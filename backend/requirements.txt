@@ -9,6 +9,7 @@ python-docx>=1.1
 openpyxl>=3.1
 reportlab>=4.2
 anthropic>=0.40
+nvidia-riva-client>=2.17
 pytest>=8.0
 # Optional OCR fallback for scanned RFP PDFs (also needs tesseract + poppler
 # binaries on the host):

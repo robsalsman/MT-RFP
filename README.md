@@ -63,13 +63,24 @@ API use is strictly read-only.
    CLOSED), days left. Click a row for the full detail: score breakdown, AI
    analysis, original documents, extracted text.
 3. **Assistant (💬, bottom-right)** — a natural-language helper that is an
-   expert on the app and the E-Rate domain. It answers from live data
-   ("which deals close this week?", "why is Broome-Tioga scored 81?"),
-   takes in-app actions (refresh data, run AI analysis, generate a draft,
-   change scoring settings), and navigates the UI for you ("take me to the
-   price list upload", "open the Shaker Heights RFP"). It is limited to
-   read-only and draft-only actions — it cannot submit bids, upload files,
-   or edit the price list/profile; for those it walks you to the right page.
+   expert on the app, the E-Rate domain, AND Mission Telecom itself (plans,
+   pricing, devices, programs, team — compiled from missiontelecom.org into
+   `data/company_knowledge.md`, with source URLs so it can point people to
+   the exact page). It answers from live data ("which deals close this
+   week?", "why is Broome-Tioga scored 81?"), takes in-app actions (refresh
+   data, run AI analysis, generate a draft, change scoring settings), and
+   navigates the UI for you ("take me to the price list upload", "open the
+   Shaker Heights RFP"). It is limited to read-only and draft-only actions —
+   it cannot submit bids, upload files, or edit the price list/profile; for
+   those it walks you to the right page.
+
+   **Voice**: click 🎤 to speak to the assistant and hear it answer
+   (speech-to-speech), or 🔊 to have typed replies read aloud. Speech runs
+   on NVIDIA-hosted Riva services with the same NVIDIA API key — Parakeet
+   ASR for speech-to-text, Magpie TTS for the voice — so there are no
+   additional accounts. In voice mode the assistant answers in short spoken
+   prose. Function IDs/voice are overridable in `.env` (see
+   `.env.example`). The mic requires a secure context (localhost is fine).
 4. **Generate Response** — one click on any OPEN RFP produces a DOCX + PDF
    named `{Entity}_{Form470No}_MissionTelecom_Response.docx` containing a
    cover letter, compliance matrix, pricing table, company info, and a

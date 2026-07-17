@@ -47,9 +47,27 @@ def _norm_state(s: str | None) -> str | None:
 
 SYSTEM_PROMPT = """/no_think You are the MT-RFP Assistant, embedded in \
 Mission Telecom's RFP intelligence platform. You are a full expert on the \
-app and the E-Rate domain. Be concise and helpful; use tools to answer with \
-real data instead of guessing, and use the navigate tool to take the user to \
-the right place in the app.
+app, the E-Rate domain, AND Mission Telecom itself (the company, its \
+services, pricing, programs, and website). Be concise and helpful; use \
+tools to answer with real data instead of guessing, and use the navigate \
+tool to take the user to the right place in the app.
+
+ABOUT MISSION TELECOM (the company; call get_company_info for full details, \
+exact pricing, team, programs, and page URLs)
+- Nonprofit telecom carrier providing affordable wireless broadband and \
+phone service — up to 70% off market rates — to schools, libraries, \
+nonprofits, and government/social welfare agencies. Runs exclusively on the \
+T-Mobile 5G/4G network. HQ: 8310 S Valley Hwy Ste 300, Englewood, CO 80112; \
+877-641-9444; info@missiontelecom.org; website missiontelecom.org.
+- Offerings: phone plans (Amplify Essential $15/line/mo 10GB, Amplify \
+Unlimited $30/line/mo with 5-year price guarantee), broadband/hotspot & \
+fixed wireless plans ($20-25/mo), connected devices (hotspots, tablets), \
+BYOD. Education plans from $9.99/line/mo. Programs: Project: Volume Up \
+(library hotspot lending), RESPOND Kits (disaster connectivity), free \
+CIPA-compliant filtering, E-Rate gap support, referral program, and the \
+Mission Telecom Giving grantmaking arm. Executive Director: Mark Colwell.
+- When asked where to find something on the website, cite the exact \
+missiontelecom.org URL from get_company_info.
 
 ABOUT THE APP
 - MT-RFP finds every currently-open E-Rate FCC Form 470 / RFP for K-12 \
@@ -100,9 +118,10 @@ list, submitting bids) — navigate the user to the right page and tell them \
 how.
 - Dollar estimates are prior-year Form 471 spend, not the value of the new \
 RFP — say so when quoting them.
-- Complete EVERY part of a multi-part request before replying. If the user \
-asks to open, see, or go to an RFP or page, you MUST call navigate (with \
-open_application_number for a specific RFP) before your final reply — \
+- Complete EVERY part of a multi-part request before replying: if the user \
+asks two questions, answer both, calling as many tools as needed. If the \
+user asks to open, see, or go to an RFP or page, you MUST call navigate \
+(with open_application_number for a specific RFP) before your final reply — \
 saying you did it without the tool call does nothing.
 - Answer in plain text only — no markdown bold/tables. Keep replies under \
 ~120 words unless listing data."""
@@ -173,6 +192,17 @@ TOOLS = [
         "name": "get_company_profile",
         "description": "Company profile fields (SPIN, contacts, references) "
                        "and which are missing.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
+        "name": "get_company_info",
+        "description": "Full Mission Telecom company knowledge base compiled "
+                       "from missiontelecom.org: services, exact plan "
+                       "pricing, devices, programs, team, coverage, support "
+                       "channels, and the source URL for every fact. MUST "
+                       "be called for any question about Mission Telecom's "
+                       "own plans, prices, devices, programs, people, or "
+                       "website (the uploaded RFP price list is a separate, "
+                       "internal thing).",
         "parameters": {"type": "object", "properties": {}}}},
     {"type": "function", "function": {
         "name": "navigate",
@@ -325,6 +355,12 @@ def _exec_tool(name: str, args: dict) -> dict:
                         "references", "capability_statement"]
             return {"profile": p,
                     "missing": [k for k in expected if not p.get(k)]}
+        if name == "get_company_info":
+            kb = config.DATA_DIR / "company_knowledge.md"
+            if kb.exists():
+                return {"knowledge_base": kb.read_text(encoding="utf-8")}
+            return {"error": "company knowledge base not found; re-run the "
+                             "site crawl to data/company_knowledge.md"}
         if name == "navigate":
             if args.get("state_filter"):
                 args["state_filter"] = _norm_state(args["state_filter"])
@@ -335,17 +371,29 @@ def _exec_tool(name: str, args: dict) -> dict:
         return {"error": str(e)}
 
 
-def run_chat(messages: list[dict]) -> dict:
+VOICE_STYLE = ("\nVOICE MODE: the user is speaking and will HEAR your reply "
+               "read aloud. Reply in short conversational prose — never "
+               "tables, lists, markdown, or long ID numbers unless asked. "
+               "Two to four spoken sentences.")
+
+
+def run_chat(messages: list[dict], voice: bool = False) -> dict:
     """messages: [{role: user|assistant, content: str}, ...] (latest last).
     Returns {reply, navigate|None, tool_log}."""
     if config.llm_provider() != "nemotron" and not config.NEMOTRON_API_KEY:
         return {"reply": "The assistant needs the Nemotron provider "
                          "(NEMOTRON_API_KEY in .env).",
                 "navigate": None, "tool_log": []}
-    convo = [{"role": "system", "content": SYSTEM_PROMPT}]
+    system = SYSTEM_PROMPT + (VOICE_STYLE if voice else "")
+    convo = [{"role": "system", "content": system}]
     for m in messages[-20:]:
         if m.get("role") in ("user", "assistant") and m.get("content"):
             convo.append({"role": m["role"], "content": str(m["content"])})
+    # models follow the latest turn far more reliably than system text
+    if voice and convo[-1]["role"] == "user":
+        convo[-1]["content"] += ("\n\n(Voice mode: answer every part of "
+                                 "this in short spoken prose — no tables, "
+                                 "no markdown.)")
 
     navigate = None
     tool_log = []

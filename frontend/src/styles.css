@@ -102,3 +102,13 @@ th.sorted { color: var(--accent); }
 .chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid
   var(--line); }
 .chat-input input { flex: 1; }
+.chat-input .mic { font-size: 16px; padding: 6px 10px; }
+.chat-input .mic.rec { background: var(--red); color: #fff;
+  border-color: var(--red); animation: pulse 1.2s infinite; }
+.chat-msg.rec { color: var(--red); font-weight: 600; }
+.chat-head { display: flex; align-items: center; justify-content:
+  space-between; }
+.chat-speaker { background: transparent; border: 1px solid #33475b;
+  color: #fff; font-size: 14px; padding: 2px 8px; }
+.chat-speaker.on { background: #1b3a5b; }
+@keyframes pulse { 50% { opacity: 0.6; } }

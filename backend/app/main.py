@@ -299,9 +299,58 @@ def chat_endpoint(payload: dict):
     return chat_mod.run_chat(messages)
 
 
+@app.post("/api/voice/converse")
+async def voice_converse(audio: UploadFile = File(...),
+                         messages: str = Form("[]"),
+                         speak_reply: bool = Form(True)):
+    """Speech-to-speech turn: transcribe -> assistant -> synthesize."""
+    from . import chat as chat_mod, voice
+    import base64
+    if not voice.available():
+        raise HTTPException(503, "voice requires NEMOTRON_API_KEY")
+    wav = await audio.read()
+    try:
+        transcript = voice.transcribe(wav)
+    except Exception as e:
+        raise HTTPException(502, f"transcription failed: {e}")
+    if not transcript:
+        return {"transcript": "", "reply": "I didn't catch that — try again.",
+                "navigate": None, "tool_log": [], "audio_b64": None}
+    history = json.loads(messages or "[]")
+    history.append({"role": "user", "content": transcript})
+    result = chat_mod.run_chat(history, voice=True)
+    audio_b64 = None
+    if speak_reply and result.get("reply"):
+        try:
+            audio_b64 = base64.b64encode(
+                voice.synthesize(result["reply"])).decode()
+        except Exception as e:
+            log.warning("TTS failed: %r", e)
+    return {"transcript": transcript, **result, "audio_b64": audio_b64}
+
+
+@app.post("/api/voice/speak")
+async def voice_speak(payload: dict):
+    """Text -> WAV (for speaking typed-chat replies aloud)."""
+    from . import voice
+    from fastapi.responses import Response
+    if not voice.available():
+        raise HTTPException(503, "voice requires NEMOTRON_API_KEY")
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(400, "text required")
+    try:
+        return Response(content=voice.synthesize(text[:4000]),
+                        media_type="audio/wav")
+    except Exception as e:
+        raise HTTPException(502, f"synthesis failed: {e}")
+
+
 @app.get("/api/health")
 def health():
+    from . import voice
     return {"ok": True, "ai_provider": config.llm_provider(),
+            "voice_available": voice.available(),
             "ai_model": (config.NEMOTRON_MODEL
                          if config.llm_provider() == "nemotron"
                          else config.ANTHROPIC_MODEL),
