@@ -1,6 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
+import { useIsMobile } from '../useMediaQuery.js'
 import Detail from './Detail.jsx'
+
+const SORT_OPTIONS = [
+  ['fit_score', 'Fit score'],
+  ['days_left', 'Days left'],
+  ['est_prior_spend', 'Est. prior spend'],
+  ['state', 'State'],
+  ['billed_entity_name', 'Entity'],
+]
 
 const COLS = [
   ['fit_score', 'Fit'],
@@ -30,6 +39,7 @@ export default function Dashboard() {
   const [sync, setSync] = useState(null)
   const [loading, setLoading] = useState(false)
   const pollRef = useRef(null)
+  const isMobile = useIsMobile()
 
   const load = useCallback(() => {
     setLoading(true)
@@ -79,6 +89,12 @@ export default function Dashboard() {
 
   const states = [...new Set(rows.map((r) => r.state).filter(Boolean))].sort()
 
+  const syncNote = sync?.running ? 'Sync running…'
+    : sync?.last_sync
+      ? `Last sync ${fmtDate(sync.last_sync.finished_at)} (${sync.last_sync.status})`
+      : ''
+  const empty = !sorted.length && !loading
+
   return (
     <>
       <div className="filters">
@@ -94,53 +110,86 @@ export default function Dashboard() {
           <option value="">All states</option>
           {states.map((s) => <option key={s}>{s}</option>)}
         </select>
-        <input placeholder="Search entity or 470 #" value={q}
-          onChange={(e) => setQ(e.target.value)} style={{ width: 220 }} />
+        {/* mobile has no sortable column headers, so expose sort here */}
+        {isMobile && (
+          <select value={sort.key} onChange={(e) =>
+            setSort({ key: e.target.value, dir: -1 })}>
+            {SORT_OPTIONS.map(([k, label]) => (
+              <option key={k} value={k}>Sort: {label}</option>))}
+          </select>
+        )}
+        <input className="search" placeholder="Search entity or 470 #"
+          value={q} onChange={(e) => setQ(e.target.value)} />
         <span className="spacer" />
-        <span className="syncnote">
-          {sync?.running ? 'Sync running…' :
-            sync?.last_sync ? `Last sync ${fmtDate(sync.last_sync.finished_at)}
-              (${sync.last_sync.status})` : ''}
-        </span>
+        <span className="syncnote">{syncNote}</span>
         <button className="primary" onClick={refresh}
           disabled={sync?.running}>Refresh Now</button>
       </div>
 
-      <table className="rfps">
-        <thead>
-          <tr>{COLS.map(([key, label]) => (
-            <th key={key} onClick={() => clickSort(key)}
-              className={sort.key === key ? 'sorted' : ''}>
-              {label}{sort.key === key ? (sort.dir < 0 ? ' ▾' : ' ▴') : ''}
-            </th>))}
-          </tr>
-        </thead>
-        <tbody>
+      {isMobile ? (
+        <div className="rfp-cards">
           {sorted.map((r) => (
-            <tr key={r.application_number} className="row"
+            <button key={r.application_number} className="rfp-card"
               onClick={() => setSelected(r.application_number)}>
-              <td className="score">{r.fit_score ?? '—'}</td>
-              <td>{r.state}</td>
-              <td>
-                <div>{r.billed_entity_name}</div>
-                <div className="rationale">{r.score_rationale}</div>
-              </td>
-              <td>{r.applicant_type}</td>
-              <td className="svc">{(r.service_types || []).join(', ')}</td>
-              <td>{fmtMoney(r.est_prior_spend)}</td>
-              <td>{fmtDate(r.certified_date)}</td>
-              <td>{fmtDate(r.bid_deadline)}<div className="small">
-                {r.bid_deadline_eastern}</div></td>
-              <td><span className={`badge ${r.status.split(' ')[0]}`}>
-                {r.status}</span></td>
-              <td>{r.days_left ?? '—'}</td>
-            </tr>
+              <div className="rfp-card-top">
+                <span className="score">{r.fit_score ?? '—'}</span>
+                <span className={`badge ${r.status.split(' ')[0]}`}>
+                  {r.status}{r.days_left != null
+                    ? ` · ${r.days_left}d left` : ''}</span>
+                <span className="rfp-card-state">{r.state}</span>
+              </div>
+              <div className="rfp-card-entity">{r.billed_entity_name}</div>
+              <div className="svc">{r.applicant_type}
+                {r.service_types?.length
+                  ? ` · ${r.service_types.join(', ')}` : ''}</div>
+              <div className="rfp-card-facts">
+                <span>{fmtMoney(r.est_prior_spend)} prior</span>
+                <span>Due {fmtDate(r.bid_deadline)}</span>
+              </div>
+              {r.score_rationale && (
+                <div className="rationale">{r.score_rationale}</div>)}
+            </button>
           ))}
-          {!sorted.length && !loading && (
-            <tr><td colSpan={COLS.length}>No RFPs match. Try Refresh Now or
-              clear filters.</td></tr>)}
-        </tbody>
-      </table>
+          {empty && <div className="card">No RFPs match. Try Refresh Now
+            or clear filters.</div>}
+        </div>
+      ) : (
+        <table className="rfps">
+          <thead>
+            <tr>{COLS.map(([key, label]) => (
+              <th key={key} onClick={() => clickSort(key)}
+                className={sort.key === key ? 'sorted' : ''}>
+                {label}{sort.key === key ? (sort.dir < 0 ? ' ▾' : ' ▴') : ''}
+              </th>))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r) => (
+              <tr key={r.application_number} className="row"
+                onClick={() => setSelected(r.application_number)}>
+                <td className="score">{r.fit_score ?? '—'}</td>
+                <td>{r.state}</td>
+                <td>
+                  <div>{r.billed_entity_name}</div>
+                  <div className="rationale">{r.score_rationale}</div>
+                </td>
+                <td>{r.applicant_type}</td>
+                <td className="svc">{(r.service_types || []).join(', ')}</td>
+                <td>{fmtMoney(r.est_prior_spend)}</td>
+                <td>{fmtDate(r.certified_date)}</td>
+                <td>{fmtDate(r.bid_deadline)}<div className="small">
+                  {r.bid_deadline_eastern}</div></td>
+                <td><span className={`badge ${r.status.split(' ')[0]}`}>
+                  {r.status}</span></td>
+                <td>{r.days_left ?? '—'}</td>
+              </tr>
+            ))}
+            {empty && (
+              <tr><td colSpan={COLS.length}>No RFPs match. Try Refresh Now or
+                clear filters.</td></tr>)}
+          </tbody>
+        </table>
+      )}
       {selected && (
         <Detail applicationNumber={selected}
           onClose={() => setSelected(null)} />

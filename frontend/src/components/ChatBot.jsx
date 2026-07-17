@@ -167,22 +167,26 @@ export default function ChatBot() {
 
   return (
     <>
-      <button className="chat-fab" onClick={() => setOpen(!open)}
-        title="MT-RFP Assistant">
+      <button className={`chat-fab ${open ? 'open' : ''}`}
+        onClick={() => setOpen(!open)} title="MT-RFP Assistant">
         {open ? '✕' : '💬'}
       </button>
       {open && (
         <div className="chat-panel">
           <div className="chat-head">
-            MT-RFP Assistant
-            {voiceOk && (
-              <button className={`chat-speaker ${speakReplies ? 'on' : ''}`}
-                title={speakReplies ? 'Voice replies on' : 'Voice replies off'}
-                onClick={() => { if (speakReplies) stopAudio()
-                  setSpeakReplies(!speakReplies) }}>
-                {speakReplies ? '🔊' : '🔇'}
-              </button>
-            )}
+            <span className="chat-title">MT-RFP Assistant</span>
+            <span className="chat-head-controls">
+              {voiceOk && (
+                <button className={`chat-speaker ${speakReplies ? 'on' : ''}`}
+                  title={speakReplies ? 'Voice replies on' : 'Voice replies off'}
+                  onClick={() => { if (speakReplies) stopAudio()
+                    setSpeakReplies(!speakReplies) }}>
+                  {speakReplies ? '🔊' : '🔇'}
+                </button>
+              )}
+              <button className="chat-close" title="Close"
+                onClick={() => setOpen(false)}>✕</button>
+            </span>
           </div>
           <div className="chat-body" ref={bodyRef}>
             {messages.map((m, i) => (

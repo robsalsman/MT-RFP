@@ -8,8 +8,23 @@ import { api } from './api.js'
 export default function App() {
   const [tab, setTab] = useState('dashboard')
   const [health, setHealth] = useState(null)
+  const [awake, setAwake] = useState(null)
 
   useEffect(() => { api.health().then(setHealth).catch(() => {}) }, [])
+
+  // keep-awake state: poll so automatic holds (during sync/generation) show
+  useEffect(() => {
+    const tick = () => api.keepAwake().then(setAwake).catch(() => {})
+    tick()
+    const id = setInterval(tick, 5000)
+    return () => clearInterval(id)
+  }, [])
+
+  const toggleAwake = () => {
+    const next = !(awake?.on)
+    api.setKeepAwake(next).then(setAwake).catch(() => {})
+  }
+  const autoHold = (awake?.holds || []).some((h) => h !== 'manual')
 
   // assistant-driven navigation (tab switch; Dashboard handles the rest)
   useEffect(() => {
@@ -37,6 +52,18 @@ export default function App() {
             <button key={id} className={tab === id ? 'active' : ''}
               onClick={() => setTab(id)}>{label}</button>
           ))}
+          {awake?.supported && (
+            <button className={`keepawake ${awake.on ? 'on' : ''}`}
+              onClick={toggleAwake}
+              title={autoHold
+                ? 'Staying awake automatically while a job runs'
+                : awake.on
+                  ? 'Keep-awake on — the machine will not sleep. Click to turn off.'
+                  : 'Prevent this machine from sleeping while the assistant works'}>
+              {awake.on ? '☕ Awake' : '☀ Keep awake'}
+              {autoHold ? ' (auto)' : ''}
+            </button>
+          )}
         </nav>
       </header>
       <main className="wrap">

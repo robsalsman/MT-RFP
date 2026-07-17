@@ -16,7 +16,7 @@ from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadF
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from . import ai, config, db, ingest, respond, status as status_mod
+from . import ai, config, db, ingest, keepawake, respond, status as status_mod
 from . import pricing as pricing_mod
 
 logging.basicConfig(level=logging.INFO,
@@ -56,10 +56,11 @@ def _run_sync_guarded():
         return  # a sync is already running
     _sync_state.update(running=True, last_error=None)
     try:
-        result = ingest.run_sync()
-        analyzed = ai.analyze_open_batch()
-        result["analyzed"] = analyzed
-        _sync_state["last_result"] = result
+        with keepawake.hold("sync"):  # don't let the box sleep mid-sync
+            result = ingest.run_sync()
+            analyzed = ai.analyze_open_batch()
+            result["analyzed"] = analyzed
+            _sync_state["last_result"] = result
     except Exception as e:
         _sync_state["last_error"] = str(e)
         raise
@@ -197,9 +198,25 @@ def analyze(application_number: str):
 @app.post("/api/rfps/{application_number}/generate-response")
 def generate_response(application_number: str):
     try:
-        return respond.generate_response(application_number)
+        with keepawake.hold("response"):  # generation can take 1-2 min
+            return respond.generate_response(application_number)
     except ValueError as e:
         raise HTTPException(404, str(e))
+
+
+# ---------------------------------------------------------------------------
+# Keep-awake (prevent local machine sleep during long jobs; NOT an activity
+# simulator — see README)
+# ---------------------------------------------------------------------------
+
+@app.get("/api/keepawake")
+def keepawake_status():
+    return keepawake.status()
+
+
+@app.post("/api/keepawake")
+def keepawake_set(payload: dict):
+    return keepawake.set_manual(bool(payload.get("on")))
 
 
 @app.get("/api/responses/{response_id}/download")

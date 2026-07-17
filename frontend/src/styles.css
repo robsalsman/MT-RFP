@@ -22,6 +22,9 @@ input, select, textarea { font: inherit; border: 1px solid var(--line);
 .topbar nav button { background: transparent; color: #cfe0f1;
   border-color: #33475b; }
 .topbar nav button.active { background: #1b3a5b; color: #fff; }
+.topbar nav button.keepawake { border-color: #33475b; }
+.topbar nav button.keepawake.on { background: #0a7d33; color: #fff;
+  border-color: #0a7d33; }
 
 .wrap { padding: 16px 20px; max-width: 1500px; margin: 0 auto; }
 .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
@@ -79,7 +82,10 @@ th.sorted { color: var(--accent); }
 .chat-fab { position: fixed; right: 22px; bottom: 22px; width: 52px;
   height: 52px; border-radius: 50%; font-size: 22px; background: var(--accent);
   color: #fff; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  z-index: 90; }
+  z-index: 95; }
+.chat-head-controls { display: flex; gap: 6px; align-items: center; }
+.chat-close { background: transparent; border: 1px solid #33475b;
+  color: #fff; font-size: 13px; padding: 2px 8px; }
 .chat-panel { position: fixed; right: 22px; bottom: 84px;
   width: min(400px, 92vw); height: min(560px, 75vh); background: var(--panel);
   border: 1px solid var(--line); border-radius: 12px; display: flex;
@@ -102,6 +108,22 @@ th.sorted { color: var(--accent); }
 .chat-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid
   var(--line); }
 .chat-input input { flex: 1; }
+.filters .search { width: 220px; }
+
+/* ---- dashboard cards (mobile) ---- */
+.rfp-cards { display: flex; flex-direction: column; gap: 10px; }
+.rfp-card { text-align: left; width: 100%; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 5px; }
+.rfp-card:active { background: #eef4ff; }
+.rfp-card-top { display: flex; align-items: center; gap: 8px; }
+.rfp-card-top .score { font-size: 18px; }
+.rfp-card-state { margin-left: auto; color: var(--muted); font-weight: 600; }
+.rfp-card-entity { font-weight: 600; font-size: 15px; }
+.rfp-card-facts { display: flex; gap: 14px; font-size: 12px;
+  color: var(--muted); }
+.rfp-card .rationale { max-width: none; }
+
 .chat-input .mic { font-size: 16px; padding: 6px 10px; }
 .chat-input .mic.rec { background: var(--red); color: #fff;
   border-color: var(--red); animation: pulse 1.2s infinite; }
@@ -112,3 +134,41 @@ th.sorted { color: var(--accent); }
   color: #fff; font-size: 14px; padding: 2px 8px; }
 .chat-speaker.on { background: #1b3a5b; }
 @keyframes pulse { 50% { opacity: 0.6; } }
+
+/* ===================================================================
+   Mobile layout (<= 720px). Desktop rules above are untouched.
+   =================================================================== */
+@media (max-width: 720px) {
+  .topbar { flex-wrap: wrap; gap: 8px 12px; padding: 10px 14px; }
+  .topbar h1 { font-size: 16px; }
+  .topbar .sub { display: none; }              /* free up the narrow bar */
+  .topbar nav { margin-left: 0; width: 100%; flex-wrap: wrap; gap: 6px; }
+  .topbar nav button { flex: 1 1 auto; min-width: 0; padding: 8px 10px; }
+
+  .wrap { padding: 12px; }
+
+  .filters { gap: 8px; }
+  .filters select, .filters .search { flex: 1 1 46%; min-width: 0; }
+  .filters .search { width: auto; }
+  .filters .spacer { display: none; }
+  .filters .syncnote { flex: 1 1 100%; order: 10; }
+  .filters .primary { flex: 1 1 100%; order: 11; padding: 10px; }
+
+  /* full-screen detail drawer on phones */
+  .drawer { width: 100vw; padding: 16px 14px 40px; }
+  .drawer .kv { grid-template-columns: 1fr; gap: 2px 0; }
+  .drawer .kv dt { margin-top: 6px; }
+
+  /* single-column forms */
+  .grid2 { grid-template-columns: 1fr; }
+
+  /* full-screen assistant; header ✕ closes it, so hide the FAB when open */
+  .chat-panel { right: 0; left: 0; bottom: 0; top: 0; width: 100vw;
+    height: 100dvh; border-radius: 0; }
+  .chat-fab { right: 16px; bottom: 16px; }
+  .chat-fab.open { display: none; }
+
+  /* comfortable tap targets */
+  button, input, select, textarea { font-size: 16px; }  /* no iOS zoom */
+  .rfp-card { padding: 14px; }
+}

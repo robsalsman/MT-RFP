@@ -86,6 +86,27 @@ API use is strictly read-only.
    cover letter, compliance matrix, pricing table, company info, and a
    required-forms checklist.
 
+### Keep awake (☀ / ☕ in the top bar)
+
+Long assistant-driven jobs — a full USAC sync, downloading and OCR-ing RFP
+PDFs, generating a response — can run for minutes. The **Keep awake** toggle
+tells the OS power manager to keep the machine and display on so those jobs
+don't get interrupted by the computer sleeping. It engages automatically
+while a sync or response generation is running (shows "auto") and can be
+pinned on manually.
+
+Implementation: Windows `SetThreadExecutionState` / macOS `caffeinate`
+(`backend/app/keepawake.py`). It only requests "stay awake" from the OS — it
+does **not** move the mouse, press keys, or simulate user activity, and it is
+not an attendance/activity tool. (Only meaningful when the backend runs
+directly on the user's machine; a container can't control host sleep.)
+
+> Note: this replaced a request to bundle a random-mouse-mover to defeat
+> employee idle/activity monitoring. That was intentionally **not** built —
+> a tool whose purpose is to misrepresent whether someone is working
+> deceives the employer, so only the honest keep-awake (which actually
+> solves the sleep/timeout problem) is included.
+
 ### Guardrails (non-negotiable)
 
 - Every response is stamped **DRAFT — NOT FOR SUBMISSION** with a mandatory

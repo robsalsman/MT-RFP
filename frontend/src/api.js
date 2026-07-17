@@ -38,4 +38,9 @@ export const api = {
     return fetch('/api/profile/documents', { method: 'POST', body: fd }).then(json)
   },
   health: () => fetch('/api/health').then(json),
+  keepAwake: () => fetch('/api/keepawake').then(json),
+  setKeepAwake: (on) => fetch('/api/keepawake', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ on }),
+  }).then(json),
 }
