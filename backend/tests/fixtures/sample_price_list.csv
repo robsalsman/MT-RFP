@@ -1,0 +1,14 @@
+SKU,Description,Service Category,Unit,Unit Price,Term (months)
+MT-IA-100M,Dedicated Internet Access 100 Mbps,Internet Access,per circuit/month,450.00,36
+MT-IA-500M,Dedicated Internet Access 500 Mbps,Internet Access,per circuit/month,900.00,36
+MT-IA-1G,Dedicated Internet Access 1 Gbps fiber,Internet Access,per circuit/month,1250.00,36
+MT-IA-10G,Dedicated Internet Access 10 Gbps fiber,Internet Access,per circuit/month,3900.00,36
+MT-WAN-1G,Point-to-Point WAN Data Transmission 1 Gbps,Data Transmission,per circuit/month,1100.00,36
+MT-WAN-10G,Point-to-Point WAN Data Transmission 10 Gbps,Data Transmission,per circuit/month,3500.00,36
+MT-LTE-UNL,Wireless Cellular Data Unlimited LTE/5G,Wireless Data,per device/month,30.00,12
+MT-WIFI-AP,Enterprise Wireless Access Point WiFi 6E installed,Internal Connections,per AP,685.00,
+MT-WIFI-CTRL,Wireless LAN Controller with licenses,Internal Connections,each,4200.00,
+MT-SW-48P,48-port PoE Access Switch with licenses,Internal Connections,each,3150.00,
+MT-FW-ENT,Enterprise Firewall with UTM licenses,Internal Connections,each,5400.00,
+MT-MIBS,Managed Internal Broadband Service,Managed Internal Broadband Services,per site/month,750.00,36
+MT-BMIC,Basic Maintenance of Internal Connections,Basic Maintenance,per site/month,250.00,12

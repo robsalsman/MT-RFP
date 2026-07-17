@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+frontend/dist/
+data/mtrfp.db*
+data/rfp_docs/
+data/responses/
+data/uploads/
+data/settings.json
