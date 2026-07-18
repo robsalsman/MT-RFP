@@ -9,6 +9,7 @@ still come exclusively from the uploaded price list.
 """
 import json
 import logging
+import re
 
 import httpx
 
@@ -45,16 +46,33 @@ def _norm_state(s: str | None) -> str | None:
     return STATE_CODES.get(s.lower(), s.upper()[:2])
 
 
-SYSTEM_PROMPT = """/no_think You are Matt, a friendly, sharp coworker on \
-Mission Telecom's sales team, embedded in the MT-RFP platform. You have a \
-laid-back 80s-rock vibe — warm, upbeat, the occasional light rock turn of \
-phrase — but you are first and foremost a competent expert and you never let \
-personality get in the way of a clear, accurate answer. Address the user by \
-their first name when you know it. You are a full expert on the app, the \
-E-Rate domain, AND Mission Telecom itself (the company, its services, \
-pricing, programs, and website). Be concise and helpful; use tools to answer \
-with real data instead of guessing, and use the navigate tool to take the \
-user to the right place in the app.
+SYSTEM_PROMPT = """/no_think You are Matt, a sharp, charismatic British \
+coworker on Mission Telecom's sales team, embedded in the MT-RFP platform. \
+You talk with the swagger and cadence of an 80s rock star and a few British \
+turns of phrase ("right then", "brilliant", "cheers", "spot on", "proper", \
+"mate", "no worries") — upbeat, punchy, a bit of showmanship — but you are \
+first and foremost a competent expert and you NEVER let the personality get \
+in the way of a clear, accurate answer. Keep the flavour light: a line of \
+attitude, then the goods. Address the user by their first name.
+
+You are a full expert on the app, the E-Rate domain, AND Mission Telecom \
+itself (the company, its services, pricing, programs, and website). Use tools \
+to answer with real data instead of guessing, and use the navigate tool to \
+take the user to the right place in the app.
+
+HOW TO PRESENT RFPs — KEEP IT LIGHT. Never recite an RFP's full details or \
+read documents word for word. NEVER use markdown tables, columns, or bullet \
+lists. When you list RFPs, reply with ONE short conversational sentence that \
+names just a handful (3-6) by town/entity and state — nothing else at all (no \
+scores, services, deadlines, dollar figures, or application numbers). Then \
+ask if they want details on any; the app shows a tappable button for each one \
+you listed, so they pick. Example: "Got a few open library ones for you, \
+Kim — Marion in Michigan, Mount Carmel in Illinois, and Fairview Heights. \
+Fancy the details on any? Tap one below." When they ask about a single RFP, \
+give a 1-2 sentence SUMMARY (who, where, what they want in plain terms) — \
+never a wall of text or the raw document. For "top", "best", or "which should \
+we bid on" questions, call list_rfps (mission_only true) — it returns RFPs \
+already RANKED by fit score, so just name the first few.
 
 ABOUT MISSION TELECOM (the company; call get_company_info for full details, \
 exact pricing, team, programs, and page URLs)
@@ -409,6 +427,37 @@ VOICE_STYLE = ("\nVOICE MODE: the user is speaking and will HEAR your reply "
                "Two to four spoken sentences.")
 
 
+def _looks_degenerate(text: str) -> bool:
+    """Detect Nemotron runaway (a token/phrase repeating dozens of times that
+    leaks reasoning into the answer)."""
+    words = text.split()
+    if len(words) > 80 and len(set(words)) / len(words) < 0.3:
+        return True
+    return False
+
+
+def _clean_reply(reply: str, has_options: bool) -> str:
+    """Strip markdown the widget renders as plain text, and — as a hard
+    backstop for the 'keep listings minimal' rule — drop any markdown table
+    Nemotron produces (it loves tables) since the RFP picks are shown as
+    tappable buttons instead."""
+    lines = []
+    for line in reply.splitlines():
+        s = line.strip()
+        # markdown table row or separator -> drop it
+        if s.startswith("|") or re.fullmatch(r"\|?[\s|:.-]{3,}\|?", s):
+            continue
+        lines.append(line)
+    out = "\n".join(lines)
+    out = out.replace("**", "").replace("__", "").replace("`", "")
+    out = re.sub(r"\n{3,}", "\n\n", out).strip()
+    if has_options and not out:
+        out = "Here you go — tap one below for the details."
+    elif has_options and "tap" not in out.lower():
+        out += "  Tap one below for the details."
+    return out
+
+
 def run_chat(messages: list[dict], voice: bool = False,
              user_name: str | None = None) -> dict:
     """messages: [{role: user|assistant, content: str}, ...] (latest last).
@@ -433,6 +482,8 @@ def run_chat(messages: list[dict], voice: bool = False,
 
     navigate = None
     tool_log = []
+    options = []  # tappable RFP picks from the most recent listing
+    degen_retries = 0
     for _ in range(MAX_TOOL_ROUNDS):
         try:
             resp = httpx.post(
@@ -440,7 +491,7 @@ def run_chat(messages: list[dict], voice: bool = False,
                 headers={"Authorization":
                          f"Bearer {config.NEMOTRON_API_KEY}"},
                 json={"model": config.NEMOTRON_MODEL, "messages": convo,
-                      "tools": TOOLS, "max_tokens": 4000,
+                      "tools": TOOLS, "max_tokens": 1200,
                       "temperature": 0.2},
                 timeout=300)
             resp.raise_for_status()
@@ -449,16 +500,26 @@ def run_chat(messages: list[dict], voice: bool = False,
             log.warning("chat request failed: %s", e)
             return {"reply": "Sorry — the assistant hit an API error. "
                              "Try again in a moment.",
-                    "navigate": navigate, "tool_log": tool_log}
+                    "navigate": navigate, "tool_log": tool_log,
+                    "options": options}
         tool_calls = msg.get("tool_calls") or []
         if not tool_calls:
             reply = (msg.get("content") or "").strip()
-            if not reply:
+            if _looks_degenerate(reply) and degen_retries < 1:
+                degen_retries += 1
+                convo.append({"role": "user", "content":
+                              "Answer in ONE short, clear sentence — no "
+                              "lists, no tables, no repetition."})
+                continue
+            if _looks_degenerate(reply):
+                reply = ("Sorry — I got my wires crossed there. Give it "
+                         "another go?")
+            elif not reply:
                 reply = "Done." if tool_log else "How can I help with MT-RFP?"
-            # the widget renders plain text; drop markdown emphasis
-            reply = reply.replace("**", "").replace("__", "")
+            else:
+                reply = _clean_reply(reply, bool(options))
             return {"reply": reply, "navigate": navigate,
-                    "tool_log": tool_log}
+                    "tool_log": tool_log, "options": options}
         convo.append({"role": "assistant",
                       "content": msg.get("content") or "",
                       "tool_calls": tool_calls})
@@ -471,10 +532,16 @@ def run_chat(messages: list[dict], voice: bool = False,
             result = _exec_tool(fn, fn_args)
             if fn == "navigate" and result.get("ok"):
                 navigate = result["navigation_queued"]
+            if fn == "list_rfps" and result.get("rfps"):
+                # tappable picks for the reply (town/entity + state)
+                options = [{"application_number": r["application_number"],
+                            "label": f"{r['entity']} ({r['state']})",
+                            "biddable": r.get("mission_biddable", True)}
+                           for r in result["rfps"][:8]]
             tool_log.append({"tool": fn, "args": fn_args,
                              "ok": "error" not in result})
             convo.append({"role": "tool", "tool_call_id": tc["id"],
                           "content": json.dumps(result, default=str)[:20000]})
     return {"reply": "I ran out of steps for that request — try breaking it "
                      "into smaller parts.",
-            "navigate": navigate, "tool_log": tool_log}
+            "navigate": navigate, "tool_log": tool_log, "options": options}

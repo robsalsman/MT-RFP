@@ -50,6 +50,7 @@ function createRecorder() {
 
 export default function ChatBot() {
   const [open, setOpen] = useState(true)   // Matt drives — he's up on login
+  const [callMode, setCallMode] = useState(false)  // full-screen "video call"
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -58,7 +59,6 @@ export default function ChatBot() {
   const [voiceOk, setVoiceOk] = useState(false)
   const [avatar, setAvatar] = useState({ state: 'idle', mouth: 0 })
   const bodyRef = useRef(null)
-  const inputRef = useRef(null)
   const recRef = useRef(null)
   const name = auth.name()
 
@@ -76,13 +76,25 @@ export default function ChatBot() {
   const started = messages.some((m) => m.role === 'user')
   const history = (msgs) => msgs.filter((m) => !m._local)
     .map(({ role, content }) => ({ role, content }))
+  const lastReply = [...messages].reverse()
+    .find((m) => m.role === 'assistant' && !m._local)?.content || ''
+
+  const openRfp = (an) => {
+    setCallMode(false)
+    window.dispatchEvent(new CustomEvent('mtrfp:navigate',
+      { detail: { tab: 'dashboard', open_application_number: an } }))
+  }
 
   const applyResult = (d, next) => {
     setMessages([...next, {
       role: 'assistant', content: d.reply, toolLog: d.tool_log,
+      options: d.options || [],
     }])
-    if (d.navigate) window.dispatchEvent(
-      new CustomEvent('mtrfp:navigate', { detail: d.navigate }))
+    if (d.navigate) {
+      setCallMode(false)  // leave the call so they can see what he pulled up
+      window.dispatchEvent(
+        new CustomEvent('mtrfp:navigate', { detail: d.navigate }))
+    }
     if (d.audio_b64) mattAudio.play(`data:audio/wav;base64,${d.audio_b64}`)
     else if (speakReplies && voiceOk && d.reply) speakText(d.reply)
   }
@@ -158,9 +170,48 @@ export default function ChatBot() {
     } finally { setBusy(false) }
   }
 
+  const startCall = () => { setCallMode(true); toggleMic() }
+  const exitCall = () => {
+    if (recording) { setRecording(false); try { recRef.current?.stop() } catch { /* */ } }
+    mattAudio.stop()
+    setCallMode(false)
+  }
+  const toggleSpeaker = () => { if (speakReplies) mattAudio.stop()
+    setSpeakReplies(!speakReplies) }
+
   const statusLabel = recording ? 'listening…'
     : avatar.state === 'speaking' ? 'talking…'
       : busy ? 'thinking…' : 'online'
+
+  // ---- full-screen "video call" ----
+  if (open && callMode) {
+    return (
+      <div className="matt-call">
+        <button className="call-min" onClick={exitCall}
+          title="Exit full screen">⤢ Exit full screen</button>
+        <div className="call-stage">
+          <Matt state={avatar.state} mouth={avatar.mouth} size={260} />
+          <div className="call-name">Matt</div>
+          <div className="call-status">{statusLabel}</div>
+          {lastReply && <div className="call-caption">{lastReply}</div>}
+        </div>
+        <div className="call-controls">
+          <button className={`call-btn mic ${recording ? 'rec' : ''}`}
+            onClick={toggleMic} disabled={busy}
+            title={recording ? 'Stop & send' : 'Talk to Matt'}>
+            {recording ? '⏹' : '🎤'}
+          </button>
+          {voiceOk && (
+            <button className="call-btn" onClick={toggleSpeaker}
+              title={speakReplies ? 'Mute Matt' : 'Unmute Matt'}>
+              {speakReplies ? '🔊' : '🔇'}
+            </button>)}
+          <button className="call-btn end" onClick={exitCall}
+            title="Exit full screen">⤢</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -180,8 +231,7 @@ export default function ChatBot() {
               {voiceOk && (
                 <button className={`chat-speaker ${speakReplies ? 'on' : ''}`}
                   title={speakReplies ? 'Voice replies on' : 'Voice replies off'}
-                  onClick={() => { if (speakReplies) mattAudio.stop()
-                    setSpeakReplies(!speakReplies) }}>
+                  onClick={toggleSpeaker}>
                   {speakReplies ? '🔊' : '🔇'}
                 </button>
               )}
@@ -193,18 +243,15 @@ export default function ChatBot() {
           <div className="chat-body" ref={bodyRef}>
             {!started && (
               <div className="matt-hero">
-                <Matt state={avatar.state} mouth={avatar.mouth} size={104} />
+                <Matt state={avatar.state} mouth={avatar.mouth} size={132} />
                 <div className="matt-hero-title">
                   Hey {name || 'there'}! I'm Matt.</div>
                 <div className="small">Talk to me or type — I'll pull up open
                   RFPs, score them for us, draft responses, and take you right
                   to what you need.</div>
                 {voiceOk && (
-                  <button className="primary cta-voice" onClick={toggleMic}
-                    disabled={busy && !recording}>
-                    {recording ? '⏹  Stop & send'
-                      : '🎤  Start a voice conversation'}
-                  </button>)}
+                  <button className="primary cta-voice" onClick={startCall}
+                    disabled={busy}>🎤  Start a voice conversation</button>)}
                 <div className="cta-chips">
                   {['Which deals close this week?',
                     'Show open libraries', "What's our best RFP right now?"]
@@ -225,6 +272,15 @@ export default function ChatBot() {
                         ⚙ {t.tool}</span>))}
                   </div>
                 )}
+                {m.options?.length > 0 && (
+                  <div className="chat-options">
+                    {m.options.map((o) => (
+                      <button key={o.application_number}
+                        className={`opt ${o.biddable ? '' : 'opt-no'}`}
+                        onClick={() => openRfp(o.application_number)}>
+                        {o.label} ›</button>))}
+                  </div>
+                )}
               </div>
             ))}
             {busy && <div className="chat-msg assistant">Working…</div>}
@@ -240,7 +296,7 @@ export default function ChatBot() {
                 🎤
               </button>
             )}
-            <input ref={inputRef} value={input} disabled={busy || recording}
+            <input value={input} disabled={busy || recording}
               placeholder={recording ? 'Listening…' : 'Message Matt…'}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()} />

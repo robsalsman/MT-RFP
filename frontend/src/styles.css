@@ -67,7 +67,7 @@ table.rfps tr.row:hover { background: #eef4ff; cursor: pointer; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(720px, 92vw);
   background: var(--panel); border-left: 1px solid var(--line);
   box-shadow: -8px 0 30px rgba(0,0,0,0.18); overflow-y: auto; padding: 20px;
-  z-index: 50; }
+  z-index: 100; }  /* above the chat panel so tapping an option shows info */
 .drawer h2 { margin-top: 0; }
 .drawer .close { float: right; }
 .kv { display: grid; grid-template-columns: 180px 1fr; gap: 4px 10px;
@@ -127,6 +127,40 @@ th.sorted { color: var(--accent); }
 .chip { font-size: 12px; padding: 5px 10px; border-radius: 999px;
   background: #eef4ff; border: 1px solid var(--line); color: var(--accent); }
 .chip:hover { background: #dfeaff; }
+
+/* ---- tappable RFP option buttons under a Matt reply ---- */
+.chat-options { display: flex; flex-direction: column; gap: 6px;
+  margin-top: 8px; }
+.opt { text-align: left; background: #fff; border: 1px solid var(--accent);
+  color: var(--accent); border-radius: 8px; padding: 8px 11px; font-weight: 600;
+  font-size: 13px; }
+.opt:hover { background: #eef4ff; }
+.opt-no { border-color: var(--closed); color: var(--muted); }
+
+/* ---- full-screen video-call mode ---- */
+.matt-call { position: fixed; inset: 0; z-index: 120;
+  background: radial-gradient(120% 120% at 50% 0%, #1a1030, #0d1b2a 70%);
+  color: #fff; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 14px; }
+.call-min { position: absolute; top: 16px; right: 16px; background:
+  rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.call-stage { display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 0 20px; text-align: center; }
+.matt-call .matt, .matt-call .matt svg { width: min(70vw, 300px) !important;
+  height: auto !important; }
+.call-name { font-size: 26px; font-weight: 800; letter-spacing: 0.02em; }
+.call-status { color: #ff8fbf; font-weight: 600; }
+.call-caption { max-width: min(90vw, 520px); margin-top: 10px; font-size: 14px;
+  line-height: 1.5; color: #d8e2ee; max-height: 34vh; overflow-y: auto; }
+.call-controls { display: flex; gap: 18px; margin-top: 8px; }
+.call-btn { width: 64px; height: 64px; border-radius: 50%; font-size: 26px;
+  background: rgba(255,255,255,0.14); color: #fff;
+  border: 1px solid rgba(255,255,255,0.25); }
+.call-btn.mic { background: #0b5fff; border-color: #0b5fff; }
+.call-btn.mic.rec { background: var(--red); border-color: var(--red);
+  animation: pulse 1.2s infinite; }
+.call-btn.end { background: #333; }
 .chat-close { background: transparent; border: 1px solid #33475b;
   color: #fff; font-size: 13px; padding: 2px 8px; }
 .chat-panel { position: fixed; right: 22px; bottom: 84px;

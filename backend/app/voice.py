@@ -23,8 +23,10 @@ ASR_FUNCTION_ID = os.environ.get(
     "NVIDIA_ASR_FUNCTION_ID", "d3fe9151-442b-4204-a70d-5fcc597fd610")
 TTS_FUNCTION_ID = os.environ.get(
     "NVIDIA_TTS_FUNCTION_ID", "877104f7-e885-42b9-8de8-f6e4c6303969")
+# Male voice for Matt. (Magpie has no British/EN-GB voice — US English only —
+# so the British feel comes from his phrasing, not the accent.)
 TTS_VOICE = os.environ.get("NVIDIA_TTS_VOICE",
-                           "Magpie-Multilingual.EN-US.Sofia")
+                           "Magpie-Multilingual.EN-US.Jason")
 TTS_SAMPLE_RATE = 22050
 # Magpie enforces a 400-token sequence cap; dense text (numbers, IDs) can
 # expand to ~2 tokens/char, so keep chunks short.
