@@ -1,35 +1,237 @@
 {
-  "canvas": [486, 1024],
+  "canvas": [
+    486,
+    1024
+  ],
   "preKeyed": true,
-  "note": "Painted full-body frames (green already removed). idle/listening/speaking are wired; actions are available for future triggers. For true lip-sync, add talk_closed/mid/open (same pose, 3 mouth openings) and set states.speaking.mouths.",
+  "note": "Master roster (one consistent batch). Full-body poses/sequences drive the stage widget + closet; chest-up visemes drive call-view lip-sync.",
   "states": {
-    "idle":      { "src": "matt_pose_idle_sit_stool.png" },
-    "listening": { "src": "matt_pose_listening.png" },
-    "speaking":  { "src": "matt_pose_talking.png" }
+    "idle": {
+      "src": "poses/matt_pose_idle_sit_stool.png"
+    },
+    "listening": {
+      "src": "poses/matt_pose_listening.png"
+    },
+    "speaking": {
+      "src": "poses/matt_pose_idle_stand.png"
+    }
   },
   "visemeNote": "Chest-up talking busts (fixed anchor). Used for lip-sync in the close-up call view; amplitude is mapped to mouth openness across these shapes.",
   "visemes": {
     "rest": "visemes/matt_viseme_rest.png",
-    "MBP":  "visemes/matt_viseme_MBP.png",
-    "WQ":   "visemes/matt_viseme_WQ.png",
-    "U":    "visemes/matt_viseme_U.png",
-    "O":    "visemes/matt_viseme_O.png",
-    "FV":   "visemes/matt_viseme_FV.png",
-    "L":    "visemes/matt_viseme_L.png",
-    "E":    "visemes/matt_viseme_E.png",
-    "etc":  "visemes/matt_viseme_etc.png",
-    "AI":   "visemes/matt_viseme_AI.png",
+    "MBP": "visemes/matt_viseme_MBP.png",
+    "WQ": "visemes/matt_viseme_WQ.png",
+    "U": "visemes/matt_viseme_U.png",
+    "O": "visemes/matt_viseme_O.png",
+    "FV": "visemes/matt_viseme_FV.png",
+    "L": "visemes/matt_viseme_L.png",
+    "E": "visemes/matt_viseme_E.png",
+    "etc": "visemes/matt_viseme_etc.png",
+    "AI": "visemes/matt_viseme_AI.png",
     "wide": "visemes/matt_viseme_wide.png"
   },
-  "actions": {
-    "idle_stand":  { "src": "matt_pose_idle_stand.png" },
-    "thinking":    { "src": "matt_pose_thinking.png" },
-    "phone_look":  { "src": "matt_pose_phone_look.png" },
-    "point":       { "src": "matt_pose_point_to_screen.png" },
-    "guitar":      { "src": "matt_pose_guitar_strum.png" },
-    "celebrate":   { "src": "matt_pose_celebrate.png" },
-    "wave":        { "src": "matt_pose_wave_hello.png" },
-    "shrug":       { "src": "matt_pose_shrug.png" },
-    "stumble":     { "src": "matt_pose_stumble.png" }
-  }
+  "poses": {
+    "air_guitar": "poses/matt_pose_air_guitar.png",
+    "arms_crossed": "poses/matt_pose_arms_crossed.png",
+    "bow": "poses/matt_pose_bow.png",
+    "catch_balance": "poses/matt_pose_catch_balance.png",
+    "celebrate": "poses/matt_pose_celebrate.png",
+    "checking_watch": "poses/matt_pose_checking_watch.png",
+    "clap": "poses/matt_pose_clap.png",
+    "clipboard": "poses/matt_pose_clipboard.png",
+    "coffee_sip": "poses/matt_pose_coffee_sip.png",
+    "confused": "poses/matt_pose_confused.png",
+    "counting_fingers": "poses/matt_pose_counting_fingers.png",
+    "dance": "poses/matt_pose_dance.png",
+    "drumming": "poses/matt_pose_drumming.png",
+    "facepalm": "poses/matt_pose_facepalm.png",
+    "facewall": "poses/matt_pose_facewall.png",
+    "fist_pump": "poses/matt_pose_fist_pump.png",
+    "guitar_solo": "poses/matt_pose_guitar_solo.png",
+    "guitar_strum": "poses/matt_pose_guitar_strum.png",
+    "hands_hips": "poses/matt_pose_hands_hips.png",
+    "handshake_offer": "poses/matt_pose_handshake_offer.png",
+    "headphones_on": "poses/matt_pose_headphones_on.png",
+    "idle_relaxed": "poses/matt_pose_idle_relaxed.png",
+    "idle_sit_stool": "poses/matt_pose_idle_sit_stool.png",
+    "idle_stand": "poses/matt_pose_idle_stand.png",
+    "jump": "poses/matt_pose_jump.png",
+    "kick": "poses/matt_pose_kick.png",
+    "kneel_slide": "poses/matt_pose_kneel_slide.png",
+    "lean_in": "poses/matt_pose_lean_in.png",
+    "lightbulb": "poses/matt_pose_lightbulb.png",
+    "listening": "poses/matt_pose_listening.png",
+    "mic_point": "poses/matt_pose_mic_point.png",
+    "mic_sing": "poses/matt_pose_mic_sing.png",
+    "nod_yes": "poses/matt_pose_nod_yes.png",
+    "phone_call": "poses/matt_pose_phone_call.png",
+    "phone_look": "poses/matt_pose_phone_look.png",
+    "point_to_screen": "poses/matt_pose_point_to_screen.png",
+    "point_up": "poses/matt_pose_point_up.png",
+    "present_chart": "poses/matt_pose_present_chart.png",
+    "present_win": "poses/matt_pose_present_win.png",
+    "reading_doc": "poses/matt_pose_reading_doc.png",
+    "rock_horns": "poses/matt_pose_rock_horns.png",
+    "shrug": "poses/matt_pose_shrug.png",
+    "stretch": "poses/matt_pose_stretch.png",
+    "stumble": "poses/matt_pose_stumble.png",
+    "thinking": "poses/matt_pose_thinking.png",
+    "thinking_pace": "poses/matt_pose_thinking_pace.png",
+    "thumbs_up": "poses/matt_pose_thumbs_up.png",
+    "typing": "poses/matt_pose_typing.png",
+    "wave_bye": "poses/matt_pose_wave_bye.png",
+    "wave_hello": "poses/matt_pose_wave_hello.png",
+    "welcome": "poses/matt_pose_welcome.png",
+    "wince": "poses/matt_pose_wince.png"
+  },
+  "sequences": {
+    "air_guitar": [
+      "sequences/matt_seq_air_guitar_01.png",
+      "sequences/matt_seq_air_guitar_02.png",
+      "sequences/matt_seq_air_guitar_03.png",
+      "sequences/matt_seq_air_guitar_04.png",
+      "sequences/matt_seq_air_guitar_05.png"
+    ],
+    "celebrate": [
+      "sequences/matt_seq_celebrate_01.png",
+      "sequences/matt_seq_celebrate_02.png",
+      "sequences/matt_seq_celebrate_03.png",
+      "sequences/matt_seq_celebrate_04.png",
+      "sequences/matt_seq_celebrate_05.png",
+      "sequences/matt_seq_celebrate_06.png"
+    ],
+    "clap": [
+      "sequences/matt_seq_clap_01.png",
+      "sequences/matt_seq_clap_02.png",
+      "sequences/matt_seq_clap_03.png",
+      "sequences/matt_seq_clap_04.png"
+    ],
+    "coffee": [
+      "sequences/matt_seq_coffee_01.png",
+      "sequences/matt_seq_coffee_02.png",
+      "sequences/matt_seq_coffee_03.png"
+    ],
+    "facepalm": [
+      "sequences/matt_seq_facepalm_01.png",
+      "sequences/matt_seq_facepalm_02.png",
+      "sequences/matt_seq_facepalm_03.png"
+    ],
+    "fist_pump": [
+      "sequences/matt_seq_fist_pump_01.png",
+      "sequences/matt_seq_fist_pump_02.png",
+      "sequences/matt_seq_fist_pump_03.png"
+    ],
+    "guitar_strum": [
+      "sequences/matt_seq_guitar_strum_01.png",
+      "sequences/matt_seq_guitar_strum_02.png",
+      "sequences/matt_seq_guitar_strum_03.png",
+      "sequences/matt_seq_guitar_strum_04.png"
+    ],
+    "handshake": [
+      "sequences/matt_seq_handshake_01.png",
+      "sequences/matt_seq_handshake_02.png",
+      "sequences/matt_seq_handshake_03.png"
+    ],
+    "headbang": [
+      "sequences/matt_seq_headbang_01.png",
+      "sequences/matt_seq_headbang_02.png",
+      "sequences/matt_seq_headbang_03.png",
+      "sequences/matt_seq_headbang_04.png"
+    ],
+    "jump": [
+      "sequences/matt_seq_jump_01.png",
+      "sequences/matt_seq_jump_02.png",
+      "sequences/matt_seq_jump_03.png",
+      "sequences/matt_seq_jump_04.png"
+    ],
+    "lean_in": [
+      "sequences/matt_seq_lean_in_01.png",
+      "sequences/matt_seq_lean_in_02.png",
+      "sequences/matt_seq_lean_in_03.png"
+    ],
+    "lightbulb": [
+      "sequences/matt_seq_lightbulb_01.png",
+      "sequences/matt_seq_lightbulb_02.png",
+      "sequences/matt_seq_lightbulb_03.png"
+    ],
+    "nod": [
+      "sequences/matt_seq_nod_01.png",
+      "sequences/matt_seq_nod_02.png",
+      "sequences/matt_seq_nod_03.png"
+    ],
+    "phone_check": [
+      "sequences/matt_seq_phone_check_01.png",
+      "sequences/matt_seq_phone_check_02.png",
+      "sequences/matt_seq_phone_check_03.png",
+      "sequences/matt_seq_phone_check_04.png"
+    ],
+    "point_screen": [
+      "sequences/matt_seq_point_screen_01.png",
+      "sequences/matt_seq_point_screen_02.png",
+      "sequences/matt_seq_point_screen_03.png"
+    ],
+    "present_chart": [
+      "sequences/matt_seq_present_chart_01.png",
+      "sequences/matt_seq_present_chart_02.png",
+      "sequences/matt_seq_present_chart_03.png",
+      "sequences/matt_seq_present_chart_04.png"
+    ],
+    "rock_horns": [
+      "sequences/matt_seq_rock_horns_01.png",
+      "sequences/matt_seq_rock_horns_02.png",
+      "sequences/matt_seq_rock_horns_03.png"
+    ],
+    "shrug": [
+      "sequences/matt_seq_shrug_01.png",
+      "sequences/matt_seq_shrug_02.png",
+      "sequences/matt_seq_shrug_03.png",
+      "sequences/matt_seq_shrug_04.png"
+    ],
+    "stumble": [
+      "sequences/matt_seq_stumble_01.png",
+      "sequences/matt_seq_stumble_02.png",
+      "sequences/matt_seq_stumble_03.png",
+      "sequences/matt_seq_stumble_04.png"
+    ],
+    "thumbs_up": [
+      "sequences/matt_seq_thumbs_up_01.png",
+      "sequences/matt_seq_thumbs_up_02.png",
+      "sequences/matt_seq_thumbs_up_03.png"
+    ],
+    "typing": [
+      "sequences/matt_seq_typing_01.png",
+      "sequences/matt_seq_typing_02.png",
+      "sequences/matt_seq_typing_03.png",
+      "sequences/matt_seq_typing_04.png"
+    ],
+    "wave": [
+      "sequences/matt_seq_wave_01.png",
+      "sequences/matt_seq_wave_02.png",
+      "sequences/matt_seq_wave_03.png",
+      "sequences/matt_seq_wave_04.png"
+    ]
+  },
+  "expressions": {
+    "concerned": "expressions/matt_expr_concerned.png",
+    "focused": "expressions/matt_expr_focused.png",
+    "grin": "expressions/matt_expr_grin.png",
+    "laugh": "expressions/matt_expr_laugh.png",
+    "look_left": "expressions/matt_expr_look_left.png",
+    "look_right": "expressions/matt_expr_look_right.png",
+    "look_screen": "expressions/matt_expr_look_screen.png",
+    "neutral": "expressions/matt_expr_neutral.png",
+    "reassuring": "expressions/matt_expr_reassuring.png",
+    "skeptical": "expressions/matt_expr_skeptical.png",
+    "smile": "expressions/matt_expr_smile.png",
+    "stoked": "expressions/matt_expr_stoked.png",
+    "surprised": "expressions/matt_expr_surprised.png",
+    "thoughtful": "expressions/matt_expr_thoughtful.png",
+    "wink": "expressions/matt_expr_wink.png"
+  },
+  "blinks": {
+    "closed": "blinks/matt_blink_closed.png",
+    "half": "blinks/matt_blink_half.png",
+    "open": "blinks/matt_blink_open.png"
+  },
+  "libraryNote": "hold_* poses and standalone props from the generator were low quality (identical phone pose / flat labeled clip-art) and are intentionally NOT referenced here. The closet is driven by the quality full-body poses instead."
 }

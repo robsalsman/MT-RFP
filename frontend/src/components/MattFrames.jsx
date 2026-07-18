@@ -54,10 +54,25 @@ async function keyGreen(url) {
 }
 
 export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
-  closeup = false, onReady, onFail }) {
+  closeup = false, pose = null, sequence = null, seqFps = 9,
+  onReady, onFail }) {
   const [manifest, setManifest] = useState(null)
   const [frames, setFrames] = useState(null)   // { filename: dataURL }
+  const [seqIdx, setSeqIdx] = useState(0)
   const tickRef = useRef(0)
+
+  // Sequence playback: loop the named sequence's frames at seqFps. The caller
+  // controls how long it runs by clearing the `sequence` prop.
+  useEffect(() => {
+    if (!manifest || !sequence) { setSeqIdx(0); return }
+    const arr = manifest.sequences?.[sequence]
+    if (!Array.isArray(arr) || !arr.length) return
+    arr.forEach((s) => { const im = new Image(); im.src = `${BASE}/${s}` }) // prewarm
+    let i = 0; setSeqIdx(0)
+    const id = setInterval(() => { i = (i + 1) % arr.length; setSeqIdx(i) },
+      Math.round(1000 / Math.max(1, seqFps)))
+    return () => clearInterval(id)
+  }, [sequence, manifest, seqFps])
 
   useEffect(() => {
     let alive = true
@@ -74,6 +89,9 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
         Object.values(mf.states?.speaking?.mouths || {}).forEach(add)
         Object.values(mf.visemes || {}).forEach(add)
         Object.values(mf.actions || {}).forEach((a) => add(a.src))
+        Object.values(mf.poses || {}).forEach(add)
+        Object.values(mf.sequences || {}).forEach((arr) =>
+          Array.isArray(arr) && arr.forEach(add))
         const out = {}
         if (mf.preKeyed) {
           await loadImage(url(idle))          // confirms it exists (else fall back)
@@ -127,9 +145,16 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
   } else if (state === 'listening' && manifest.states.listening?.src) {
     src = manifest.states.listening.src
   }
+  // pose override (closet / action), then sequence override (animation) win
+  if (pose && manifest.poses?.[pose]) src = manifest.poses[pose]
+  if (sequence && manifest.sequences?.[sequence]?.length) {
+    const arr = manifest.sequences[sequence]
+    src = arr[Math.min(seqIdx, arr.length - 1)]
+  }
   const url = frames[src] || frames[idleSrc]
   // a subtle voice-driven bob while he talks (until real viseme frames exist)
-  const bob = state === 'speaking' ? -Math.min(mouth, 1) * 3 : 0
+  const bob = state === 'speaking' && !pose && !sequence
+    ? -Math.min(mouth, 1) * 3 : 0
 
   return (
     <div className="matt-frames-host"

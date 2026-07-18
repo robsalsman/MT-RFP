@@ -56,6 +56,26 @@ function createRecorder() {
   }
 }
 
+// Matt's closet — driven by the quality full-body poses (the generator's
+// standalone props + hold poses came back unusable, so each item just strikes
+// the matching painted pose). id -> label + pose key in frames.json.
+const CLOSET = [
+  { id: 'guitar', label: '🎸 Guitar', pose: 'guitar_strum', kind: 'Music' },
+  { id: 'solo', label: '🎸 Solo', pose: 'guitar_solo', kind: 'Music' },
+  { id: 'air', label: '🤘 Air guitar', pose: 'air_guitar', kind: 'Music' },
+  { id: 'mic', label: '🎤 Sing', pose: 'mic_sing', kind: 'Music' },
+  { id: 'headphones', label: '🎧 Headphones', pose: 'headphones_on', kind: 'Music' },
+  { id: 'drums', label: '🥁 Drums', pose: 'drumming', kind: 'Music' },
+  { id: 'laptop', label: '💻 Laptop', pose: 'typing', kind: 'Business' },
+  { id: 'docs', label: '📄 RFP docs', pose: 'reading_doc', kind: 'Business' },
+  { id: 'clipboard', label: '📋 Clipboard', pose: 'clipboard', kind: 'Business' },
+  { id: 'present', label: '📊 Present', pose: 'present_chart', kind: 'Business' },
+  { id: 'coffee', label: '☕ Coffee', pose: 'coffee_sip', kind: 'Business' },
+  { id: 'trophy', label: '🏆 Trophy', pose: 'present_win', kind: 'Flair' },
+  { id: 'horns', label: '🤘 Rock horns', pose: 'rock_horns', kind: 'Flair' },
+  { id: 'relaxed', label: '😎 Chill', pose: 'idle_relaxed', kind: 'Flair' },
+]
+
 export default function ChatBot() {
   const [view, setView] = useState('stage')      // 'stage' | 'min' | 'call'
   const [chatOpen, setChatOpen] = useState(false)
@@ -68,6 +88,10 @@ export default function ChatBot() {
   const [speakReplies, setSpeakReplies] = useState(true)
   const [voiceOk, setVoiceOk] = useState(false)
   const [avatar, setAvatar] = useState({ state: 'idle', mouth: 0 })
+  const [closetOpen, setClosetOpen] = useState(false)
+  const [closetPose, setClosetPose] = useState(null)   // persistent held pose
+  const [seqPlay, setSeqPlay] = useState(null)          // one-shot animation
+  const seqTimer = useRef(null)
   const bodyRef = useRef(null)
   const recRef = useRef(null)
   const name = auth.name()
@@ -89,6 +113,19 @@ export default function ChatBot() {
       .then((h) => setVoiceOk(!!h.voice_available)).catch(() => {})
   }, [])
   useEffect(() => mattAudio.subscribe(setAvatar), [])
+
+  // play a one-shot animation for `ms`, then let Matt settle back
+  const playSeq = (name, ms = 2600) => {
+    if (seqTimer.current) clearTimeout(seqTimer.current)
+    setSeqPlay(name)
+    seqTimer.current = setTimeout(() => setSeqPlay(null), ms)
+  }
+  useEffect(() => () => seqTimer.current && clearTimeout(seqTimer.current), [])
+
+  // what pose Matt holds: a playing animation wins; else while he's working he
+  // reads the screen (typing); else whatever you pulled from the closet.
+  const effSequence = seqPlay
+  const effPose = seqPlay ? null : (busy ? 'typing' : closetPose)
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
   }, [messages, chatOpen, busy])
@@ -147,6 +184,7 @@ export default function ChatBot() {
         + 'Tap it and I\'ll draft it.'
       setMessages((m) => [...m, { role: 'assistant', _proactive: true,
         content, picks }])
+      playSeq('wave', 2400)   // he waves hello when he greets you
     }).catch(() => { /* no data yet — the default greeting stands */ })
   }, [])   // eslint-disable-line
 
@@ -163,6 +201,7 @@ export default function ChatBot() {
         + `out.${extra}`
       setMessages((m) => [...m, { role: 'assistant', content: reply,
         downloads: { id: r.id, entity: label } }])
+      playSeq('celebrate', 3000)   // draft's ready — Matt celebrates the win
       window.dispatchEvent(new CustomEvent('mtrfp:navigate',
         { detail: { tab: 'dashboard', open_application_number: an } }))
       if (speakReplies && voiceOk) speakText(reply)
@@ -432,11 +471,37 @@ export default function ChatBot() {
           {!isMobile && dockStyle.left && (
             <button className="stage-icon" title="Reset Matt's position"
               onClick={resetPos}>⟲</button>)}
+          <button className={`stage-icon ${closetOpen ? 'on' : ''}`}
+            title="Matt's closet" onClick={() => setClosetOpen((o) => !o)}>🚪</button>
           <button className="stage-icon" title="Full-screen call"
             onClick={() => setView('call')}>⤢</button>
           <button className="stage-icon" title="Minimize Matt"
             onClick={minimize}>–</button>
         </div>
+
+        {closetOpen && (
+          <div className="closet">
+            <div className="closet-head">
+              <span>Matt's closet</span>
+              <button className="closet-put" disabled={!closetPose}
+                onClick={() => setClosetPose(null)}>Put away</button>
+            </div>
+            <div className="closet-grid">
+              {CLOSET.map((it) => (
+                <button key={it.id}
+                  className={`closet-item ${closetPose === it.pose ? 'sel' : ''}`}
+                  title={`${it.kind} — ${it.label}`}
+                  onClick={() => {
+                    if (seqTimer.current) clearTimeout(seqTimer.current)
+                    setSeqPlay(null); setClosetPose(it.pose)
+                  }}>
+                  <img src={`/matt-frames/poses/matt_pose_${it.pose}.png`} alt="" />
+                  <span>{it.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {!isMobile && (
           <div className="stage-grab">⠿ drag Matt anywhere</div>)}
@@ -460,6 +525,7 @@ export default function ChatBot() {
         <div className="puppet-wrap">
           {/* painted frames (top tier) — activate once real art is dropped in */}
           <MattFrames state={avatar.state} mouth={avatar.mouth} lean={phys.lean}
+            pose={effPose} sequence={effSequence}
             onReady={() => setFramesReady(true)} onFail={() => {}} />
           {/* until frames are ready: vector puppet, then hand-drawn fallback */}
           {!framesReady && (puppetFailed ? (
