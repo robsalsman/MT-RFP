@@ -478,8 +478,6 @@ export default function ChatBot() {
               onClick={resetPos}>⟲</button>)}
           <button className={`stage-icon ${closetOpen ? 'on' : ''}`}
             title="Matt's closet" onClick={() => setClosetOpen((o) => !o)}>🚪</button>
-          <button className="stage-icon" title="Full-screen call"
-            onClick={() => setView('call')}>⤢</button>
           <button className="stage-icon" title="Minimize Matt"
             onClick={minimize}>–</button>
         </div>
@@ -571,6 +569,9 @@ export default function ChatBot() {
               title="Hold to talk, release to send">
               🎤<span>{recording ? 'Release' : 'Hold to talk'}</span>
             </button>)}
+          <button className="stage-btn call" onClick={() => setView('call')}
+            title="Zoom into Matt's face — full-screen video call">
+            📹<span>Call</span></button>
           <button className={`stage-btn ${chatOpen ? 'on' : ''}`}
             onClick={() => setChatOpen(!chatOpen)} title="Type a message">
             💬<span>Chat</span></button>

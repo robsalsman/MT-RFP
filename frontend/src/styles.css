@@ -221,12 +221,14 @@ th.sorted { color: var(--accent); }
   margin-top: -8px; }
 .stage-status { display: block; font-size: 11px; font-weight: 400;
   color: #ff8fbf; }
-.stage-controls { display: flex; gap: 8px; justify-content: center;
-  margin-top: 8px; }
-.stage-btn { flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 2px; background: rgba(255,255,255,.12); color: #fff;
+.stage-controls { display: flex; flex-wrap: wrap; gap: 6px;
+  justify-content: center; margin-top: 8px; }
+.stage-btn { flex: 1 1 40%; min-width: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 2px; background: rgba(255,255,255,.12); color: #fff;
   border: 1px solid rgba(255,255,255,.22); border-radius: 10px; padding: 7px 4px;
-  font-size: 18px; }
+  font-size: 18px; cursor: pointer; }
+.stage-btn.call { background: linear-gradient(120deg, #7b2ff7, #d61f69);
+  border-color: transparent; }
 .stage-btn span { font-size: 10px; font-weight: 600; }
 .stage-btn.mic { background: #0b5fff; border-color: #0b5fff; }
 .stage-btn.mic.rec { background: var(--red); border-color: var(--red);
