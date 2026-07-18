@@ -133,7 +133,10 @@ export function useMattPhysics(enabled) {
     window.removeEventListener('pointerup', onUp)
   }, [onMove, onUp])
 
-  const style = pos
+  // Only honor a saved drag position when dragging is enabled (desktop).
+  // On mobile the box is docked bottom-right by CSS — a stale desktop
+  // coordinate must not pin it off-screen.
+  const style = (enabled && pos)
     ? { left: `${pos.left}px`, top: `${pos.top}px`, right: 'auto', bottom: 'auto' }
     : {}
   return { style, phys, propCfg: PROP_CFG, onPointerDown, dragging,

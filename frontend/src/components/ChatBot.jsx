@@ -89,6 +89,11 @@ export default function ChatBot() {
   const [voiceOk, setVoiceOk] = useState(false)
   const [avatar, setAvatar] = useState({ state: 'idle', mouth: 0 })
   const [closetOpen, setClosetOpen] = useState(false)
+  // greeting/picks tray: open on desktop (room to spare), collapsed on mobile
+  const [trayOpen, setTrayOpen] = useState(
+    () => typeof window === 'undefined'
+      || !window.matchMedia('(max-width: 720px)').matches)
+  const [bubbleExp, setBubbleExp] = useState(false)    // expand clamped bubble
   const [closetPose, setClosetPose] = useState(null)   // persistent held pose
   const [seqPlay, setSeqPlay] = useState(null)          // one-shot animation
   const seqTimer = useRef(null)
@@ -505,21 +510,37 @@ export default function ChatBot() {
 
         {!isMobile && (
           <div className="stage-grab">⠿ drag Matt anywhere</div>)}
-        {!chatOpen && <div className="stage-bubble">{bubble.slice(0, 180)}</div>}
-        {!chatOpen && bubblePicks.length > 0 && (
-          <div className="stage-picks">
-            {bubblePicks.map((p) => (
-              <button key={p.application_number} className="stage-pick"
-                disabled={busy}
-                onClick={() => prepareReply(p.application_number, p.entity)}>
-                🎸 Draft reply — {p.label}</button>))}
-          </div>)}
-        {!chatOpen && bubbleDownloads && (
-          <div className="stage-picks stage-dl">
-            <button className="stage-pick" onClick={() =>
-              downloadDraft(bubbleDownloads.id, 'docx')}>⬇ Download DOCX</button>
-            <button className="stage-pick" onClick={() =>
-              downloadDraft(bubbleDownloads.id, 'pdf')}>⬇ Download PDF</button>
+
+        {!chatOpen && (
+          <div className={`stage-tray ${trayOpen ? 'open' : ''}`}>
+            <button className="tray-toggle" onClick={() => setTrayOpen((o) => !o)}
+              title={trayOpen ? 'Hide' : 'Show what Matt found'}>
+              <span className="tray-title">💬 Matt{bubblePicks.length
+                ? ` · ${bubblePicks.length} pick${bubblePicks.length > 1 ? 's' : ''}`
+                : bubbleDownloads ? ' · draft ready' : ''}</span>
+              <span className="tray-chev">{trayOpen ? '▾' : '▸'}</span>
+            </button>
+            {trayOpen && (
+              <div className="tray-body">
+                <div className={`stage-bubble ${bubbleExp ? 'exp' : ''}`}
+                  onClick={() => setBubbleExp((e) => !e)}
+                  title="Tap to expand">{bubble}</div>
+                {bubblePicks.length > 0 && (
+                  <div className="stage-picks">
+                    {bubblePicks.map((p) => (
+                      <button key={p.application_number} className="stage-pick"
+                        disabled={busy} title={`Draft reply — ${p.label}`}
+                        onClick={() => prepareReply(p.application_number, p.entity)}>
+                        🎸 {p.label}</button>))}
+                  </div>)}
+                {bubbleDownloads && (
+                  <div className="stage-picks stage-dl">
+                    <button className="stage-pick" onClick={() =>
+                      downloadDraft(bubbleDownloads.id, 'docx')}>⬇ DOCX</button>
+                    <button className="stage-pick" onClick={() =>
+                      downloadDraft(bubbleDownloads.id, 'pdf')}>⬇ PDF</button>
+                  </div>)}
+              </div>)}
           </div>)}
 
         <div className="puppet-wrap">
