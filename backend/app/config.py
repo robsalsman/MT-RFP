@@ -18,6 +18,9 @@ RESPONSES_DIR = DATA_DIR / "responses"
 UPLOADS_DIR = DATA_DIR / "uploads"
 DB_PATH = Path(os.environ.get("MTRFP_DB_PATH", DATA_DIR / "mtrfp.db"))
 SETTINGS_PATH = DATA_DIR / "settings.json"
+# Built frontend (production/tunnel mode); absent during local Vite dev.
+FRONTEND_DIST = Path(os.environ.get(
+    "MTRFP_FRONTEND_DIST", BASE_DIR / "frontend" / "dist"))
 
 for d in (DATA_DIR, DOCS_DIR, RESPONSES_DIR, UPLOADS_DIR):
     d.mkdir(parents=True, exist_ok=True)

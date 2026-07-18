@@ -3,14 +3,27 @@ import Dashboard from './components/Dashboard.jsx'
 import Uploads from './components/Uploads.jsx'
 import Settings from './components/Settings.jsx'
 import ChatBot from './components/ChatBot.jsx'
-import { api } from './api.js'
+import Login from './components/Login.jsx'
+import { api, auth } from './api.js'
 
 export default function App() {
   const [tab, setTab] = useState('dashboard')
   const [health, setHealth] = useState(null)
   const [awake, setAwake] = useState(null)
+  const [authed, setAuthed] = useState(null)  // null=unknown, bool once known
 
-  useEffect(() => { api.health().then(setHealth).catch(() => {}) }, [])
+  useEffect(() => {
+    api.health().then((h) => {
+      setHealth(h)
+      setAuthed(!h.auth_required || auth.isSet())
+    }).catch(() => setAuthed(true))
+  }, [])
+
+  useEffect(() => {
+    const onUnauth = () => setAuthed(false)
+    window.addEventListener('mtrfp:unauthorized', onUnauth)
+    return () => window.removeEventListener('mtrfp:unauthorized', onUnauth)
+  }, [])
 
   // keep-awake state: poll so automatic holds (during sync/generation) show
   useEffect(() => {
@@ -32,6 +45,9 @@ export default function App() {
     window.addEventListener('mtrfp:navigate', onNav)
     return () => window.removeEventListener('mtrfp:navigate', onNav)
   }, [])
+
+  if (authed === null) return null  // brief: waiting on /api/health
+  if (!authed) return <Login onSuccess={() => setAuthed(true)} />
 
   return (
     <>

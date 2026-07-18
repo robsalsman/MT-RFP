@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { authFetch } from '../api.js'
 
 const WELCOME = {
   role: 'assistant',
@@ -94,7 +95,7 @@ export default function ChatBot() {
   }
   const speakText = async (text) => {
     try {
-      const r = await fetch('/api/voice/speak', {
+      const r = await authFetch('/api/voice/speak', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       })
@@ -117,7 +118,7 @@ export default function ChatBot() {
     setInput('')
     setBusy(true)
     try {
-      const r = await fetch('/api/chat', {
+      const r = await authFetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: history(next) }),
       })
@@ -152,7 +153,7 @@ export default function ChatBot() {
       fd.append('audio', wav, 'speech.wav')
       fd.append('messages', JSON.stringify(history(messages)))
       fd.append('speak_reply', speakReplies ? 'true' : 'false')
-      const r = await fetch('/api/voice/converse', { method: 'POST', body: fd })
+      const r = await authFetch('/api/voice/converse', { method: 'POST', body: fd })
       const d = await r.json()
       if (!r.ok) throw new Error(d.detail || 'voice request failed')
       const next = d.transcript

@@ -28,6 +28,13 @@ pulls all Form 470s certified in the last 60 days across all states, scores
 the open ones, and downloads attached RFP documents. Use **Refresh Now** in
 the UI any time.
 
+### Share it with your team (free, no VPS)
+
+To let remote reps use the app from their phones on one shared NVIDIA key, run
+it on a machine you keep on and expose it through a free HTTPS tunnel — the
+backend serves the frontend as one origin, gated by a shared team password.
+Full steps in **[DEPLOY.md](DEPLOY.md)** (`make serve` + Tailscale Funnel).
+
 ### Without Docker
 
 ```bash

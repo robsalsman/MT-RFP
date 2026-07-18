@@ -12,11 +12,13 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
+                     Request, UploadFile)
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
-from . import ai, config, db, ingest, keepawake, respond, status as status_mod
+from . import ai, auth, config, db, ingest, keepawake, respond
+from . import status as status_mod
 from . import pricing as pricing_mod
 
 logging.basicConfig(level=logging.INFO,
@@ -26,6 +28,30 @@ log = logging.getLogger("mtrfp")
 app = FastAPI(title="MT-RFP", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
+
+# Endpoints reachable without a token (so the login screen can load and probe).
+_AUTH_EXEMPT = {"/api/login", "/api/health"}
+
+
+@app.middleware("http")
+async def team_auth(request: Request, call_next):
+    path = request.url.path
+    if (auth.auth_enabled() and path.startswith("/api/")
+            and path not in _AUTH_EXEMPT
+            and request.method != "OPTIONS"):
+        token = auth.bearer_from_header(request.headers.get("Authorization"))
+        if not auth.verify_token(token):
+            return JSONResponse({"detail": "unauthorized"}, status_code=401)
+    return await call_next(request)
+
+
+@app.post("/api/login")
+def login(payload: dict):
+    if not auth.auth_enabled():
+        return {"token": "", "auth_required": False}
+    if not auth.check_password(payload.get("password", "")):
+        raise HTTPException(401, "incorrect team password")
+    return {"token": auth.issue_token(), "auth_required": True}
 
 _sync_lock = threading.Lock()
 _sync_state = {"running": False, "last_result": None, "last_error": None}
@@ -389,7 +415,30 @@ def health():
     from . import voice
     return {"ok": True, "ai_provider": config.llm_provider(),
             "voice_available": voice.available(),
+            "auth_required": auth.auth_enabled(),
             "ai_model": (config.NEMOTRON_MODEL
                          if config.llm_provider() == "nemotron"
                          else config.ANTHROPIC_MODEL),
             "usac_token_configured": bool(config.USAC_APP_TOKEN)}
+
+
+# ---------------------------------------------------------------------------
+# Serve the built frontend (production / tunnel mode) as the same origin, so
+# one tunnel URL covers the whole app. In local dev the Vite server proxies
+# to the API instead and this mount simply isn't present.
+# ---------------------------------------------------------------------------
+
+_DIST = config.FRONTEND_DIST
+
+
+@app.get("/{full_path:path}")
+def spa(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(404, "not found")
+    if not _DIST.exists():
+        raise HTTPException(
+            503, "frontend not built — run `npm run build` in frontend/")
+    target = (_DIST / full_path).resolve()
+    if target.is_file() and str(target).startswith(str(_DIST.resolve())):
+        return FileResponse(target)
+    return FileResponse(_DIST / "index.html")  # SPA fallback
