@@ -136,6 +136,16 @@ th.sorted { color: var(--accent); }
   font-size: 13px; }
 .opt:hover { background: #eef4ff; }
 .opt-no { border-color: var(--closed); color: var(--muted); }
+.opt.pick { background: linear-gradient(120deg, #ff2e88, #0b5fff); color: #fff;
+  border: none; }
+
+/* proactive RFP picks on the stage, under the bubble */
+.stage-picks { display: flex; flex-direction: column; gap: 5px;
+  margin: 2px 4px 0; }
+.stage-pick { text-align: left; font-size: 12px; font-weight: 700; color: #fff;
+  border: none; border-radius: 8px; padding: 7px 9px;
+  background: linear-gradient(120deg, #ff2e88, #0b5fff); }
+.stage-pick:disabled { opacity: .55; }
 
 /* ---- Matt on a spotlit stage (floating dock, bottom-right) ---- */
 .matt-dock { position: fixed; right: 20px; bottom: 20px; z-index: 95;

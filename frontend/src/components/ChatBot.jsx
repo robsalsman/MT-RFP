@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { authFetch, auth } from '../api.js'
+import { api, authFetch, auth } from '../api.js'
 import { useIsMobile } from '../useMediaQuery.js'
 import { useMattPhysics } from '../useMattPhysics.js'
 import Matt from './Matt.jsx'
@@ -116,13 +116,72 @@ export default function ChatBot() {
   const started = messages.some((m) => m.role === 'user')
   const history = (msgs) => msgs.filter((m) => !m._local)
     .map(({ role, content }) => ({ role, content }))
-  const lastReply = [...messages].reverse()
-    .find((m) => m.role === 'assistant' && !m._local)?.content
+  const lastAsst = [...messages].reverse()
+    .find((m) => m.role === 'assistant' && !m._local)
+  const lastReply = lastAsst?.content
   const bubble = lastReply
-    || `Hey ${name || 'there'}! Hold the mic to talk to me — or hit Chat to type.`
+    || `Hey ${name || 'there'}! Give me a sec — pulling up the best RFPs for us…`
+  const bubblePicks = (lastAsst?.picks) || []
+  const bubbleDownloads = lastAsst?.downloads
   const statusLabel = recording ? 'listening — release to send'
     : avatar.state === 'speaking' ? 'talking…'
       : busy ? 'thinking…' : 'online'
+
+  // Proactive open: as soon as Matt is up, he pulls the top mission-fit RFPs
+  // and offers to draft one — instead of waiting to be asked.
+  const proactiveDone = useRef(false)
+  useEffect(() => {
+    if (proactiveDone.current) return
+    proactiveDone.current = true
+    api.rfps({ status: 'OPEN', mission_only: true }).then((d) => {
+      const top = (d.rfps || []).slice(0, 3)
+      if (!top.length) return
+      const picks = top.map((r) => ({ application_number: r.application_number,
+        label: `${r.billed_entity_name} · ${r.state}`,
+        entity: r.billed_entity_name }))
+      const hi = name ? `Hey ${name}! ` : 'Hey! '
+      const content = hi + "I went through the open RFPs — these look like our "
+        + 'strongest shots right now. Want me to prepare a reply for one? '
+        + 'Tap it and I\'ll draft it.'
+      setMessages((m) => [...m, { role: 'assistant', _proactive: true,
+        content, picks }])
+    }).catch(() => { /* no data yet — the default greeting stands */ })
+  }, [])   // eslint-disable-line
+
+  const prepareReply = async (an, label) => {
+    if (busy) return
+    setBusy(true)
+    setMessages((m) => [...m, { role: 'user', content: `Draft ${label}'s reply` }])
+    try {
+      const r = await api.generateResponse(an)
+      const extra = r.unmatched_count
+        ? ` ${r.unmatched_count} item(s) need manual pricing (flagged in red).` : ''
+      const reply = `Done${name ? `, ${name}` : ''}! I drafted ${label}'s `
+        + `reply — it's a DRAFT, so give it a human once-over before it goes `
+        + `out.${extra}`
+      setMessages((m) => [...m, { role: 'assistant', content: reply,
+        downloads: { id: r.id, entity: label } }])
+      window.dispatchEvent(new CustomEvent('mtrfp:navigate',
+        { detail: { tab: 'dashboard', open_application_number: an } }))
+      if (speakReplies && voiceOk) speakText(reply)
+    } catch (e) {
+      setMessages((m) => [...m, { role: 'assistant', _local: true,
+        content: `Couldn't draft that one: ${e.message}` }])
+    } finally { setBusy(false) }
+  }
+
+  const downloadDraft = async (id, fmt) => {
+    try {
+      const r = await authFetch(`/api/responses/${id}/download?fmt=${fmt}`)
+      if (!r.ok) return
+      const blob = await r.blob()
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = `MissionTelecom_Response.${fmt}`
+      document.body.appendChild(a); a.click(); a.remove()
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000)
+    } catch { /* ignore */ }
+  }
 
   const openRfp = (an) => {
     setView('stage')
@@ -270,10 +329,24 @@ export default function ChatBot() {
                 onClick={() => openRfp(o.application_number)}>
                 {o.label} ›</button>))}
             </div>)}
+          {m.picks?.length > 0 && (
+            <div className="chat-options">{m.picks.map((p) => (
+              <button key={p.application_number} className="opt pick"
+                disabled={busy}
+                onClick={() => prepareReply(p.application_number, p.entity)}>
+                🎸 Draft reply — {p.label}</button>))}
+            </div>)}
+          {m.downloads && (
+            <div className="chat-options">
+              <button className="opt" onClick={() =>
+                downloadDraft(m.downloads.id, 'docx')}>⬇ DOCX</button>
+              <button className="opt" onClick={() =>
+                downloadDraft(m.downloads.id, 'pdf')}>⬇ PDF</button>
+            </div>)}
         </div>
       ))}
       {busy && <div className="chat-msg assistant">Working…</div>}
-      {!started && !busy && (
+      {!started && !busy && !messages.some((m) => m.picks?.length) && (
         <div className="chat-msg assistant">Ask me anything, or tap a chip:
           <div className="cta-chips">
             {['Which deals close this week?', 'Show open libraries',
@@ -360,6 +433,21 @@ export default function ChatBot() {
         {!isMobile && (
           <div className="stage-grab">⠿ drag Matt anywhere</div>)}
         {!chatOpen && <div className="stage-bubble">{bubble.slice(0, 180)}</div>}
+        {!chatOpen && bubblePicks.length > 0 && (
+          <div className="stage-picks">
+            {bubblePicks.map((p) => (
+              <button key={p.application_number} className="stage-pick"
+                disabled={busy}
+                onClick={() => prepareReply(p.application_number, p.entity)}>
+                🎸 Draft reply — {p.label}</button>))}
+          </div>)}
+        {!chatOpen && bubbleDownloads && (
+          <div className="stage-picks stage-dl">
+            <button className="stage-pick" onClick={() =>
+              downloadDraft(bubbleDownloads.id, 'docx')}>⬇ Download DOCX</button>
+            <button className="stage-pick" onClick={() =>
+              downloadDraft(bubbleDownloads.id, 'pdf')}>⬇ Download PDF</button>
+          </div>)}
 
         {puppetFailed ? (
           <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
