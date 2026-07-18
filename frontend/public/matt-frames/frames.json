@@ -1,23 +1,21 @@
 {
-  "canvas": [512, 768],
-  "chromaKey": "#00b140",
-  "note": "Drop the green-screen PNGs named below into this folder. The app auto-keys the green and switches Matt to the painted frames. Until the idle frame exists it uses the vector puppet.",
+  "canvas": [486, 1024],
+  "preKeyed": true,
+  "note": "Painted full-body frames (green already removed). idle/listening/speaking are wired; actions are available for future triggers. For true lip-sync, add talk_closed/mid/open (same pose, 3 mouth openings) and set states.speaking.mouths.",
   "states": {
-    "idle":      { "src": "pose_idle_sit_stool.png" },
-    "listening": { "src": "pose_listening.png" },
-    "speaking":  { "mouths": {
-      "closed": "talk_closed.png",
-      "mid":    "talk_mid.png",
-      "open":   "talk_open.png"
-    } }
+    "idle":      { "src": "matt_pose_idle_sit_stool.png" },
+    "listening": { "src": "matt_pose_listening.png" },
+    "speaking":  { "src": "matt_pose_talking.png" }
   },
   "actions": {
-    "thinking":   { "src": "pose_thinking.png" },
-    "phone_look": { "src": "pose_phone_look.png" },
-    "point":      { "src": "pose_point.png" },
-    "guitar":     { "src": "pose_guitar.png" },
-    "celebrate":  { "src": "pose_celebrate.png" },
-    "wave":       { "src": "pose_wave.png" },
-    "shrug":      { "src": "pose_shrug.png" }
+    "idle_stand":  { "src": "matt_pose_idle_stand.png" },
+    "thinking":    { "src": "matt_pose_thinking.png" },
+    "phone_look":  { "src": "matt_pose_phone_look.png" },
+    "point":       { "src": "matt_pose_point_to_screen.png" },
+    "guitar":      { "src": "matt_pose_guitar_strum.png" },
+    "celebrate":   { "src": "matt_pose_celebrate.png" },
+    "wave":        { "src": "matt_pose_wave_hello.png" },
+    "shrug":       { "src": "matt_pose_shrug.png" },
+    "stumble":     { "src": "matt_pose_stumble.png" }
   }
 }

@@ -189,8 +189,10 @@ th.sorted { color: var(--accent); }
 .matt-puppet-host svg { width: 100%; height: auto; display: block; }
 .stage-gear { position: absolute; inset: 0; width: 100%; height: 100%;
   pointer-events: none; }
-.matt-frames-host { width: 100%; will-change: transform; }
-.matt-frames-host img { width: 100%; height: auto; display: block; }
+.matt-frames-host { width: 100%; display: flex; justify-content: center;
+  align-items: flex-end; will-change: transform; }
+.matt-frames-host img { height: 300px; width: auto; display: block; }
+@media (max-width: 720px) { .matt-frames-host img { height: 240px; } }
 
 .mattstage { display: block; margin-top: -4px; }
 .mattstage svg { display: block; }

@@ -463,7 +463,9 @@ export default function ChatBot() {
             <MattPuppet state={avatar.state} mouth={avatar.mouth}
               lean={phys.lean} onFail={() => setPuppetFailed(true)} />
           ))}
-          <StageGear props={phys.props} />
+          {/* the painted poses have their own props, so only overlay the
+              toppleable gear on the vector puppet / hand-drawn fallback */}
+          {!framesReady && <StageGear props={phys.props} />}
         </div>
 
         <div className="stage-name">Matt<span className="stage-status">

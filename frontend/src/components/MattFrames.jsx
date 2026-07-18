@@ -43,22 +43,33 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
 
   useEffect(() => {
     let alive = true
+    const url = (s) => `${BASE}/${s}`
     fetch(`${BASE}/frames.json`)
       .then((r) => { if (!r.ok) throw new Error('no manifest'); return r.json() })
       .then(async (mf) => {
         const idle = mf.states?.idle?.src
         if (!idle) throw new Error('no idle frame')
-        // idle is required — this throws (and we fall back) until it exists
-        const out = { [idle]: await keyGreen(`${BASE}/${idle}`) }
-        const rest = new Set()
-        const add = (s) => s && rest.add(s)
-        add(mf.states?.listening?.src)
+        const refs = new Set()
+        const add = (s) => s && refs.add(s)
+        add(mf.states?.idle?.src); add(mf.states?.listening?.src)
+        add(mf.states?.speaking?.src)
         Object.values(mf.states?.speaking?.mouths || {}).forEach(add)
         Object.values(mf.actions || {}).forEach((a) => add(a.src))
-        rest.delete(idle)
-        await Promise.all([...rest].map(async (s) => {
-          try { out[s] = await keyGreen(`${BASE}/${s}`) } catch { /* optional */ }
-        }))
+        const out = {}
+        if (mf.preKeyed) {
+          await loadImage(url(idle))          // confirms it exists (else fall back)
+          refs.forEach((s) => { out[s] = url(s) })
+          // warm the state frames so swaps are instant
+          for (const s of [mf.states?.listening?.src, mf.states?.speaking?.src]) {
+            if (s) { const i = new Image(); i.src = url(s) }
+          }
+        } else {
+          out[idle] = await keyGreen(url(idle))   // required
+          refs.delete(idle)
+          await Promise.all([...refs].map(async (s) => {
+            try { out[s] = await keyGreen(url(s)) } catch { /* optional */ }
+          }))
+        }
         if (!alive) return
         setManifest(mf); setFrames(out); onReady && onReady()
       })
@@ -70,17 +81,21 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
 
   const idleSrc = manifest.states.idle.src
   let src = idleSrc
-  const sp = manifest.states.speaking?.mouths
-  if (state === 'speaking' && sp) {
-    src = sp[level(mouth)] || sp.mid || sp.closed || idleSrc
+  const sp = manifest.states.speaking
+  if (state === 'speaking' && sp?.mouths) {
+    src = sp.mouths[level(mouth)] || sp.mouths.mid || sp.mouths.closed || idleSrc
+  } else if (state === 'speaking' && sp?.src) {
+    src = sp.src
   } else if (state === 'listening' && manifest.states.listening?.src) {
     src = manifest.states.listening.src
   }
   const url = frames[src] || frames[idleSrc]
+  // a subtle voice-driven bob while he talks (until real viseme frames exist)
+  const bob = state === 'speaking' ? -Math.min(mouth, 1) * 3 : 0
 
   return (
     <div className="matt-frames-host"
-      style={{ transform: `rotate(${lean.toFixed(2)}deg)`,
+      style={{ transform: `translateY(${bob.toFixed(1)}px) rotate(${lean.toFixed(2)}deg)`,
         transformOrigin: '50% 95%' }}>
       <img src={url} alt="Matt" draggable={false} />
     </div>
