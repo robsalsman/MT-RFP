@@ -83,22 +83,27 @@ export default function ChatBot() {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
   }, [messages, chatOpen, busy])
 
-  // hands-free: start listening as soon as Matt is up (best-effort — needs
-  // mic permission; falls back quietly to "tap Talk" if the browser blocks it)
-  useEffect(() => { startRec(true) }, [])   // eslint-disable-line
-
-  // after Matt finishes a spoken reply in a voice chat, re-arm listening
+  // Spacebar = push-to-talk on desktop (hold Space to talk, release to send),
+  // unless you're typing in a field.
   useEffect(() => {
-    const was = prevState.current; prevState.current = avatar.state
-    if (was === 'speaking' && avatar.state === 'idle' && voiceMode.current
-        && viewRef.current !== 'min' && !chatRef.current
-        && !busyRef.current && !recRecording.current) {
-      const id = setTimeout(() => {
-        if (!recRecording.current && !busyRef.current) startRec(true)
-      }, 500)
-      return () => clearTimeout(id)
+    const typing = () => {
+      const el = document.activeElement
+      return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')
     }
-  }, [avatar.state])
+    const down = (e) => {
+      if (e.code === 'Space' && !e.repeat && voiceOk && !typing()
+          && viewRef.current !== 'min') { e.preventDefault(); pttDown() }
+    }
+    const up = (e) => {
+      if (e.code === 'Space' && !typing()) { e.preventDefault(); pttUp() }
+    }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => {
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
+    }
+  }, [voiceOk])   // eslint-disable-line
 
   const started = messages.some((m) => m.role === 'user')
   const history = (msgs) => msgs.filter((m) => !m._local)
@@ -106,8 +111,8 @@ export default function ChatBot() {
   const lastReply = [...messages].reverse()
     .find((m) => m.role === 'assistant' && !m._local)?.content
   const bubble = lastReply
-    || `Hey ${name || 'there'}! I'm all ears — just talk, or hit Chat.`
-  const statusLabel = recording ? 'listening…'
+    || `Hey ${name || 'there'}! Hold the mic to talk to me — or hit Chat to type.`
+  const statusLabel = recording ? 'listening — release to send'
     : avatar.state === 'speaking' ? 'talking…'
       : busy ? 'thinking…' : 'online'
 
@@ -163,24 +168,40 @@ export default function ChatBot() {
     } finally { setBusy(false) }
   }
 
-  async function startRec(auto) {
-    if (busy || recRecording.current) return
+  // ---- push-to-talk: hold the mic to talk, release to send ----
+  const pttHeld = useRef(false)
+
+  async function pttDown() {
+    if (busyRef.current || recRecording.current) return
+    pttHeld.current = true
     mattAudio.stop()
     try {
       recRef.current = createRecorder()
       await recRef.current.start()
+      if (!pttHeld.current) {   // released before the mic even opened
+        try { recRef.current.stop() } catch { /* */ }
+        return
+      }
+      recRecording.current = true
       setRecording(true)
       mattAudio.setState('listening')
     } catch {
-      if (!auto) setMessages((m) => [...m, { role: 'assistant', _local: true,
-        content: 'Microphone was blocked — allow it and tap Talk.' }])
+      pttHeld.current = false
+      setMessages((m) => [...m, { role: 'assistant', _local: true,
+        content: 'Microphone was blocked — allow mic access and try again.' }])
     }
   }
 
+  function pttUp() {
+    if (!pttHeld.current) return
+    pttHeld.current = false
+    if (recRecording.current) stopRecAndSend()
+  }
+
   const stopRecAndSend = async () => {
+    recRecording.current = false
     setRecording(false); setBusy(true)
     mattAudio.setState('idle')
-    voiceMode.current = true
     const wav = recRef.current.stop()
     try {
       const fd = new FormData()
@@ -200,14 +221,29 @@ export default function ChatBot() {
     } finally { setBusy(false) }
   }
 
-  const toggleMic = () => (recording ? stopRecAndSend() : startRec(false))
   const cancelRec = () => {
-    if (recording) { setRecording(false); try { recRef.current?.stop() } catch { /* */ } }
+    pttHeld.current = false
+    if (recRecording.current) {
+      recRecording.current = false; setRecording(false)
+      try { recRef.current?.stop() } catch { /* */ }
+    }
     mattAudio.stop()
   }
   const toggleSpeaker = () => { if (speakReplies) mattAudio.stop()
     setSpeakReplies(!speakReplies) }
-  const minimize = () => { cancelRec(); voiceMode.current = false; setView('min') }
+  const minimize = () => { cancelRec(); setView('min') }
+
+  // props for a push-to-talk mic button (pointer + touch)
+  const pttProps = {
+    onPointerDown: (e) => {
+      e.preventDefault()
+      try { e.currentTarget.setPointerCapture(e.pointerId) } catch { /* */ }
+      pttDown()
+    },
+    onPointerUp: pttUp,
+    onPointerCancel: pttUp,
+    onContextMenu: (e) => e.preventDefault(),
+  }
   const exitCall = () => { setView('stage') }
 
   const msgList = (
@@ -254,11 +290,15 @@ export default function ChatBot() {
           {lastReply && <div className="call-caption">{lastReply}</div>}
         </div>
         <div className="call-controls">
-          <button className={`call-btn mic ${recording ? 'rec' : ''}`}
-            onClick={toggleMic} disabled={busy}>{recording ? '⏹' : '🎤'}</button>
+          <button className={`call-btn mic ptt ${recording ? 'rec' : ''}`}
+            {...pttProps} disabled={busy}
+            title="Hold to talk, release to send">🎤</button>
           {voiceOk && <button className="call-btn" onClick={toggleSpeaker}>
             {speakReplies ? '🔊' : '🔇'}</button>}
           <button className="call-btn end" onClick={exitCall}>⤢</button>
+        </div>
+        <div className="call-status" style={{ marginTop: '4px' }}>
+          {recording ? 'listening — release to send' : 'hold the mic to talk'}
         </div>
       </div>
     )
@@ -313,10 +353,10 @@ export default function ChatBot() {
 
         <div className="stage-controls">
           {voiceOk && (
-            <button className={`stage-btn mic ${recording ? 'rec' : ''}`}
-              onClick={toggleMic} disabled={busy}
-              title={recording ? 'Stop & send' : 'Talk to Matt'}>
-              {recording ? '⏹' : '🎤'}<span>{recording ? 'Send' : 'Talk'}</span>
+            <button className={`stage-btn mic ptt ${recording ? 'rec' : ''}`}
+              {...pttProps} disabled={busy}
+              title="Hold to talk, release to send">
+              🎤<span>{recording ? 'Release' : 'Hold to talk'}</span>
             </button>)}
           <button className={`stage-btn ${chatOpen ? 'on' : ''}`}
             onClick={() => setChatOpen(!chatOpen)} title="Type a message">
