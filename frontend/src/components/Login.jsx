@@ -23,7 +23,7 @@ export default function Login({ onSuccess }) {
     <div className="login-wrap">
       <form className="login-card" onSubmit={submit}>
         <div className="login-matt"><Matt state="idle" mouth={0} size={110} /></div>
-        <h1>MT-RFP</h1>
+        <h1>🎸 RFP Rockstar</h1>
         <p className="small">Hey, I'm Matt — sign in and let's find you some
           RFPs.</p>
         <input placeholder="Your name" autoFocus value={username}

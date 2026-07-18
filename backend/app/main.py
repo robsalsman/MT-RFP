@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("mtrfp")
 
-app = FastAPI(title="MT-RFP", version="0.1.0")
+app = FastAPI(title="RFP Rockstar", version="0.1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
 

@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react'
 // pops against the dark stage. Mouth opens with `mouth` (0..1, his voice);
 // blinks on his own; `state` adds a speaking/listening pulse.
 export default function MattStage({ state = 'idle', mouth = 0, height = 300,
-  lean = 0, stumble = false, mic = { angle: 0, down: false },
-  bottle = { angle: 0, down: false } }) {
+  lean = 0, stumble = false, props = {} }) {
+  const pa = (id) => (props[id]?.angle || 0).toFixed(1)
   const [blink, setBlink] = useState(0)
   useEffect(() => {
     let t
@@ -50,18 +50,41 @@ export default function MattStage({ state = 'idle', mouth = 0, height = 300,
         <ellipse className="pool" cx="130" cy="410" rx="92" ry="24" fill="url(#pool)" />
         <ellipse cx="130" cy="150" rx="70" ry="150" fill="url(#rimg)" opacity=".45" />
 
-        {/* stage props — they topple if you fling Matt too fast */}
-        <g transform={`rotate(${mic.angle.toFixed(1)} 50 410)`}>
-          <rect x="47" y="300" width="6" height="112" rx="3" fill="#2b2b33" />
-          <ellipse cx="50" cy="296" rx="9" ry="12" fill="#15151b" />
-          <ellipse cx="50" cy="296" rx="5.5" ry="8" fill="#39404d" />
-          <path d="M36 410 L50 402 L64 410 Z" fill="#1c1c22" />
+        {/* stage gear — each topples if you fling Matt too fast */}
+        <g transform={`rotate(${pa('amp')} 36 410)`}>
+          <rect x="16" y="372" width="40" height="38" rx="4" fill="#0d0d12" />
+          <rect x="20" y="376" width="32" height="26" rx="2" fill="#2b2b33" />
+          <circle cx="30" cy="389" r="7" fill="#15151b" />
+          <circle cx="45" cy="389" r="5" fill="#15151b" />
+          <path d="M22 406 h28" stroke="#fff6d8" strokeWidth="2" opacity=".5" />
         </g>
-        <g transform={`rotate(${bottle.angle.toFixed(1)} 210 410)`}>
-          <rect x="204" y="382" width="12" height="28" rx="4" fill="#2f7d5b"
+        <g transform={`rotate(${pa('laptop')} 38 362)`}>
+          <path d="M24 362 h28 l3 -18 h-34 z" fill="#20222b" />
+          <rect x="21" y="342" width="34" height="22" rx="2" fill="#0d0d12" />
+          <rect x="24" y="345" width="28" height="16" rx="1" fill="#79d7ff"
+            opacity=".85" />
+        </g>
+        <g transform={`rotate(${pa('micStand')} 66 410)`}>
+          <rect x="63" y="300" width="6" height="112" rx="3" fill="#2b2b33" />
+          <ellipse cx="66" cy="296" rx="8" ry="11" fill="#15151b" />
+          <ellipse cx="66" cy="296" rx="5" ry="7" fill="#39404d" />
+          <path d="M54 410 L66 402 L78 410 Z" fill="#1c1c22" />
+        </g>
+        <g transform={`rotate(${pa('guitarStand')} 206 410)`}>
+          <path d="M206 410 L196 360 M206 410 L216 360 M206 410 L206 356"
+            stroke="#1c1c22" strokeWidth="4" strokeLinecap="round" />
+          <path d="M197 388 h18" stroke="#1c1c22" strokeWidth="3" />
+          <g transform="rotate(-8 206 380)">
+            <rect x="203" y="326" width="6" height="56" rx="2" fill="#2a1a10" />
+            <ellipse cx="206" cy="392" rx="15" ry="20" fill="#c0392b" />
+            <ellipse cx="206" cy="392" rx="8" ry="11" fill="#7a2018" />
+          </g>
+        </g>
+        <g transform={`rotate(${pa('bottle')} 232 410)`}>
+          <rect x="226" y="382" width="12" height="28" rx="4" fill="#2f7d5b"
             opacity=".92" />
-          <rect x="207" y="374" width="6" height="10" rx="2" fill="#1f5a41" />
-          <rect x="205" y="390" width="10" height="8" rx="2" fill="#d9ead0"
+          <rect x="229" y="374" width="6" height="10" rx="2" fill="#1f5a41" />
+          <rect x="227" y="390" width="10" height="8" rx="2" fill="#d9ead0"
             opacity=".5" />
         </g>
 

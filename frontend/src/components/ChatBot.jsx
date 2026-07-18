@@ -359,8 +359,7 @@ export default function ChatBot() {
         {!chatOpen && <div className="stage-bubble">{bubble.slice(0, 180)}</div>}
 
         <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
-          lean={phys.lean} stumble={phys.stumble}
-          mic={phys.mic} bottle={phys.bottle} />
+          lean={phys.lean} stumble={phys.stumble} props={phys.props} />
 
         <div className="stage-name">Matt<span className="stage-status">
           {statusLabel}</span></div>

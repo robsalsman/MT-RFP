@@ -52,7 +52,7 @@ export default function App() {
   return (
     <>
       <header className="topbar">
-        <h1>MT-RFP</h1>
+        <h1>🎸 RFP Rockstar</h1>
         <span className="sub">
           {auth.name() ? `Hey ${auth.name()} · ` : ''}Mission Telecom
           &middot; E-Rate &amp; K-12/Library RFP Intelligence</span>

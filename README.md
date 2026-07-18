@@ -1,4 +1,4 @@
-# MT-RFP — Mission Telecom RFP Intelligence & Response Platform
+# RFP Rockstar — Mission Telecom RFP Intelligence & Response Platform
 
 Finds every currently-open E-Rate Form 470 / RFP in the K-12 & library
 connectivity vertical across all 50 states, scores each for fit, and generates
