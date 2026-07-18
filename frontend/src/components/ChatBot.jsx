@@ -4,6 +4,8 @@ import { useIsMobile } from '../useMediaQuery.js'
 import { useMattPhysics } from '../useMattPhysics.js'
 import Matt from './Matt.jsx'
 import MattStage from './MattStage.jsx'
+import MattPuppet from './MattPuppet.jsx'
+import StageGear from './StageGear.jsx'
 import * as mattAudio from '../mattAudio.js'
 
 // 16-bit mono WAV recorder (Riva ASR wants real WAV, not webm). Mic is routed
@@ -56,6 +58,7 @@ function createRecorder() {
 export default function ChatBot() {
   const [view, setView] = useState('stage')      // 'stage' | 'min' | 'call'
   const [chatOpen, setChatOpen] = useState(false)
+  const [puppetFailed, setPuppetFailed] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -358,8 +361,16 @@ export default function ChatBot() {
           <div className="stage-grab">⠿ drag Matt anywhere</div>)}
         {!chatOpen && <div className="stage-bubble">{bubble.slice(0, 180)}</div>}
 
-        <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
-          lean={phys.lean} stumble={phys.stumble} props={phys.props} />
+        {puppetFailed ? (
+          <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
+            lean={phys.lean} stumble={phys.stumble} props={phys.props} />
+        ) : (
+          <div className="puppet-wrap">
+            <MattPuppet state={avatar.state} mouth={avatar.mouth}
+              lean={phys.lean} onFail={() => setPuppetFailed(true)} />
+            <StageGear props={phys.props} />
+          </div>
+        )}
 
         <div className="stage-name">Matt<span className="stage-status">
           {statusLabel}</span></div>

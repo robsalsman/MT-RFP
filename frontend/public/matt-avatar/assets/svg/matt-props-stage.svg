@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768">
+  <defs>
+    <radialGradient id="pool" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".9"/><stop offset="1" stop-color="#ffe9a8" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cone" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#fff6d8" stop-opacity=".5"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient>
+    <symbol id="matt_stage_spotlight_cone" viewBox="0 0 512 768"><path fill="url(#cone)" d="M206 0h100l116 640H90z"/></symbol>
+    <symbol id="matt_stage_floor_pool" viewBox="0 0 512 768"><ellipse cx="256" cy="705" rx="210" ry="48" fill="url(#pool)"/></symbol>
+    <symbol id="matt_prop_guitar" viewBox="0 0 512 768"><path fill="#4b241e" d="M178 223l23-12 153 295-23 12z"/><path fill="#c0392b" d="M190 476c-27-37 5-82 45-66 25-35 84-8 75 37 41 22 11 87-40 74-21 31-76 15-80-45z"/><circle cx="247" cy="467" r="25" fill="#2b1110"/><path stroke="#fff6d8" stroke-width="3" d="M201 226l151 288"/></symbol>
+    <symbol id="matt_prop_mic_boom" viewBox="0 0 512 768"><path stroke="#0d0d12" stroke-width="8" stroke-linecap="round" d="M262 216l106 35M366 251v390"/><ellipse cx="250" cy="213" rx="22" ry="12" fill="#171923" transform="rotate(10 250 213)"/></symbol>
+    <symbol id="matt_prop_bar_stool" viewBox="0 0 512 768"><ellipse cx="256" cy="530" rx="84" ry="28" fill="#373742"/><path stroke="#0d0d12" stroke-width="10" d="M226 550l-28 130M286 550l28 130M256 550v130"/><path stroke="#0d0d12" stroke-width="6" d="M201 616h110"/></symbol>
+    <symbol id="matt_prop_couch" viewBox="0 0 512 768"><path fill="#262a34" d="M84 488h344c22 0 40 18 40 40v116H44V528c0-22 18-40 40-40z"/><path fill="#373742" d="M70 555h372v100H70z"/><path fill="#171923" d="M58 646h400v42H58z"/></symbol>
+    <symbol id="matt_prop_phone_off" viewBox="0 0 512 768"><rect x="342" y="482" width="48" height="82" rx="9" fill="#0d0d12"/><rect x="348" y="491" width="36" height="60" rx="4" fill="#1b1e28"/></symbol>
+    <symbol id="matt_prop_phone_glow" viewBox="0 0 512 768"><rect x="342" y="482" width="48" height="82" rx="9" fill="#0d0d12"/><rect x="348" y="491" width="36" height="60" rx="4" fill="#79d7ff"/><path fill="#fff6d8" opacity=".55" d="M348 491h36l-36 42z"/></symbol>
+    <symbol id="matt_prop_sunglasses" viewBox="0 0 512 768"><path fill="#0d0d12" d="M197 169h46v25h-46zm72 0h46v25h-46z"/><path stroke="#0d0d12" stroke-width="5" d="M243 181h26"/></symbol>
+    <symbol id="matt_prop_water_bottle" viewBox="0 0 512 768"><path fill="#bde8ff" d="M386 586h34l9 84h-52z"/><path fill="#79d7ff" d="M392 612h31l4 42h-39z"/><path fill="#0d0d12" d="M392 574h22v15h-22z"/></symbol>
+    <symbol id="matt_prop_amp" viewBox="0 0 512 768"><rect x="44" y="538" width="118" height="118" rx="10" fill="#0d0d12"/><rect x="58" y="554" width="90" height="72" fill="#373742"/><circle cx="82" cy="590" r="24" fill="#171923"/><circle cx="124" cy="590" r="18" fill="#171923"/><path stroke="#fff6d8" stroke-width="4" d="M62 640h82"/></symbol>
+  </defs>
+  <use href="#matt_stage_spotlight_cone"/>
+  <use href="#matt_stage_floor_pool"/>
+</svg>

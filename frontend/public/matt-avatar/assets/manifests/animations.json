@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "defaultCrossfadeMs": 180,
+  "clips": {
+    "idle_stand": { "fps": 24, "loop": true, "anchor": [256, 730], "layers": [{ "part": "torso", "keys": [{ "t": 0, "y": 0 }, { "t": 12, "y": -4 }, { "t": 24, "y": 0 }] }, { "part": "head", "keys": [{ "t": 0, "r": -1 }, { "t": 12, "r": 1 }, { "t": 24, "r": -1 }] }] },
+    "idle_sit_stool": { "fps": 24, "loop": true, "anchor": [256, 628], "props": ["barStool"], "layers": [{ "part": "torso", "keys": [{ "t": 0, "y": 0 }, { "t": 14, "y": -3 }, { "t": 28, "y": 0 }] }] },
+    "sit_down_stool": { "fps": 24, "loop": false, "anchor": [256, 628], "props": ["barStool"], "layers": [{ "part": "hips", "keys": [{ "t": 0, "y": -80 }, { "t": 18, "y": 0 }] }] },
+    "stand_up_stool": { "fps": 24, "loop": false, "anchor": [256, 730], "props": ["barStool"], "layers": [{ "part": "hips", "keys": [{ "t": 0, "y": 0 }, { "t": 18, "y": -80 }] }] },
+    "idle_couch": { "fps": 24, "loop": true, "anchor": [256, 620], "props": ["couch"], "layers": [{ "part": "torso", "keys": [{ "t": 0, "r": -4 }, { "t": 24, "r": -1 }, { "t": 48, "r": -4 }] }] },
+    "sit_down_couch": { "fps": 24, "loop": false, "anchor": [256, 620], "props": ["couch"], "layers": [{ "part": "torso", "keys": [{ "t": 0, "y": -70 }, { "t": 20, "y": 0 }] }] },
+    "stand_up_couch": { "fps": 24, "loop": false, "anchor": [256, 730], "props": ["couch"], "layers": [{ "part": "torso", "keys": [{ "t": 0, "y": 0 }, { "t": 20, "y": -70 }] }] },
+    "listening": { "fps": 24, "loop": true, "anchor": [256, 730], "layers": [{ "part": "head", "keys": [{ "t": 0, "r": 4 }, { "t": 18, "r": 6 }, { "t": 36, "r": 4 }] }, { "part": "hand-R", "swap": "matt_hand_R_cupped" }, { "part": "forearm-R", "keys": [{ "t": 0, "r": -82 }] }] },
+    "talking_gesture": { "fps": 24, "loop": true, "anchor": [256, 730], "underVisemes": true, "layers": [{ "part": "forearm-L", "keys": [{ "t": 0, "r": 8 }, { "t": 10, "r": -18 }, { "t": 20, "r": 8 }] }, { "part": "forearm-R", "keys": [{ "t": 0, "r": -10 }, { "t": 14, "r": 14 }, { "t": 28, "r": -10 }] }] },
+    "thinking": { "fps": 24, "loop": true, "anchor": [256, 730], "expression": "thinking", "layers": [{ "part": "forearm-R", "keys": [{ "t": 0, "r": -65 }] }, { "part": "hand-R", "swap": "matt_hand_R_chin" }] },
+    "phone_pull_out": { "fps": 24, "loop": false, "anchor": [256, 730], "props": ["phoneOff"], "layers": [{ "part": "forearm-R", "keys": [{ "t": 0, "r": 20 }, { "t": 16, "r": -42 }] }] },
+    "phone_look": { "fps": 24, "loop": true, "anchor": [256, 730], "props": ["phoneGlow"], "look": "down", "layers": [{ "part": "head", "keys": [{ "t": 0, "r": 8 }, { "t": 24, "r": 6 }, { "t": 48, "r": 8 }] }] },
+    "phone_put_away": { "fps": 24, "loop": false, "anchor": [256, 730], "props": ["phoneOff"], "layers": [{ "part": "forearm-R", "keys": [{ "t": 0, "r": -42 }, { "t": 16, "r": 20 }] }] },
+    "guitar_strum": { "fps": 24, "loop": false, "anchor": [256, 730], "props": ["guitar"], "expression": "rockin", "layers": [{ "part": "forearm-R", "keys": [{ "t": 0, "r": -10 }, { "t": 4, "r": 24 }, { "t": 8, "r": -8 }, { "t": 12, "r": 20 }] }] },
+    "point_to_screen": { "fps": 24, "loop": false, "anchor": [256, 730], "layers": [{ "part": "hand-R", "swap": "matt_hand_R_point" }, { "part": "forearm-R", "keys": [{ "t": 0, "r": -10 }, { "t": 12, "r": -72 }] }] },
+    "celebrate": { "fps": 24, "loop": false, "anchor": [256, 730], "expression": "rockin", "layers": [{ "part": "hand-L", "swap": "matt_hand_L_horns" }, { "part": "hand-R", "swap": "matt_hand_R_horns" }, { "part": "forearm-L", "keys": [{ "t": 0, "r": 0 }, { "t": 12, "r": -105 }] }, { "part": "forearm-R", "keys": [{ "t": 0, "r": 0 }, { "t": 12, "r": 105 }] }] },
+    "wave_hello": { "fps": 24, "loop": false, "anchor": [256, 730], "expression": "warm_grin", "layers": [{ "part": "hand-R", "swap": "matt_hand_R_open" }, { "part": "forearm-R", "keys": [{ "t": 0, "r": -55 }, { "t": 6, "r": -80 }, { "t": 12, "r": -48 }, { "t": 18, "r": -80 }, { "t": 24, "r": -55 }] }] },
+    "shrug": { "fps": 24, "loop": false, "anchor": [256, 730], "expression": "surprised", "layers": [{ "part": "upper-arm-L", "keys": [{ "t": 0, "r": 0 }, { "t": 12, "r": -22 }] }, { "part": "upper-arm-R", "keys": [{ "t": 0, "r": 0 }, { "t": 12, "r": 22 }] }] }
+  },
+  "appStateMap": {
+    "idle": "idle_sit_stool",
+    "user_speaking": "listening",
+    "fetching": ["phone_pull_out", "phone_look"],
+    "tool_calls": ["phone_pull_out", "phone_look"],
+    "matt_speaking": "talking_gesture",
+    "win": "celebrate",
+    "no_matches": "shrug"
+  }
+}

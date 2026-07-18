@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 960">
+  <rect width="1440" height="960" fill="#f8f7f2"/>
+  <text x="48" y="70" font-family="Arial, sans-serif" font-size="36" font-weight="700" fill="#171923">Matt Model Sheet</text>
+  <text x="48" y="108" font-family="Arial, sans-serif" font-size="18" fill="#373742">Original stylized blues/Southern-rock assistant mascot. Reuse the symbols in matt-puppet.svg for every view and clip.</text>
+  <g transform="translate(70 140) scale(.58)"><use href="matt-puppet.svg#matt-puppet-front"/></g>
+  <g transform="translate(410 150) scale(.52) skewY(-2)"><use href="matt-puppet.svg#matt-puppet-front"/></g>
+  <text x="92" y="604" font-family="Arial" font-size="18" fill="#171923">Front view</text>
+  <text x="430" y="604" font-family="Arial" font-size="18" fill="#171923">3/4 production view guide</text>
+  <g transform="translate(790 150)">
+    <text x="0" y="0" font-family="Arial" font-size="24" font-weight="700" fill="#171923">Expressions</text>
+    <use href="matt-puppet.svg#matt_head_front" transform="translate(0 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_mouth_grin" transform="translate(0 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_head_front" transform="translate(170 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_brow_L_furrowed" transform="translate(170 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_brow_R_furrowed" transform="translate(170 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_mouth_rest" transform="translate(170 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_head_front" transform="translate(340 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_brow_L_raised" transform="translate(340 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_brow_R_raised" transform="translate(340 30) scale(.42)"/>
+    <use href="matt-puppet.svg#matt_mouth_wide_open" transform="translate(340 30) scale(.42)"/>
+  </g>
+  <g transform="translate(790 430)">
+    <text x="0" y="0" font-family="Arial" font-size="24" font-weight="700" fill="#171923">Props</text>
+    <use href="matt-props-stage.svg#matt_prop_guitar" transform="translate(-80 -150) scale(.55)"/>
+    <use href="matt-props-stage.svg#matt_prop_bar_stool" transform="translate(120 -200) scale(.55)"/>
+    <use href="matt-props-stage.svg#matt_prop_phone_glow" transform="translate(280 -210) scale(.9)"/>
+    <use href="matt-props-stage.svg#matt_prop_amp" transform="translate(370 -220) scale(.75)"/>
+  </g>
+  <g transform="translate(48 700)" font-family="Arial">
+    <text x="0" y="-28" font-size="24" font-weight="700" fill="#171923">Palette</text>
+    <g font-size="13" fill="#171923">
+      <rect x="0" y="0" width="76" height="48" fill="#d8a074"/><text x="0" y="68">skin #d8a074</text>
+      <rect x="120" y="0" width="76" height="48" fill="#2b211c"/><text x="120" y="68">hair #2b211c</text>
+      <rect x="240" y="0" width="76" height="48" fill="#c62f28"/><text x="240" y="68">bandana #c62f28</text>
+      <rect x="360" y="0" width="76" height="48" fill="#0f0f16"/><text x="360" y="68">leather #0f0f16</text>
+      <rect x="480" y="0" width="76" height="48" fill="#1b1e28"/><text x="480" y="68">tee #1b1e28</text>
+      <rect x="600" y="0" width="76" height="48" fill="#20283f"/><text x="600" y="68">jeans #20283f</text>
+      <rect x="720" y="0" width="76" height="48" fill="#c0392b"/><text x="720" y="68">guitar #c0392b</text>
+      <rect x="840" y="0" width="76" height="48" fill="#fff6d8"/><text x="840" y="68">rim #fff6d8</text>
+    </g>
+  </g>
+</svg>

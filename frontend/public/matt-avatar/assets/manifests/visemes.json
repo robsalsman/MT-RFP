@@ -1,0 +1,53 @@
+{
+  "anchor": [256, 214],
+  "slotSize": [92, 50],
+  "mouths": {
+    "rest": { "symbol": "matt_mouth_rest", "label": "rest / neutral" },
+    "closed": { "symbol": "matt_mouth_closed", "label": "M/B/P" },
+    "smallOpen": { "symbol": "matt_mouth_small_open", "label": "ah" },
+    "wideOpen": { "symbol": "matt_mouth_wide_open", "label": "AA" },
+    "ee": { "symbol": "matt_mouth_ee", "label": "E / ee" },
+    "oh": { "symbol": "matt_mouth_oh", "label": "O rounded" },
+    "oo": { "symbol": "matt_mouth_oo", "label": "U/W oo" },
+    "fv": { "symbol": "matt_mouth_fv", "label": "F/V" },
+    "l": { "symbol": "matt_mouth_l", "label": "L tongue" },
+    "st": { "symbol": "matt_mouth_st", "label": "S/T teeth" },
+    "belt": { "symbol": "matt_mouth_belt", "label": "big belt / sing" },
+    "grin": { "symbol": "matt_mouth_grin", "label": "grin" }
+  },
+  "rhubarb": {
+    "A": "closed",
+    "B": "st",
+    "C": "ee",
+    "D": "smallOpen",
+    "E": "wideOpen",
+    "F": "oh",
+    "G": "fv",
+    "H": "l",
+    "X": "rest"
+  },
+  "oculus": {
+    "sil": "rest",
+    "PP": "closed",
+    "FF": "fv",
+    "TH": "st",
+    "DD": "st",
+    "kk": "smallOpen",
+    "CH": "st",
+    "SS": "st",
+    "nn": "l",
+    "RR": "oh",
+    "aa": "wideOpen",
+    "E": "ee",
+    "ih": "ee",
+    "oh": "oh",
+    "ou": "oo"
+  },
+  "amplitude": {
+    "closedBelow": 0.08,
+    "midBelow": 0.34,
+    "closed": "closed",
+    "mid": "smallOpen",
+    "open": "wideOpen"
+  }
+}

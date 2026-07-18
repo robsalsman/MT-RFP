@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 768" role="img" aria-labelledby="title desc">
+  <title id="title">Matt layered puppet</title>
+  <desc id="desc">Original vector assistant mascot: late seventies and eighties blues rock frontman archetype.</desc>
+  <defs>
+    <filter id="warmRim" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="-5" dy="-7" stdDeviation="1.4" flood-color="#fff6d8" flood-opacity=".65"/></filter>
+    <symbol id="matt_hair_back_front" viewBox="0 0 512 768"><path fill="#170f0b" d="M166 151c-12-43 13-85 54-94 10-35 56-42 78-17 38-2 65 26 58 65 24 17 27 56 4 78-42 25-152 27-194-32z"/></symbol>
+    <symbol id="matt_neck_front" viewBox="0 0 512 768"><path fill="#bd845b" d="M229 250h54l10 58c-22 17-51 17-73 0z"/></symbol>
+    <symbol id="matt_head_front" viewBox="0 0 512 768"><path fill="#d8a074" d="M179 151c0-54 35-88 77-88s77 34 77 88v42c0 52-34 91-77 91s-77-39-77-91z"/><path fill="#bd845b" opacity=".5" d="M310 138c8 68-13 121-57 142 51 2 80-40 80-87v-42c0-9-1-18-4-26z"/></symbol>
+    <symbol id="matt_ears_front" viewBox="0 0 512 768"><path fill="#d8a074" d="M164 174c-18-3-28 12-22 30 4 13 15 23 29 22zm184 0c18-3 28 12 22 30-4 13-15 23-29 22z"/><circle cx="350" cy="210" r="8" fill="none" stroke="#c9d0d6" stroke-width="5"/></symbol>
+    <symbol id="matt_face_base_front" viewBox="0 0 512 768"><path fill="#2b211c" opacity=".24" d="M198 221c22 42 96 42 116 0-4 43-27 63-58 63s-54-20-58-63z"/><path fill="#2b211c" d="M191 112c46-5 90-8 133 2l5 21c-51-15-100-10-146 4z"/><path fill="#c62f28" d="M177 119c57-18 111-19 160-2l-3 18c-49-14-100-13-153 2z"/></symbol>
+    <symbol id="matt_eye_L_center" viewBox="0 0 512 768"><ellipse cx="221" cy="174" rx="18" ry="12" fill="#fff6d8"/><circle cx="224" cy="176" r="6" fill="#5c3524"/><circle cx="226" cy="173" r="2" fill="#fff"/></symbol>
+    <symbol id="matt_eye_R_center" viewBox="0 0 512 768"><ellipse cx="291" cy="174" rx="18" ry="12" fill="#fff6d8"/><circle cx="288" cy="176" r="6" fill="#5c3524"/><circle cx="290" cy="173" r="2" fill="#fff"/></symbol>
+    <symbol id="matt_eyelid_L_open" viewBox="0 0 512 768"><path fill="none" stroke="#2b211c" stroke-width="4" stroke-linecap="round" d="M204 169q17-10 34 0"/></symbol>
+    <symbol id="matt_eyelid_R_open" viewBox="0 0 512 768"><path fill="none" stroke="#2b211c" stroke-width="4" stroke-linecap="round" d="M274 169q17-10 34 0"/></symbol>
+    <symbol id="matt_eyelid_L_half" viewBox="0 0 512 768"><path fill="#d8a074" d="M202 162h38v14q-19 8-38 0z"/><path stroke="#2b211c" stroke-width="4" stroke-linecap="round" d="M204 176q17 5 34 0"/></symbol>
+    <symbol id="matt_eyelid_R_half" viewBox="0 0 512 768"><path fill="#d8a074" d="M272 162h38v14q-19 8-38 0z"/><path stroke="#2b211c" stroke-width="4" stroke-linecap="round" d="M274 176q17 5 34 0"/></symbol>
+    <symbol id="matt_eyelid_L_closed" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="5" stroke-linecap="round" d="M204 176q17 7 34 0"/></symbol>
+    <symbol id="matt_eyelid_R_closed" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="5" stroke-linecap="round" d="M274 176q17 7 34 0"/></symbol>
+    <symbol id="matt_brow_L_neutral" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="9" stroke-linecap="round" d="M201 152l39-5"/></symbol>
+    <symbol id="matt_brow_R_neutral" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="9" stroke-linecap="round" d="M272 147l39 5"/></symbol>
+    <symbol id="matt_brow_L_raised" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="9" stroke-linecap="round" d="M200 143l40-9"/></symbol>
+    <symbol id="matt_brow_R_raised" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="9" stroke-linecap="round" d="M272 134l40 9"/></symbol>
+    <symbol id="matt_brow_L_furrowed" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="9" stroke-linecap="round" d="M202 145l37 10"/></symbol>
+    <symbol id="matt_brow_R_furrowed" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="9" stroke-linecap="round" d="M273 155l37-10"/></symbol>
+    <symbol id="matt_nose_front" viewBox="0 0 512 768"><path fill="#bd845b" d="M255 180c-9 19-16 35-2 43 8 4 22 2 28-5-15 4-21-2-20-14 0-9 5-17 6-25z"/></symbol>
+    <symbol id="matt_hair_front_front" viewBox="0 0 512 768"><path fill="#2b211c" d="M171 141c9-50 38-80 81-88-14 23-11 48 8 72 18-26 44-39 79-35-7 42-2 67 15 86-47-28-116-30-183-35z"/><path fill="#170f0b" d="M208 84c-38 9-58 33-61 75 10-19 28-30 54-36z"/></symbol>
+    <symbol id="matt_torso_jacket_front" viewBox="0 0 512 768"><path fill="#0f0f16" filter="url(#warmRim)" d="M174 303c37-30 127-31 164 0 23 66 24 135 8 204H166c-16-69-15-138 8-204z"/><path fill="#373742" d="M202 306l43 16-34 138-42 45c2-73 9-141 33-199zm108 0l-43 16 34 138 42 45c-2-73-9-141-33-199z"/></symbol>
+    <symbol id="matt_tee_front" viewBox="0 0 512 768"><path fill="#1b1e28" d="M219 320h74l23 184H196z"/><path fill="#b8143f" d="M263 344l-31 74h33l-18 57 48-83h-33z"/></symbol>
+    <symbol id="matt_upper_arm_L_front" viewBox="0 0 512 768"><path fill="#0f0f16" d="M177 322c-28 20-39 57-34 100l39 5 28-91z"/></symbol>
+    <symbol id="matt_forearm_L_front" viewBox="0 0 512 768"><path fill="#0f0f16" d="M143 417c-10 33-9 68 0 103l35 0 4-98z"/></symbol>
+    <symbol id="matt_hand_L_relaxed" viewBox="0 0 512 768"><path fill="#d8a074" d="M133 512c19-7 38-4 47 10-4 20-34 28-49 13z"/></symbol>
+    <symbol id="matt_upper_arm_R_front" viewBox="0 0 512 768"><path fill="#0f0f16" d="M335 322c28 20 39 57 34 100l-39 5-28-91z"/></symbol>
+    <symbol id="matt_forearm_R_front" viewBox="0 0 512 768"><path fill="#0f0f16" d="M369 417c10 33 9 68 0 103l-35 0-4-98z"/></symbol>
+    <symbol id="matt_hand_R_relaxed" viewBox="0 0 512 768"><path fill="#d8a074" d="M379 512c-19-7-38-4-47 10 4 20 34 28 49 13z"/></symbol>
+    <symbol id="matt_hand_R_open" viewBox="0 0 512 768"><path fill="#d8a074" d="M344 512c30-16 46 2 38 34-24 7-41-7-38-34z"/></symbol>
+    <symbol id="matt_hand_R_point" viewBox="0 0 512 768"><path fill="#d8a074" d="M336 518l70-18c7 4 7 12 0 16l-41 16c1 15-10 22-24 14z"/></symbol>
+    <symbol id="matt_hand_R_cupped" viewBox="0 0 512 768"><path fill="#d8a074" d="M342 503c30 1 46 23 34 49-31-1-46-23-34-49z"/></symbol>
+    <symbol id="matt_hand_R_chin" viewBox="0 0 512 768"><path fill="#d8a074" d="M340 504c24 0 43 14 42 31-18 13-47 10-53-7z"/></symbol>
+    <symbol id="matt_hand_L_horns" viewBox="0 0 512 768"><path fill="#d8a074" d="M137 536c-6-27 3-43 20-48l6 30 19-34c8 3 10 10 5 18l-13 29 12 12c-14 11-33 9-49-7z"/></symbol>
+    <symbol id="matt_hand_R_horns" viewBox="0 0 512 768"><path fill="#d8a074" d="M375 536c6-27-3-43-20-48l-6 30-19-34c-8 3-10 10-5 18l13 29-12 12c14 11 33 9 49-7z"/></symbol>
+    <symbol id="matt_hips_front" viewBox="0 0 512 768"><path fill="#20283f" d="M196 493h120l20 57c-51 18-104 18-160 0z"/></symbol>
+    <symbol id="matt_thigh_L_front" viewBox="0 0 512 768"><path fill="#20283f" d="M188 540h58l-11 98h-54z"/><path fill="#39456a" d="M198 585l34-12-5 18-29 9z"/></symbol>
+    <symbol id="matt_shin_L_front" viewBox="0 0 512 768"><path fill="#20283f" d="M181 632h54l-2 72h-60z"/></symbol>
+    <symbol id="matt_boot_L_front" viewBox="0 0 512 768"><path fill="#0d0d12" d="M170 694h64l32 20c3 14-10 21-38 19h-62z"/></symbol>
+    <symbol id="matt_thigh_R_front" viewBox="0 0 512 768"><path fill="#20283f" d="M266 540h58l7 98h-54z"/><path fill="#39456a" d="M286 575l31 14-8 16-31-11z"/></symbol>
+    <symbol id="matt_shin_R_front" viewBox="0 0 512 768"><path fill="#20283f" d="M277 632h54l8 72h-60z"/></symbol>
+    <symbol id="matt_boot_R_front" viewBox="0 0 512 768"><path fill="#0d0d12" d="M278 694h64l4 39h-62c-28 2-41-5-38-19z"/></symbol>
+    <symbol id="matt_mouth_rest" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="6" stroke-linecap="round" fill="none" d="M230 218q26 11 52 0"/></symbol>
+    <symbol id="matt_mouth_closed" viewBox="0 0 512 768"><path stroke="#2b211c" stroke-width="7" stroke-linecap="round" fill="none" d="M229 216q27 4 54 0"/></symbol>
+    <symbol id="matt_mouth_small_open" viewBox="0 0 512 768"><ellipse cx="256" cy="219" rx="24" ry="13" fill="#2b1110"/><path fill="#fff6d8" d="M237 212h38q-17 7-38 0z"/></symbol>
+    <symbol id="matt_mouth_wide_open" viewBox="0 0 512 768"><ellipse cx="256" cy="221" rx="30" ry="22" fill="#2b1110"/><path fill="#fff6d8" d="M232 211h48q-22 9-48 0z"/><path fill="#c75f5f" d="M238 232q18 11 37 0 0 12-19 13t-18-13z"/></symbol>
+    <symbol id="matt_mouth_ee" viewBox="0 0 512 768"><path fill="#2b1110" d="M225 213q31-10 62 0-3 18-31 19t-31-19z"/><path fill="#fff6d8" d="M229 213h54v8h-54z"/></symbol>
+    <symbol id="matt_mouth_oh" viewBox="0 0 512 768"><ellipse cx="256" cy="219" rx="19" ry="23" fill="#2b1110"/><ellipse cx="256" cy="218" rx="9" ry="12" fill="#551f1a"/></symbol>
+    <symbol id="matt_mouth_oo" viewBox="0 0 512 768"><ellipse cx="256" cy="219" rx="14" ry="17" fill="#2b1110"/><path fill="#bd845b" d="M241 216q15-10 30 0-3 15-15 15t-15-15z"/></symbol>
+    <symbol id="matt_mouth_fv" viewBox="0 0 512 768"><path fill="#fff6d8" d="M230 209h52v11h-52z"/><path fill="#2b1110" d="M230 220q26 13 52 0-5 17-26 17t-26-17z"/></symbol>
+    <symbol id="matt_mouth_l" viewBox="0 0 512 768"><ellipse cx="256" cy="220" rx="25" ry="16" fill="#2b1110"/><path fill="#c75f5f" d="M241 223q15-9 30 0v13h-30z"/><path fill="#fff6d8" d="M236 212h40v7h-40z"/></symbol>
+    <symbol id="matt_mouth_st" viewBox="0 0 512 768"><path fill="#2b1110" d="M228 212h56v20h-56z"/><path fill="#fff6d8" d="M230 212h52v14h-52z"/><path stroke="#d8a074" stroke-width="2" d="M256 212v14"/></symbol>
+    <symbol id="matt_mouth_belt" viewBox="0 0 512 768"><ellipse cx="256" cy="225" rx="35" ry="29" fill="#2b1110"/><path fill="#fff6d8" d="M230 208h52q-22 12-52 0z"/><path fill="#c75f5f" d="M230 234q26 18 52 0-3 22-26 22t-26-22z"/></symbol>
+    <symbol id="matt_mouth_grin" viewBox="0 0 512 768"><path fill="#2b1110" d="M222 211q34 24 68 0-3 31-34 32t-34-32z"/><path fill="#fff6d8" d="M228 216q28 12 56 0-4 16-28 17t-28-17z"/></symbol>
+    <g id="matt-puppet-front"><use href="#matt_hair_back_front"/><use href="#matt_neck_front"/><use href="#matt_torso_jacket_front"/><use href="#matt_tee_front"/><use href="#matt_upper_arm_L_front"/><use href="#matt_forearm_L_front"/><use href="#matt_hand_L_relaxed"/><use href="#matt_upper_arm_R_front"/><use href="#matt_forearm_R_front"/><use href="#matt_hand_R_relaxed"/><use href="#matt_hips_front"/><use href="#matt_thigh_L_front"/><use href="#matt_shin_L_front"/><use href="#matt_boot_L_front"/><use href="#matt_thigh_R_front"/><use href="#matt_shin_R_front"/><use href="#matt_boot_R_front"/><use href="#matt_head_front"/><use href="#matt_ears_front"/><use href="#matt_face_base_front"/><use href="#matt_eye_L_center"/><use href="#matt_eye_R_center"/><use href="#matt_eyelid_L_open"/><use href="#matt_eyelid_R_open"/><use href="#matt_brow_L_neutral"/><use href="#matt_brow_R_neutral"/><use href="#matt_nose_front"/><use href="#matt_mouth_rest"/><use href="#matt_hair_front_front"/></g>
+  </defs>
+  <use href="#matt-puppet-front"/>
+</svg>
