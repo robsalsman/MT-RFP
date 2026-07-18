@@ -59,13 +59,17 @@ function createRecorder() {
 // Matt's closet — driven by the quality full-body poses (the generator's
 // standalone props + hold poses came back unusable, so each item just strikes
 // the matching painted pose). id -> label + pose key in frames.json.
+// Each item strikes the matching painted pose. `prop` (when present) is a
+// standalone painted item shown as the drawer thumbnail; otherwise the pose
+// itself is the thumbnail.
 const CLOSET = [
-  { id: 'guitar', label: '🎸 Guitar', pose: 'guitar_strum', kind: 'Music' },
-  { id: 'solo', label: '🎸 Solo', pose: 'guitar_solo', kind: 'Music' },
+  { id: 'guitar', label: '🎸 Guitar', pose: 'guitar_strum', kind: 'Music', prop: 'prop_music_guitar_electric' },
+  { id: 'solo', label: '🎸 Solo', pose: 'guitar_solo', kind: 'Music', prop: 'prop_music_guitar_electric' },
   { id: 'air', label: '🤘 Air guitar', pose: 'air_guitar', kind: 'Music' },
-  { id: 'mic', label: '🎤 Sing', pose: 'mic_sing', kind: 'Music' },
-  { id: 'headphones', label: '🎧 Headphones', pose: 'headphones_on', kind: 'Music' },
-  { id: 'drums', label: '🥁 Drums', pose: 'drumming', kind: 'Music' },
+  { id: 'mic', label: '🎤 Sing', pose: 'mic_sing', kind: 'Music', prop: 'prop_music_mic_handheld' },
+  { id: 'headphones', label: '🎧 Headphones', pose: 'headphones_on', kind: 'Music', prop: 'prop_music_headphones' },
+  { id: 'drums', label: '🥁 Drums', pose: 'drumming', kind: 'Music', prop: 'prop_music_drumsticks' },
+  { id: 'keytar', label: '🎹 Keytar', pose: 'mic_point', kind: 'Music', prop: 'prop_music_keytar' },
   { id: 'laptop', label: '💻 Laptop', pose: 'typing', kind: 'Business' },
   { id: 'docs', label: '📄 RFP docs', pose: 'reading_doc', kind: 'Business' },
   { id: 'clipboard', label: '📋 Clipboard', pose: 'clipboard', kind: 'Business' },
@@ -498,7 +502,10 @@ export default function ChatBot() {
                     if (seqTimer.current) clearTimeout(seqTimer.current)
                     setSeqPlay(null); setClosetPose(it.pose)
                   }}>
-                  <img src={`/matt-frames/poses/matt_pose_${it.pose}.png`} alt="" />
+                  <img className={it.prop ? 'prop' : ''} alt=""
+                    src={it.prop
+                      ? `/matt-frames/props/${it.prop}.png`
+                      : `/matt-frames/poses/matt_pose_${it.pose}.png`} />
                   <span>{it.label}</span>
                 </button>
               ))}

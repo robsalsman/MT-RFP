@@ -286,6 +286,7 @@ th.sorted { color: var(--accent); }
 .closet-item.sel { border-color: var(--accent); background: var(--hover); }
 .closet-item img { width: 100%; height: 46px; object-fit: contain;
   object-position: top; }
+.closet-item img.prop { object-position: center; }
 .closet-item span { font-size: 9px; color: var(--ink); text-align: center;
   line-height: 1.1; }
 
