@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RFP Rockstar — Mission Telecom RFP Intelligence</title>
+    <script>
+      // apply the theme before first paint so there's no flash of the wrong one
+      (function () {
+        try {
+          var p = localStorage.getItem('mtrfp_theme') || 'auto';
+          var dark = p === 'dark' || (p === 'auto' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

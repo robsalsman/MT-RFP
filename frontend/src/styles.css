@@ -1,7 +1,16 @@
-:root {
+:root, :root[data-theme="light"] {
+  color-scheme: light;
   --bg: #f6f8fa; --panel: #ffffff; --ink: #1c2733; --muted: #5b6b7b;
-  --line: #dde4ea; --accent: #0b5fff; --accent-ink: #ffffff;
+  --line: #dde4ea; --field: #ffffff; --hover: #eef4ff; --chip-bg: #eef4ff;
+  --accent: #0b5fff; --accent-ink: #ffffff;
   --open: #0a7d33; --closing: #b45309; --closed: #8a94a0; --red: #c00000;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f141a; --panel: #1a2230; --ink: #e6edf3; --muted: #9fb0c0;
+  --line: #2b3644; --field: #131a24; --hover: #1e2a3a; --chip-bg: #17263b;
+  --accent: #3b82f6; --accent-ink: #ffffff;
+  --open: #3fce6b; --closing: #e0913c; --closed: #7a8694; --red: #ff6b6b;
 }
 * { box-sizing: border-box; }
 body { margin: 0; font: 14px/1.45 'Segoe UI', system-ui, sans-serif;
@@ -12,7 +21,8 @@ button.primary { background: var(--accent); color: var(--accent-ink);
   border-color: var(--accent); }
 button:disabled { opacity: 0.5; cursor: default; }
 input, select, textarea { font: inherit; border: 1px solid var(--line);
-  border-radius: 6px; padding: 6px 8px; background: #fff; color: var(--ink); }
+  border-radius: 6px; padding: 6px 8px; background: var(--field);
+  color: var(--ink); }
 
 .login-wrap { min-height: 100vh; display: flex; align-items: center;
   justify-content: center; background: #0d1b2a; padding: 20px; }
@@ -50,10 +60,10 @@ table.rfps { width: 100%; border-collapse: collapse; background: var(--panel);
 table.rfps th { text-align: left; font-size: 12px; text-transform: uppercase;
   letter-spacing: 0.03em; color: var(--muted); padding: 9px 10px;
   border-bottom: 2px solid var(--line); cursor: pointer; user-select: none;
-  background: #fbfcfe; white-space: nowrap; }
+  background: var(--bg); white-space: nowrap; }
 table.rfps td { padding: 9px 10px; border-bottom: 1px solid var(--line);
   vertical-align: top; }
-table.rfps tr.row:hover { background: #eef4ff; cursor: pointer; }
+table.rfps tr.row:hover { background: var(--hover); cursor: pointer; }
 .score { font-weight: 700; font-size: 15px; }
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px;
   font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap; }
@@ -77,7 +87,11 @@ table.rfps tr.row:hover { background: #eef4ff; cursor: pointer; }
 .needs-input, .nomatch { color: var(--red); font-weight: 700; }
 .reqlist li { margin-bottom: 4px; }
 .draftflag { background: #fff4e5; border: 1px solid #f0c987;
-  border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 13px; }
+  border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 13px;
+  color: #6b4a12; }
+:root[data-theme="dark"] .draftflag { background: #33280f;
+  border-color: #6b5320; color: #f0d9a0; }
+.topbar nav button.theme { border-color: #33475b; }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .formrow { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
@@ -125,16 +139,16 @@ th.sorted { color: var(--accent); }
   background: linear-gradient(120deg, #ff2e88, #0b5fff); border: none; }
 .cta-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .chip { font-size: 12px; padding: 5px 10px; border-radius: 999px;
-  background: #eef4ff; border: 1px solid var(--line); color: var(--accent); }
-.chip:hover { background: #dfeaff; }
+  background: var(--chip-bg); border: 1px solid var(--line); color: var(--accent); }
+.chip:hover { filter: brightness(1.06); }
 
 /* ---- tappable RFP option buttons under a Matt reply ---- */
 .chat-options { display: flex; flex-direction: column; gap: 6px;
   margin-top: 8px; }
-.opt { text-align: left; background: #fff; border: 1px solid var(--accent);
+.opt { text-align: left; background: var(--panel); border: 1px solid var(--accent);
   color: var(--accent); border-radius: 8px; padding: 8px 11px; font-weight: 600;
   font-size: 13px; }
-.opt:hover { background: #eef4ff; }
+.opt:hover { background: var(--hover); }
 .opt-no { border-color: var(--closed); color: var(--muted); }
 .opt.pick { background: linear-gradient(120deg, #ff2e88, #0b5fff); color: #fff;
   border: none; }
@@ -276,7 +290,7 @@ th.sorted { color: var(--accent); }
 .rfp-card { text-align: left; width: 100%; background: var(--panel);
   border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
   display: flex; flex-direction: column; gap: 5px; }
-.rfp-card:active { background: #eef4ff; }
+.rfp-card:active { background: var(--hover); }
 .rfp-card-top { display: flex; align-items: center; gap: 8px; }
 .rfp-card-top .score { font-size: 18px; }
 .rfp-card-state { margin-left: auto; color: var(--muted); font-weight: 600; }

@@ -5,11 +5,23 @@ import Settings from './components/Settings.jsx'
 import ChatBot from './components/ChatBot.jsx'
 import Login from './components/Login.jsx'
 import { api, auth } from './api.js'
+import { getPref, setPref, watchSystem } from './theme.js'
+
+const THEME_ICON = { auto: '🌗', light: '☀️', dark: '🌙' }
+const THEME_NEXT = { auto: 'light', light: 'dark', dark: 'auto' }
 
 export default function App() {
   const [tab, setTab] = useState('dashboard')
   const [health, setHealth] = useState(null)
   const [awake, setAwake] = useState(null)
+  const [themePref, setThemePref] = useState(getPref())
+
+  // follow the OS theme while in 'auto' (re-render just to refresh the icon)
+  useEffect(() => watchSystem(() => setThemePref((p) => p)), [])
+  const cycleTheme = () => {
+    const next = THEME_NEXT[themePref] || 'auto'
+    setPref(next); setThemePref(next)
+  }
   const [authed, setAuthed] = useState(null)  // null=unknown, bool once known
 
   useEffect(() => {
@@ -69,6 +81,10 @@ export default function App() {
             <button key={id} className={tab === id ? 'active' : ''}
               onClick={() => setTab(id)}>{label}</button>
           ))}
+          <button className="theme" onClick={cycleTheme}
+            title={`Theme: ${themePref} (click to change; auto follows your computer)`}>
+            {THEME_ICON[themePref]} {themePref[0].toUpperCase() + themePref.slice(1)}
+          </button>
           {awake?.supported && (
             <button className={`keepawake ${awake.on ? 'on' : ''}`}
               onClick={toggleAwake}
