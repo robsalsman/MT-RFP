@@ -17,14 +17,23 @@ Copy `.env.example` to `.env` and set at least:
 
 ```
 NEMOTRON_API_KEY=nvapi-...        # your NVIDIA key (rotate the one shared in chat)
-MTRFP_TEAM_PASSWORD=some-strong-shared-password
 # optional but recommended:
 USAC_APP_TOKEN=...                # free, avoids throttling
 ```
 
-`MTRFP_TEAM_PASSWORD` is what your reps type to sign in. **It is required
-before you expose the app** — without it the API is open and anyone with the
-URL could spend your NVIDIA credits.
+Then create a sign-in user for each rep (name + 4-digit PIN):
+
+```
+cd backend
+python -m app.manage_users add kim "Kim" 6969
+python -m app.manage_users add rob "Rob" 1234
+python -m app.manage_users list
+```
+
+Credentials are stored **hashed** in `data/users.json` (gitignored). **At
+least one user is required before you expose the app** — with no users the API
+is open and anyone with the URL could spend your NVIDIA credits. Reps sign in
+with their name and PIN, and Matt (the assistant) greets them by name.
 
 ## 2. Build the frontend and start the server
 

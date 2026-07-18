@@ -22,6 +22,7 @@ input, select, textarea { font: inherit; border: 1px solid var(--line);
 .login-card h1 { margin: 0; }
 .login-card input { padding: 10px; font-size: 16px; }
 .login-card .primary { padding: 10px; }
+.login-matt { display: flex; justify-content: center; margin-bottom: 4px; }
 
 .topbar { display: flex; align-items: center; gap: 16px; padding: 10px 20px;
   background: #0d1b2a; color: #fff; }
@@ -88,11 +89,33 @@ table.rfps tr.row:hover { background: #eef4ff; cursor: pointer; }
 th.sorted { color: var(--accent); }
 
 /* ---- assistant chat widget ---- */
-.chat-fab { position: fixed; right: 22px; bottom: 22px; width: 52px;
-  height: 52px; border-radius: 50%; font-size: 22px; background: var(--accent);
-  color: #fff; border: none; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  z-index: 95; }
+.chat-fab { position: fixed; right: 22px; bottom: 22px; width: 58px;
+  height: 58px; border-radius: 50%; font-size: 22px;
+  background: linear-gradient(160deg, #241a3a, #0d1b2a); color: #fff;
+  border: 2px solid #ff2e88; box-shadow: 0 4px 18px rgba(0,0,0,0.3);
+  z-index: 95; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 0; }
+.chat-fab.open { font-size: 22px; }
+
+/* ---- Matt avatar ---- */
+.matt { display: inline-block; line-height: 0; }
+.matt svg { display: block; }
+.matt-aura { opacity: 0; transform-origin: center; }
+.matt-speaking .matt-aura { opacity: 1; animation: mattPulse 0.7s ease-in-out
+  infinite; }
+.matt-listening .matt-aura { opacity: 0.7; animation: mattPulse 1.6s
+  ease-in-out infinite; }
+@keyframes mattPulse { 0%, 100% { transform: scale(0.92); opacity: 0.3; }
+  50% { transform: scale(1.04); opacity: 0.7; } }
+.matt-speaking svg, .matt-listening svg { animation: mattBob 1.4s ease-in-out
+  infinite; }
+@keyframes mattBob { 0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-1.5px) rotate(-1.2deg); } }
+
 .chat-head-controls { display: flex; gap: 6px; align-items: center; }
+.chat-title { display: flex; align-items: center; gap: 9px; }
+.chat-status { display: block; font-size: 11px; font-weight: 400;
+  color: #9fb3c8; }
 .chat-close { background: transparent; border: 1px solid #33475b;
   color: #fff; font-size: 13px; padding: 2px 8px; }
 .chat-panel { position: fixed; right: 22px; bottom: 84px;

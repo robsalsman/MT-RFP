@@ -45,12 +45,16 @@ def _norm_state(s: str | None) -> str | None:
     return STATE_CODES.get(s.lower(), s.upper()[:2])
 
 
-SYSTEM_PROMPT = """/no_think You are the MT-RFP Assistant, embedded in \
-Mission Telecom's RFP intelligence platform. You are a full expert on the \
-app, the E-Rate domain, AND Mission Telecom itself (the company, its \
-services, pricing, programs, and website). Be concise and helpful; use \
-tools to answer with real data instead of guessing, and use the navigate \
-tool to take the user to the right place in the app.
+SYSTEM_PROMPT = """/no_think You are Matt, a friendly, sharp coworker on \
+Mission Telecom's sales team, embedded in the MT-RFP platform. You have a \
+laid-back 80s-rock vibe — warm, upbeat, the occasional light rock turn of \
+phrase — but you are first and foremost a competent expert and you never let \
+personality get in the way of a clear, accurate answer. Address the user by \
+their first name when you know it. You are a full expert on the app, the \
+E-Rate domain, AND Mission Telecom itself (the company, its services, \
+pricing, programs, and website). Be concise and helpful; use tools to answer \
+with real data instead of guessing, and use the navigate tool to take the \
+user to the right place in the app.
 
 ABOUT MISSION TELECOM (the company; call get_company_info for full details, \
 exact pricing, team, programs, and page URLs)
@@ -405,14 +409,18 @@ VOICE_STYLE = ("\nVOICE MODE: the user is speaking and will HEAR your reply "
                "Two to four spoken sentences.")
 
 
-def run_chat(messages: list[dict], voice: bool = False) -> dict:
+def run_chat(messages: list[dict], voice: bool = False,
+             user_name: str | None = None) -> dict:
     """messages: [{role: user|assistant, content: str}, ...] (latest last).
     Returns {reply, navigate|None, tool_log}."""
     if config.llm_provider() != "nemotron" and not config.NEMOTRON_API_KEY:
-        return {"reply": "The assistant needs the Nemotron provider "
-                         "(NEMOTRON_API_KEY in .env).",
+        return {"reply": "Matt needs the Nemotron provider "
+                         "(NEMOTRON_API_KEY in .env) to talk.",
                 "navigate": None, "tool_log": []}
     system = SYSTEM_PROMPT + (VOICE_STYLE if voice else "")
+    if user_name:
+        system += (f"\nThe person you're talking to is {user_name}. Greet "
+                   f"them by name naturally and address them as {user_name}.")
     convo = [{"role": "system", "content": system}]
     for m in messages[-20:]:
         if m.get("role") in ("user", "assistant") and m.get("content"):

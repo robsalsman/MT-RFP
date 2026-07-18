@@ -48,10 +48,19 @@ async def team_auth(request: Request, call_next):
 @app.post("/api/login")
 def login(payload: dict):
     if not auth.auth_enabled():
-        return {"token": "", "auth_required": False}
-    if not auth.check_password(payload.get("password", "")):
-        raise HTTPException(401, "incorrect team password")
-    return {"token": auth.issue_token(), "auth_required": True}
+        return {"token": "", "auth_required": False, "display_name": ""}
+    username = payload.get("username", "")
+    name = auth.verify_credentials(username, payload.get("pin", ""))
+    if not name:
+        raise HTTPException(401, "incorrect name or PIN")
+    return {"token": auth.issue_token(username), "auth_required": True,
+            "display_name": name}
+
+
+@app.get("/api/me")
+def me(request: Request):
+    _, name = auth.user_from_header(request.headers.get("Authorization"))
+    return {"display_name": name}
 
 _sync_lock = threading.Lock()
 _sync_state = {"running": False, "last_result": None, "last_error": None}
@@ -355,16 +364,17 @@ async def put_settings(new_settings: dict):
 # ---------------------------------------------------------------------------
 
 @app.post("/api/chat")
-def chat_endpoint(payload: dict):
+def chat_endpoint(payload: dict, request: Request):
     from . import chat as chat_mod
     messages = payload.get("messages") or []
     if not isinstance(messages, list) or not messages:
         raise HTTPException(400, "messages list required")
-    return chat_mod.run_chat(messages)
+    _, name = auth.user_from_header(request.headers.get("Authorization"))
+    return chat_mod.run_chat(messages, user_name=name)
 
 
 @app.post("/api/voice/converse")
-async def voice_converse(audio: UploadFile = File(...),
+async def voice_converse(request: Request, audio: UploadFile = File(...),
                          messages: str = Form("[]"),
                          speak_reply: bool = Form(True)):
     """Speech-to-speech turn: transcribe -> assistant -> synthesize."""
@@ -380,9 +390,10 @@ async def voice_converse(audio: UploadFile = File(...),
     if not transcript:
         return {"transcript": "", "reply": "I didn't catch that — try again.",
                 "navigate": None, "tool_log": [], "audio_b64": None}
+    _, name = auth.user_from_header(request.headers.get("Authorization"))
     history = json.loads(messages or "[]")
     history.append({"role": "user", "content": transcript})
-    result = chat_mod.run_chat(history, voice=True)
+    result = chat_mod.run_chat(history, voice=True, user_name=name)
     audio_b64 = None
     if speak_reply and result.get("reply"):
         try:

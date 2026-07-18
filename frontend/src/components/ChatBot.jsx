@@ -1,12 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { authFetch } from '../api.js'
+import { authFetch, auth } from '../api.js'
+import Matt from './Matt.jsx'
+import * as mattAudio from '../mattAudio.js'
 
-const WELCOME = {
-  role: 'assistant',
-  content: "Hi — I'm the MT-RFP Assistant. Ask me anything about the app, " +
-    'your RFP pipeline, or Mission Telecom itself — by text or voice (🎤). ' +
-    'Try: "show open RFPs in Ohio", "which deals close this week?", ' +
-    '"what do our broadband plans cost?", "take me to the price list upload".',
+const welcome = () => {
+  const name = auth.name()
+  const hi = name ? `Hey ${name}! ` : 'Hey! '
+  return {
+    role: 'assistant', _welcome: true,
+    content: hi + "I'm Matt. Ask me anything about the app, your RFP " +
+      'pipeline, or Mission Telecom — by text or voice (🎤). Try: "which ' +
+      'deals close this week?", "show open libraries in Ohio", "what do our ' +
+      'broadband plans cost?"',
+  }
 }
 
 // ---- 16-bit mono WAV recorder (Riva ASR wants real WAV, not webm) ----
@@ -56,26 +62,28 @@ function createRecorder() {
 
 export default function ChatBot() {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState([WELCOME])
+  const [messages, setMessages] = useState(() => [welcome()])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [recording, setRecording] = useState(false)
   const [speakReplies, setSpeakReplies] = useState(true)
   const [voiceOk, setVoiceOk] = useState(false)
+  const [avatar, setAvatar] = useState({ state: 'idle', mouth: 0 })
   const bodyRef = useRef(null)
   const recRef = useRef(null)
-  const audioRef = useRef(null)
 
   useEffect(() => {
     fetch('/api/health').then((r) => r.json())
       .then((h) => setVoiceOk(!!h.voice_available)).catch(() => {})
   }, [])
 
+  useEffect(() => mattAudio.subscribe(setAvatar), [])
+
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
   }, [messages, open, busy])
 
-  const history = (msgs) => msgs.filter((m) => m !== WELCOME)
+  const history = (msgs) => msgs.filter((m) => !m._welcome)
     .map(({ role, content }) => ({ role, content }))
 
   const applyResult = (d, next) => {
@@ -84,15 +92,10 @@ export default function ChatBot() {
     }])
     if (d.navigate) window.dispatchEvent(
       new CustomEvent('mtrfp:navigate', { detail: d.navigate }))
-    if (d.audio_b64) playB64(d.audio_b64)
+    if (d.audio_b64) mattAudio.play(`data:audio/wav;base64,${d.audio_b64}`)
     else if (speakReplies && voiceOk && d.reply) speakText(d.reply)
   }
 
-  const playB64 = (b64) => {
-    stopAudio()
-    audioRef.current = new Audio(`data:audio/wav;base64,${b64}`)
-    audioRef.current.play().catch(() => {})
-  }
   const speakText = async (text) => {
     try {
       const r = await authFetch('/api/voice/speak', {
@@ -100,14 +103,8 @@ export default function ChatBot() {
         body: JSON.stringify({ text }),
       })
       if (!r.ok) return
-      const blob = await r.blob()
-      stopAudio()
-      audioRef.current = new Audio(URL.createObjectURL(blob))
-      audioRef.current.play().catch(() => {})
+      mattAudio.play(URL.createObjectURL(await r.blob()))
     } catch { /* voice is best-effort */ }
-  }
-  const stopAudio = () => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
   }
 
   const send = async () => {
@@ -134,11 +131,12 @@ export default function ChatBot() {
   const toggleMic = async () => {
     if (busy) return
     if (!recording) {
-      stopAudio()
+      mattAudio.stop()
       try {
         recRef.current = createRecorder()
         await recRef.current.start()
         setRecording(true)
+        mattAudio.setState('listening')
       } catch {
         setMessages((m) => [...m, { role: 'assistant',
           content: 'Microphone access was blocked — allow it and try again.' }])
@@ -147,6 +145,7 @@ export default function ChatBot() {
     }
     setRecording(false)
     setBusy(true)
+    mattAudio.setState('idle')
     const wav = recRef.current.stop()
     try {
       const fd = new FormData()
@@ -166,21 +165,29 @@ export default function ChatBot() {
     } finally { setBusy(false) }
   }
 
+  const statusLabel = recording ? 'listening…'
+    : avatar.state === 'speaking' ? 'talking…'
+      : busy ? 'thinking…' : 'online'
+
   return (
     <>
       <button className={`chat-fab ${open ? 'open' : ''}`}
-        onClick={() => setOpen(!open)} title="MT-RFP Assistant">
-        {open ? '✕' : '💬'}
+        onClick={() => setOpen(!open)} title="Matt — your RFP sidekick">
+        {open ? '✕'
+          : <Matt state={avatar.state} mouth={avatar.mouth} size={46} />}
       </button>
       {open && (
         <div className="chat-panel">
           <div className="chat-head">
-            <span className="chat-title">MT-RFP Assistant</span>
+            <span className="chat-title">
+              <Matt state={avatar.state} mouth={avatar.mouth} size={40} />
+              <span>Matt<span className="chat-status">{statusLabel}</span></span>
+            </span>
             <span className="chat-head-controls">
               {voiceOk && (
                 <button className={`chat-speaker ${speakReplies ? 'on' : ''}`}
                   title={speakReplies ? 'Voice replies on' : 'Voice replies off'}
-                  onClick={() => { if (speakReplies) stopAudio()
+                  onClick={() => { if (speakReplies) mattAudio.stop()
                     setSpeakReplies(!speakReplies) }}>
                   {speakReplies ? '🔊' : '🔇'}
                 </button>
@@ -210,13 +217,12 @@ export default function ChatBot() {
             {voiceOk && (
               <button className={`mic ${recording ? 'rec' : ''}`}
                 onClick={toggleMic} disabled={busy}
-                title={recording ? 'Stop & send' : 'Speak to the assistant'}>
+                title={recording ? 'Stop & send' : 'Talk to Matt'}>
                 🎤
               </button>
             )}
             <input value={input} disabled={busy || recording}
-              placeholder={recording ? 'Listening…'
-                : 'e.g. "what closes this week?"'}
+              placeholder={recording ? 'Listening…' : 'Message Matt…'}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()} />
             <button className="primary" onClick={send}

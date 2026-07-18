@@ -53,8 +53,9 @@ export default function App() {
     <>
       <header className="topbar">
         <h1>MT-RFP</h1>
-        <span className="sub">Mission Telecom &middot; E-Rate &amp; K-12/Library
-          RFP Intelligence</span>
+        <span className="sub">
+          {auth.name() ? `Hey ${auth.name()} · ` : ''}Mission Telecom
+          &middot; E-Rate &amp; K-12/Library RFP Intelligence</span>
         {health && !health.ai_provider && (
           <span className="sub warn">AI analysis off — set NEMOTRON_API_KEY
             in .env</span>

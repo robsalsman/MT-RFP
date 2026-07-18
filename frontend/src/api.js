@@ -1,23 +1,30 @@
-// --- team auth token (shared password gate) -----------------------------
+// --- per-user auth (name + 4-digit PIN) ----------------------------------
 let token = localStorage.getItem('mtrfp_token') || ''
+let displayName = localStorage.getItem('mtrfp_name') || ''
 
 export const auth = {
   token: () => token,
   isSet: () => !!token,
-  set(t) {
+  name: () => displayName,
+  set(t, name) {
     token = t || ''
     if (t) localStorage.setItem('mtrfp_token', t)
     else localStorage.removeItem('mtrfp_token')
+    if (name !== undefined) {
+      displayName = name || ''
+      if (name) localStorage.setItem('mtrfp_name', name)
+      else localStorage.removeItem('mtrfp_name')
+    }
   },
-  login: (password) =>
+  login: (username, pin) =>
     fetch('/api/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username, pin }),
     }).then((r) => {
-      if (!r.ok) throw new Error('Incorrect team password')
+      if (!r.ok) throw new Error('Incorrect name or PIN')
       return r.json()
-    }).then((d) => { auth.set(d.token); return d }),
-  logout() { auth.set('') },
+    }).then((d) => { auth.set(d.token, d.display_name); return d }),
+  logout() { auth.set('', '') },
 }
 
 // fetch wrapper that attaches the token and signals when the session lapses.
