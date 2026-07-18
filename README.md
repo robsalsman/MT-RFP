@@ -119,21 +119,44 @@ directly on the user's machine; a container can't control host sleep.)
   post-generation scrubber additionally strips any model-authored dollar
   amounts and unrecognized identifiers.
 
-## Fit scoring
+## Fit scoring & Mission-Telecom biddability
 
-0–100, four buckets, weights configurable in the Settings tab (persisted to
-`data/settings.json`):
+Scoring is tuned to Mission Telecom's real business: a **nonprofit wireless
+ISP on the T-Mobile 5G/4G network** that sells internet access / data
+transmission (fixed wireless, cellular, hotspots) to schools and libraries.
+It does **not** build fiber or sell/install LAN hardware. So the engine first
+decides whether an RFP is even **biddable** (`app/mission_fit.py`, driven by
+`config.MISSION_TELECOM`, derived from `data/company_knowledge.md`):
+
+- **Biddable** — Category 1 "Internet Access and Data Transmission" (or
+  standalone internet/data) that a wireless carrier can serve.
+- **Not a fit** — requires leased fiber (lit/dark), or is Category 2
+  internal-connections hardware only (switches, routers, firewalls, access
+  points, cabling, UPS). These are flagged "not a fit" with the reason, and
+  their rubric total is scaled down hard so they sink below every real
+  opportunity. Biddability keys off the structured `function` field, not the
+  noisy portal bandwidth values (a small school listing a 76 Gbps "minimum"
+  is a data artifact, so bandwidth only flags a concern, never disqualifies).
+
+The dashboard defaults to **Mission fit only** (a toggle turns it off to see
+everything, with non-fits labelled). Then the 0–100 rubric ranks the biddable
+ones, four buckets, weights configurable in Settings (`data/settings.json`):
 
 | Bucket | Default | What it measures |
 |---|---|---|
-| Service match | 40 | Overlap between requested services and the catalog (price-list categories + core service list). Internet/wireless/Wi-Fi = core; niche hardware = lower. |
-| Deal size | 20 | Log-scaled prior-FY Form 471 spend for the BEN; floor of 5 pts so small libraries still surface. |
+| Service match | 40 | How well the RFP matches Mission Telecom's wireless-connectivity catalog; bonus when it explicitly wants wireless/cellular/fixed-wireless, extra for modest bandwidth and library hotspot-lending. |
+| Deal size | 20 | Log-scaled prior-FY Form 471 spend for the BEN; floor so small libraries still surface. |
 | Winnability | 20 | Penalties for state/local restrictions, short remaining window, many mandatory requirements, disqualifiers; notes when the RFP confirms price as primary factor. |
-| Strategic fit | 20 | Priority states, entity-type preferences, multi-year contract bonus. |
+| Strategic fit | 20 | Entity type (libraries and schools rank highest), explicit wireless demand, priority states, multi-year term. |
 
 Every score carries a 2–3 sentence rationale (AI-written after the analyst
-pass; deterministic fallback otherwise) plus a per-bucket breakdown in the
-detail view. Tuning weights in Settings rescores everything immediately.
+pass; deterministic fallback otherwise) plus a per-bucket breakdown and the
+biddability verdict/blockers in the detail view. Tuning weights in Settings
+rescores everything immediately.
+
+**Filters:** the dashboard filters by Status, State, and entity Type, plus a
+free-text search and the Mission-fit toggle — all also driveable from the
+assistant ("show open libraries in Illinois", "which fiber RFPs did we skip?").
 
 ## Scheduler
 

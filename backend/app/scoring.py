@@ -1,27 +1,32 @@
-"""Fit scoring engine (0-100) with configurable weights.
+"""Fit scoring engine (0-100), tuned to Mission Telecom's real business.
 
-Subscores are deterministic and explainable; the 2-3 sentence rationale is
-AI-written when an Anthropic key is configured (template fallback otherwise).
-Weights and strategic preferences live in data/settings.json.
+Mission Telecom is a nonprofit wireless ISP on the T-Mobile network (see
+app/mission_fit.py and config.MISSION_TELECOM). Scoring finds the E-Rate RFPs
+it can actually bid on and win — Category 1 internet access / data
+transmission deliverable over fixed wireless / cellular, especially for
+libraries and schools — and pushes down the ones it can't serve (dedicated
+fiber, multi-gig circuits, Category 2 LAN hardware).
+
+Subscores are deterministic and explainable; the rationale is AI-written when
+a provider key is set (template fallback otherwise). Weights live in
+data/settings.json.
 """
 import json
 import logging
 import math
 
-from . import config, db, status as status_mod
+from . import config, db, mission_fit, status as status_mod
 
 log = logging.getLogger(__name__)
 
-CORE_FUNCTION_HINTS = [
-    "internet access", "data transmission", "wireless", "cellular",
-    "wi-fi", "wifi", "leased lit fiber", "broadband", "access points",
-]
+# When Mission Telecom can't deliver the requested service, the rubric total
+# is scaled down hard so non-fits sink below every real opportunity.
+NONBIDDABLE_FACTOR = 0.3
 
 
 def score_all(rescore: bool = False) -> int:
     """Score every relevant, non-CLOSED RFP. Returns count scored."""
     settings = config.load_settings()
-    catalog_terms = _catalog_terms(settings)
     with db.closing_conn() as conn:
         rows = conn.execute(
             "SELECT * FROM rfps WHERE relevant=1").fetchall()
@@ -34,76 +39,56 @@ def score_all(rescore: bool = False) -> int:
             continue
         if row["fit_score"] is not None and not rescore:
             continue
-        breakdown = compute_breakdown(dict(row), days_left, settings,
-                                      catalog_terms)
+        with db.closing_conn() as conn:
+            srs = [dict(r) for r in conn.execute(
+                "SELECT * FROM service_requests WHERE application_number=?",
+                (row["application_number"],)).fetchall()]
+        fit = mission_fit.assess(dict(row), srs)
+        breakdown = compute_breakdown(dict(row), fit, days_left, settings)
         total = round(sum(b["points"] for b in breakdown.values()), 1)
-        rationale = _template_rationale(dict(row), breakdown, total)
+        if not fit["biddable"]:
+            total = round(total * NONBIDDABLE_FACTOR, 1)
+        rationale = _template_rationale(dict(row), breakdown, fit, total)
         with db.closing_conn() as conn:
             # keep AI-written rationales (they exist iff analysis exists);
             # regenerate template rationales so totals stay in sync
             conn.execute(
                 "UPDATE rfps SET fit_score=?, score_breakdown=?, "
+                "mission_biddable=?, mission_blockers=?, "
                 "score_rationale=CASE WHEN analysis IS NOT NULL "
                 "THEN COALESCE(score_rationale, ?) ELSE ? END "
                 "WHERE application_number=?",
-                (total, json.dumps(breakdown), rationale, rationale,
-                 row["application_number"]))
+                (total, json.dumps(breakdown),
+                 1 if fit["biddable"] else 0, json.dumps(fit["blockers"]),
+                 rationale, rationale, row["application_number"]))
             conn.commit()
         scored += 1
     return scored
 
 
-def _catalog_terms(settings: dict) -> tuple[list, list]:
-    """Core/secondary match terms; augmented by uploaded price-list
-    categories (price-list categories count as core — we sell them)."""
-    core = [t.lower() for t in settings.get("core_services", [])]
-    secondary = [t.lower() for t in settings.get("secondary_services", [])]
-    with db.closing_conn() as conn:
-        cats = conn.execute(
-            "SELECT DISTINCT category FROM price_items "
-            "WHERE category IS NOT NULL AND category != ''").fetchall()
-    core += [c["category"].lower() for c in cats]
-    return core, secondary
-
-
-def compute_breakdown(row: dict, days_left: int | None, settings: dict,
-                      catalog_terms: tuple[list, list]) -> dict:
+def compute_breakdown(row: dict, fit: dict, days_left: int | None,
+                      settings: dict) -> dict:
     w = settings["scoring_weights"]
     return {
-        "service_match": _service_match(row, w["service_match"], catalog_terms),
+        "service_match": _service_match(fit, w["service_match"]),
         "deal_size": _deal_size(row, w["deal_size"], settings["deal_size"]),
-        "winnability": _winnability(row, days_left, w["winnability"]),
-        "strategic_fit": _strategic_fit(row, w["strategic_fit"],
+        "winnability": _winnability(row, fit, days_left, w["winnability"]),
+        "strategic_fit": _strategic_fit(row, fit, w["strategic_fit"],
                                         settings["strategic_fit"]),
     }
 
 
-def _service_match(row: dict, max_pts: float,
-                   catalog_terms: tuple[list, list]) -> dict:
-    core_terms, secondary_terms = catalog_terms
-    haystacks = []
-    for field in ("service_types", "functions"):
-        try:
-            haystacks += [s.lower() for s in json.loads(row.get(field) or "[]")]
-        except (TypeError, json.JSONDecodeError):
-            pass
-    for field in ("cat1_description", "cat2_description"):
-        if row.get(field):
-            haystacks.append(str(row[field]).lower())
-    blob = " ; ".join(haystacks)
-
-    core_hits = sorted({t for t in core_terms if t in blob})
-    secondary_hits = sorted({t for t in secondary_terms if t in blob})
-    if core_hits:
-        # any core service = at least 70% of the bucket; more overlap = more
-        frac = 0.7 + 0.3 * min(len(core_hits) / 3, 1.0)
-    elif secondary_hits:
-        frac = 0.35 + 0.15 * min(len(secondary_hits) / 4, 1.0)
-    else:
-        frac = 0.1  # relevant service_type but nothing matched our catalog
-    return {"points": round(max_pts * frac, 1), "max": max_pts,
-            "detail": {"core_matches": core_hits,
-                       "secondary_matches": secondary_hits}}
+def _service_match(fit: dict, max_pts: float) -> dict:
+    """How well the RFP matches Mission Telecom's wireless-connectivity
+    catalog (mission_fit.assess computes the fraction)."""
+    return {"points": round(max_pts * fit["service_fraction"], 1),
+            "max": max_pts,
+            "detail": {"mission_matches": fit["matched"],
+                       "wireless_signal": fit["wireless_signal"],
+                       "biddable": fit["biddable"],
+                       "max_mbps": fit["max_mbps"],
+                       "blockers": fit["blockers"],
+                       "concerns": fit.get("concerns", [])}}
 
 
 def _deal_size(row: dict, max_pts: float, cfg: dict) -> dict:
@@ -121,9 +106,12 @@ def _deal_size(row: dict, max_pts: float, cfg: dict) -> dict:
             "detail": {"est_prior_spend": spend}}
 
 
-def _winnability(row: dict, days_left: int | None, max_pts: float) -> dict:
+def _winnability(row: dict, fit: dict, days_left: int | None,
+                 max_pts: float) -> dict:
     pts = max_pts
     notes = []
+    if not fit["biddable"]:
+        notes.append("Mission Telecom cannot deliver the requested service")
     if row.get("state_or_local_restrictions"):
         pts -= max_pts * 0.35
         notes.append("state/local procurement restrictions apply")
@@ -151,7 +139,7 @@ def _winnability(row: dict, days_left: int | None, max_pts: float) -> dict:
             "detail": {"notes": notes}}
 
 
-def _strategic_fit(row: dict, max_pts: float, cfg: dict) -> dict:
+def _strategic_fit(row: dict, fit: dict, max_pts: float, cfg: dict) -> dict:
     pts = 0.0
     notes = []
     if row.get("state") in cfg.get("priority_states", []):
@@ -159,11 +147,15 @@ def _strategic_fit(row: dict, max_pts: float, cfg: dict) -> dict:
         notes.append(f"priority state {row.get('state')}")
     etype_pts = cfg.get("entity_type_points", {})
     at = row.get("applicant_type") or ""
-    for etype, p in etype_pts.items():
-        if etype.lower() in at.lower():
-            pts += float(p)
-            notes.append(f"entity type: {at}")
-            break
+    # longest matching entity label wins (so "Library System" beats "Library")
+    best = max((e for e in etype_pts if e.lower() in at.lower()),
+               key=len, default=None)
+    if best:
+        pts += float(etype_pts[best])
+        notes.append(f"entity type: {at}")
+    if fit.get("wireless_signal"):
+        pts += 3
+        notes.append("RFP explicitly seeks wireless connectivity")
     analysis = _parse_analysis(row)
     term = (analysis or {}).get("contract_term_years")
     if term:
@@ -184,17 +176,27 @@ def _parse_analysis(row: dict) -> dict | None:
         return None
 
 
-def _template_rationale(row: dict, breakdown: dict, total: float) -> str:
+def _template_rationale(row: dict, breakdown: dict, fit: dict,
+                        total: float) -> str:
     """Deterministic fallback rationale; replaced by the AI-written one when
     the analyst pass runs."""
-    sm = breakdown["service_match"]["detail"]
-    services = ", ".join(sm["core_matches"][:3]) or \
-        ", ".join(sm["secondary_matches"][:3]) or "peripheral services"
+    entity = row.get("billed_entity_name", "Applicant")
+    state = row.get("state")
     spend = row.get("est_prior_spend")
     spend_txt = (f"~${spend:,.0f} est. prior-FY spend" if spend
                  else "no prior-FY spend history found")
+    if not fit["biddable"]:
+        why = fit["blockers"][0] if fit["blockers"] else \
+            "outside Mission Telecom's wireless service scope"
+        return (f"{entity} ({state}) — NOT a Mission Telecom fit: {why}. "
+                f"Scored {total}/100 ({spend_txt}).")
+    services = ", ".join(fit["matched"][:3]) or \
+        "internet access / data transmission"
+    extra = (" RFP explicitly wants wireless — a direct match for Mission "
+             "Telecom's fixed-wireless/cellular service." if
+             fit["wireless_signal"] else "")
     win_notes = breakdown["winnability"]["detail"]["notes"]
     win_txt = win_notes[0] if win_notes else "no major bid barriers identified"
-    return (f"{row.get('billed_entity_name', 'Applicant')} ({row.get('state')}) "
-            f"requests {services}, with {spend_txt}. "
-            f"Winnability check: {win_txt}. Overall fit {total}/100.")
+    return (f"{entity} ({state}) requests {services}, deliverable over Mission "
+            f"Telecom's wireless network; {spend_txt}.{extra} "
+            f"Winnability: {win_txt}. Overall fit {total}/100.")

@@ -109,6 +109,13 @@ th.sorted { color: var(--accent); }
   var(--line); }
 .chat-input input { flex: 1; }
 .filters .search { width: 220px; }
+.mission-toggle { display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink); white-space: nowrap; cursor: pointer; }
+.mission-toggle input { width: auto; }
+.notfit { display: inline-block; margin-left: 8px; padding: 1px 7px;
+  border-radius: 999px; font-size: 10px; font-weight: 700; color: #fff;
+  background: var(--closed); vertical-align: middle; text-transform: uppercase;
+  letter-spacing: 0.03em; }
 
 /* ---- dashboard cards (mobile) ---- */
 .rfp-cards { display: flex; flex-direction: column; gap: 10px; }

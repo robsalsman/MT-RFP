@@ -9,6 +9,7 @@ export const api = {
       Object.entries(params).filter(([, v]) => v !== '' && v != null))
     return fetch(`/api/rfps?${qs}`).then(json)
   },
+  facets: () => fetch('/api/rfps-facets').then(json),
   rfp: (an) => fetch(`/api/rfps/${an}`).then(json),
   analyze: (an) => fetch(`/api/rfps/${an}/analyze`, { method: 'POST' }).then(json),
   generateResponse: (an) =>

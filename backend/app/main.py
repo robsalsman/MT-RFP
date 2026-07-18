@@ -109,7 +109,8 @@ def _decorate(row: dict) -> dict:
                               tzinfo=ZoneInfo(config.EASTERN_TZ))
         out["bid_deadline_eastern"] = eastern_dt.strftime(
             "%Y-%m-%d 23:59 %Z")
-    for f in ("service_types", "functions", "rfp_doc_urls", "doc_files"):
+    for f in ("service_types", "functions", "rfp_doc_urls", "doc_files",
+              "mission_blockers"):
         try:
             out[f] = json.loads(out.get(f) or "[]")
         except (TypeError, json.JSONDecodeError):
@@ -124,14 +125,20 @@ def _decorate(row: dict) -> dict:
 
 @app.get("/api/rfps")
 def list_rfps(status: str | None = None, state: str | None = None,
+              applicant_type: str | None = None, mission_only: bool = False,
               relevant_only: bool = True, q: str | None = None):
     sql = "SELECT * FROM rfps"
     clauses, params = [], []
     if relevant_only:
         clauses.append("relevant=1")
+    if mission_only:
+        clauses.append("mission_biddable=1")
     if state:
         clauses.append("state=?")
         params.append(state.upper())
+    if applicant_type:
+        clauses.append("applicant_type=?")
+        params.append(applicant_type)
     if q:
         clauses.append("(billed_entity_name LIKE ? OR application_number LIKE ?)")
         params += [f"%{q}%", f"%{q}%"]
@@ -147,6 +154,20 @@ def list_rfps(status: str | None = None, state: str | None = None,
         r.pop("analysis", None)
     rows.sort(key=lambda r: (r["fit_score"] or 0), reverse=True)
     return {"count": len(rows), "rfps": rows}
+
+
+@app.get("/api/rfps-facets")
+def rfp_facets():
+    """Distinct filter values (applicant types, states) for the dashboard."""
+    with db.closing_conn() as conn:
+        types = [r[0] for r in conn.execute(
+            "SELECT DISTINCT applicant_type FROM rfps WHERE relevant=1 "
+            "AND applicant_type IS NOT NULL AND applicant_type != '' "
+            "ORDER BY applicant_type")]
+        states = [r[0] for r in conn.execute(
+            "SELECT DISTINCT state FROM rfps WHERE relevant=1 "
+            "AND state IS NOT NULL AND state != '' ORDER BY state")]
+    return {"applicant_types": types, "states": states}
 
 
 @app.get("/api/rfps/{application_number}")

@@ -84,10 +84,17 @@ earliest close. Status is OPEN, CLOSING SOON (<7 days left), or CLOSED, \
 computed from today's date. Price must be the primary evaluation factor in \
 E-Rate bidding. FY2027 filing season opened July 1, 2026.
 - Fit score buckets (weights configurable in Settings): Service match (40) — \
-overlap with Mission Telecom's catalog/price list; Deal size (20) — \
-log-scaled prior-FY 471 spend; Winnability (20) — bid barriers, remaining \
-window, restrictions; Strategic fit (20) — priority states, entity type, \
-multi-year terms.
+how well the RFP matches Mission Telecom's wireless-connectivity catalog; \
+Deal size (20) — log-scaled prior-FY 471 spend; Winnability (20) — bid \
+barriers, remaining window, restrictions; Strategic fit (20) — entity type \
+(libraries and schools rank highest), wireless demand, priority states.
+- MISSION FIT: scoring is tuned to Mission Telecom's real business — a \
+nonprofit WIRELESS ISP on the T-Mobile network. "Biddable" RFPs are E-Rate \
+Category 1 internet access / data transmission a wireless carrier can serve. \
+RFPs requiring leased fiber, or that are only Category 2 internal-connections \
+hardware (switches, routers, firewalls, access points, cabling), are marked \
+NOT a fit and scored far lower — Mission Telecom sells connectivity, not \
+fiber builds or LAN equipment. The dashboard defaults to Mission-fit-only.
 
 PAGES (use navigate to send the user there)
 - "dashboard": sortable/filterable RFP table (filters: status, state, text \
@@ -130,13 +137,21 @@ saying you did it without the tool call does nothing.
 TOOLS = [
     {"type": "function", "function": {
         "name": "list_rfps",
-        "description": "List RFPs. Returns entity, state, score, status, "
-                       "days left, deadline, services, est prior spend.",
+        "description": "List RFPs. Returns entity, state, type, score, "
+                       "status, days left, deadline, services, est prior "
+                       "spend, and mission_biddable (can Mission Telecom "
+                       "deliver it).",
         "parameters": {"type": "object", "properties": {
             "status": {"type": "string",
                        "enum": ["OPEN", "CLOSING SOON", "CLOSED", "ALL"]},
             "state": {"type": "string",
                       "description": "2-letter code or full name"},
+            "applicant_type": {"type": "string",
+                               "description": "School, School District, "
+                               "Library, Library System, Consortium"},
+            "mission_only": {"type": "boolean",
+                             "description": "only RFPs Mission Telecom can "
+                             "deliver (default true)", "default": True},
             "search": {"type": "string",
                        "description": "entity name or 470 number substring"},
             "limit": {"type": "integer", "default": 15}}}}},
@@ -215,17 +230,26 @@ TOOLS = [
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",
                                        "ALL"]},
             "state_filter": {"type": "string"},
+            "applicant_type": {"type": "string",
+                               "description": "filter dashboard by entity "
+                               "type (School, Library, Consortium, ...)"},
             "search": {"type": "string"},
             "open_application_number": {"type": "string"}}}}},
 ]
 
 
-def _decorated_rfp_rows(status=None, state=None, search=None, limit=15):
+def _decorated_rfp_rows(status=None, state=None, search=None, limit=15,
+                        applicant_type=None, mission_only=False):
     sql = "SELECT * FROM rfps WHERE relevant=1"
     params = []
+    if mission_only:
+        sql += " AND mission_biddable=1"
     if state:
         sql += " AND state=?"
         params.append(_norm_state(state))
+    if applicant_type:
+        sql += " AND applicant_type=?"
+        params.append(applicant_type)
     if search:
         sql += " AND (billed_entity_name LIKE ? OR application_number LIKE ?)"
         params += [f"%{search}%", f"%{search}%"]
@@ -242,6 +266,8 @@ def _decorated_rfp_rows(status=None, state=None, search=None, limit=15):
             "application_number": r["application_number"],
             "entity": r["billed_entity_name"], "state": r["state"],
             "type": r["applicant_type"], "fit_score": r["fit_score"],
+            "mission_biddable": bool(r["mission_biddable"]),
+            "mission_blockers": json.loads(r["mission_blockers"] or "[]"),
             "status": st, "days_left": days,
             "bid_deadline": str(status_mod.allowable_contract_date(
                 status_mod.parse_usac_date(r["certified_date"]),
@@ -259,8 +285,10 @@ def _exec_tool(name: str, args: dict) -> dict:
     """Execute one tool; always returns a JSON-serializable dict."""
     try:
         if name == "list_rfps":
-            rows = _decorated_rfp_rows(args.get("status"), args.get("state"),
-                                       args.get("search"), args.get("limit", 15))
+            rows = _decorated_rfp_rows(
+                args.get("status"), args.get("state"), args.get("search"),
+                args.get("limit", 15), args.get("applicant_type"),
+                args.get("mission_only", False))
             return {"count": len(rows), "rfps": rows}
         if name == "get_rfp":
             an = str(args["application_number"]).strip()

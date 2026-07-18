@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS rfps (
     fit_score REAL,
     score_breakdown TEXT,
     score_rationale TEXT,
+    mission_biddable INTEGER,
+    mission_blockers TEXT DEFAULT '[]',
     analysis TEXT,
     doc_text TEXT,
     doc_files TEXT DEFAULT '[]',
@@ -107,7 +109,19 @@ def connect(db_path=None) -> sqlite3.Connection:
 def init_db(db_path=None) -> None:
     with closing_conn(db_path) as conn:
         conn.executescript(SCHEMA)
+        _migrate(conn)
         conn.commit()
+
+
+def _migrate(conn) -> None:
+    """Add columns introduced after a DB was first created (CREATE TABLE
+    IF NOT EXISTS won't alter an existing table)."""
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(rfps)")}
+    if "mission_biddable" not in cols:
+        conn.execute("ALTER TABLE rfps ADD COLUMN mission_biddable INTEGER")
+    if "mission_blockers" not in cols:
+        conn.execute(
+            "ALTER TABLE rfps ADD COLUMN mission_blockers TEXT DEFAULT '[]'")
 
 
 @contextmanager

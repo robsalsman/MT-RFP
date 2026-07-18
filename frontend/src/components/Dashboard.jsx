@@ -33,6 +33,9 @@ export default function Dashboard() {
   const [rows, setRows] = useState([])
   const [statusFilter, setStatusFilter] = useState('OPEN')
   const [stateFilter, setStateFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [missionOnly, setMissionOnly] = useState(true)
+  const [facets, setFacets] = useState({ applicant_types: [], states: [] })
   const [q, setQ] = useState('')
   const [sort, setSort] = useState({ key: 'fit_score', dir: -1 })
   const [selected, setSelected] = useState(null)
@@ -43,13 +46,15 @@ export default function Dashboard() {
 
   const load = useCallback(() => {
     setLoading(true)
-    api.rfps({ status: statusFilter, state: stateFilter, q })
+    api.rfps({ status: statusFilter, state: stateFilter,
+      applicant_type: typeFilter, mission_only: missionOnly, q })
       .then((d) => setRows(d.rfps))
       .finally(() => setLoading(false))
-  }, [statusFilter, stateFilter, q])
+  }, [statusFilter, stateFilter, typeFilter, missionOnly, q])
 
   useEffect(() => { load() }, [load])
   useEffect(() => { api.syncStatus().then(setSync).catch(() => {}) }, [])
+  useEffect(() => { api.facets().then(setFacets).catch(() => {}) }, [])
 
   // assistant-driven navigation: filters + open a specific RFP
   useEffect(() => {
@@ -58,6 +63,7 @@ export default function Dashboard() {
       if (d.status_filter) setStatusFilter(d.status_filter === 'ALL' ? ''
         : d.status_filter)
       if (d.state_filter !== undefined) setStateFilter(d.state_filter || '')
+      if (d.applicant_type !== undefined) setTypeFilter(d.applicant_type || '')
       if (d.search !== undefined) setQ(d.search || '')
       if (d.open_application_number) setSelected(d.open_application_number)
     }
@@ -87,7 +93,10 @@ export default function Dashboard() {
   const clickSort = (key) => setSort((s) =>
     s.key === key ? { key, dir: -s.dir } : { key, dir: -1 })
 
-  const states = [...new Set(rows.map((r) => r.state).filter(Boolean))].sort()
+  const states = facets.states?.length
+    ? facets.states
+    : [...new Set(rows.map((r) => r.state).filter(Boolean))].sort()
+  const types = facets.applicant_types || []
 
   const syncNote = sync?.running ? 'Sync running…'
     : sync?.last_sync
@@ -110,6 +119,16 @@ export default function Dashboard() {
           <option value="">All states</option>
           {states.map((s) => <option key={s}>{s}</option>)}
         </select>
+        <select value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}>
+          <option value="">All types</option>
+          {types.map((t) => <option key={t}>{t}</option>)}
+        </select>
+        <label className="mission-toggle" title="Show only RFPs Mission Telecom can bid on and deliver (Category 1 wireless-serviceable internet access; excludes fiber builds and LAN hardware)">
+          <input type="checkbox" checked={missionOnly}
+            onChange={(e) => setMissionOnly(e.target.checked)} />
+          Mission fit only
+        </label>
         {/* mobile has no sortable column headers, so expose sort here */}
         {isMobile && (
           <select value={sort.key} onChange={(e) =>
@@ -138,7 +157,11 @@ export default function Dashboard() {
                     ? ` · ${r.days_left}d left` : ''}</span>
                 <span className="rfp-card-state">{r.state}</span>
               </div>
-              <div className="rfp-card-entity">{r.billed_entity_name}</div>
+              <div className="rfp-card-entity">{r.billed_entity_name}
+                {r.mission_biddable === 0 && (
+                  <span className="notfit" title={(r.mission_blockers
+                    || []).join('; ')}>not a fit</span>)}
+              </div>
               <div className="svc">{r.applicant_type}
                 {r.service_types?.length
                   ? ` · ${r.service_types.join(', ')}` : ''}</div>
@@ -170,7 +193,11 @@ export default function Dashboard() {
                 <td className="score">{r.fit_score ?? '—'}</td>
                 <td>{r.state}</td>
                 <td>
-                  <div>{r.billed_entity_name}</div>
+                  <div>{r.billed_entity_name}
+                    {r.mission_biddable === 0 && (
+                      <span className="notfit" title={(r.mission_blockers
+                        || []).join('; ')}>not a fit</span>)}
+                  </div>
                   <div className="rationale">{r.score_rationale}</div>
                 </td>
                 <td>{r.applicant_type}</td>

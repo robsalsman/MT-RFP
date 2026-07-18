@@ -54,6 +54,20 @@ export default function Detail({ applicationNumber, onClose }) {
         <dt>Functions</dt><dd className="small">{(rfp.functions || []).join(', ')}</dd>
       </dl>
 
+      <div className="card">
+        <b>Mission Telecom fit:</b>{' '}
+        {rfp.mission_biddable === 0
+          ? <span className="notfit">not a fit</span>
+          : <span className="ok">biddable — wireless-serviceable</span>}
+        {(rfp.mission_blockers || []).length > 0 && (
+          <ul className="reqlist">{rfp.mission_blockers.map((b, i) => (
+            <li key={i} className="err">{b}</li>))}</ul>)}
+        {rfp.score_breakdown?.service_match?.detail?.concerns?.length > 0 && (
+          <ul className="reqlist">{rfp.score_breakdown.service_match.detail
+            .concerns.map((c, i) => (
+              <li key={i} className="warn">{c}</li>))}</ul>)}
+      </div>
+
       {rfp.score_breakdown && (
         <div className="card">
           <b>Score breakdown</b>

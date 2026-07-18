@@ -81,25 +81,65 @@ DEFAULT_SETTINGS = {
         "full_points_at_annual_spend": 250000,
     },
     "strategic_fit": {
-        "priority_states": ["TX", "CA", "FL", "NY"],
-        "priority_state_points": 8,
-        "entity_type_points": {"School District": 6, "School": 5, "Library": 4,
-                               "Library System": 4, "Consortium": 6},
-        "preferred_contract_years_min": 3,
-        "multi_year_points": 6,
+        # Mission Telecom's field is under-resourced K-12 & libraries; its
+        # library hotspot-lending program (Project: Volume Up) makes libraries
+        # an especially strong fit.
+        "priority_states": [],
+        "priority_state_points": 6,
+        "entity_type_points": {"Library": 10, "Library System": 10,
+                               "School": 8, "Consortium": 6,
+                               "School District": 7},
+        "preferred_contract_years_min": 1,
+        "multi_year_points": 4,
     },
-    # Mission Telecom's core catalog categories. Used for service-match until a
-    # price list is uploaded, then augmented by the price list's categories.
-    "core_services": [
-        "internet access", "data transmission", "wireless", "cellular",
-        "wi-fi", "wifi", "leased lit fiber", "broadband",
+}
+
+# --- Mission Telecom capability profile -----------------------------------
+# Derived from missiontelecom.org (see data/company_knowledge.md). Mission
+# Telecom is a NONPROFIT WIRELESS ISP running on the T-Mobile 5G/4G network.
+# It sells internet access / data transmission delivered over fixed wireless
+# and cellular (mobile hotspots, connected tablets, BYOD) to schools and
+# libraries. It does NOT build fiber and does NOT sell/install LAN hardware
+# (switches, routers, firewalls, wireless access points, cabling, UPS).
+#
+# Scoring uses this to find the RFPs Mission Telecom can actually bid on and
+# win: E-Rate Category 1 internet access / data transmission at bandwidths
+# deliverable over wireless — not fiber builds, multi-gig circuits, or
+# Category 2 internal-connections hardware.
+MISSION_TELECOM = {
+    # E-Rate service the company bids on (Category 1 connectivity)
+    "core_service_types": [
+        "data transmission and/or internet access",
     ],
-    "secondary_services": [
-        "internal connections", "wireless access points", "access points",
-        "wireless controllers", "switches", "routers", "firewall",
-        "managed internal broadband", "basic maintenance", "cabling",
-        "leased dark fiber", "antennas",
+    # what Mission Telecom actually delivers (wireless connectivity)
+    "core_terms": [
+        "internet access", "data transmission", "broadband", "wan",
+        "wireless", "cellular", "lte", "5g", "4g", "fixed wireless",
+        "hotspot", "mobile data", "mobile hotspot",
     ],
+    # exact-niche signals that make an RFP an especially strong fit
+    "sweet_spot_terms": [
+        "fixed wireless", "wireless", "cellular", "lte", "5g", "hotspot",
+        "mobile", "wi-fi hotspot", "lending",
+    ],
+    # requested services/functions Mission Telecom CANNOT deliver:
+    # dedicated fiber builds, and Category 2 internal-connections hardware.
+    "cannot_deliver_terms": [
+        "leased dark fiber", "leased lit fiber", "dark fiber", "lit fiber",
+        "switch", "router", "firewall", "cabling", "access point",
+        "wireless controller", "antenna", "uninterruptable", "ups",
+        "battery backup", "rack", "structured cabling", "caching",
+    ],
+    # E-Rate service categories that are LAN hardware, not Mission's business
+    "excluded_service_types": [
+        "internal connections",
+        "basic maintenance of internal connections",
+        "managed internal broadband services",
+    ],
+    # realistic delivery ceiling for fixed wireless / cellular, in Mbps.
+    # Above this a wireless carrier can't serve the circuit.
+    "max_deliverable_mbps": 1000,
+    "sweet_spot_mbps": 500,
 }
 
 
