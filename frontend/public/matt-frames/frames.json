@@ -82,7 +82,20 @@
     "wave_bye": "poses/matt_pose_wave_bye.png",
     "wave_hello": "poses/matt_pose_wave_hello.png",
     "welcome": "poses/matt_pose_welcome.png",
-    "wince": "poses/matt_pose_wince.png"
+    "wince": "poses/matt_pose_wince.png",
+    "hold_clipboard": "poses/matt_hold_clipboard.png",
+    "hold_coffee_mug": "poses/matt_hold_coffee_mug.png",
+    "hold_confetti": "poses/matt_hold_confetti.png",
+    "hold_cowbell": "poses/matt_hold_cowbell.png",
+    "hold_document": "poses/matt_hold_document.png",
+    "hold_guitar_electric": "poses/matt_hold_guitar_electric.png",
+    "hold_headphones": "poses/matt_hold_headphones.png",
+    "hold_keytar": "poses/matt_hold_keytar.png",
+    "hold_laptop": "poses/matt_hold_laptop.png",
+    "hold_mic_handheld": "poses/matt_hold_mic_handheld.png",
+    "hold_pointer": "poses/matt_hold_pointer.png",
+    "hold_sunglasses": "poses/matt_hold_sunglasses.png",
+    "hold_trophy": "poses/matt_hold_trophy.png"
   },
   "sequences": {
     "air_guitar": [

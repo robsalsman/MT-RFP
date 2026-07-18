@@ -59,26 +59,25 @@ function createRecorder() {
 // Matt's closet — driven by the quality full-body poses (the generator's
 // standalone props + hold poses came back unusable, so each item just strikes
 // the matching painted pose). id -> label + pose key in frames.json.
-// Each item strikes the matching painted pose. `prop` (when present) is a
-// standalone painted item shown as the drawer thumbnail; otherwise the pose
-// itself is the thumbnail.
+// Matt's closet: pull an item out and he actually holds it. `hold` is his
+// hold pose (frames.json poses key), `prop` the painted item shown as the
+// drawer thumbnail. Grouped by `kind`.
 const CLOSET = [
-  { id: 'guitar', label: '🎸 Guitar', pose: 'guitar_strum', kind: 'Music', prop: 'prop_music_guitar_electric' },
-  { id: 'solo', label: '🎸 Solo', pose: 'guitar_solo', kind: 'Music', prop: 'prop_music_guitar_electric' },
-  { id: 'air', label: '🤘 Air guitar', pose: 'air_guitar', kind: 'Music' },
-  { id: 'mic', label: '🎤 Sing', pose: 'mic_sing', kind: 'Music', prop: 'prop_music_mic_handheld' },
-  { id: 'headphones', label: '🎧 Headphones', pose: 'headphones_on', kind: 'Music', prop: 'prop_music_headphones' },
-  { id: 'drums', label: '🥁 Drums', pose: 'drumming', kind: 'Music', prop: 'prop_music_drumsticks' },
-  { id: 'keytar', label: '🎹 Keytar', pose: 'mic_point', kind: 'Music', prop: 'prop_music_keytar' },
-  { id: 'laptop', label: '💻 Laptop', pose: 'typing', kind: 'Business' },
-  { id: 'docs', label: '📄 RFP docs', pose: 'reading_doc', kind: 'Business' },
-  { id: 'clipboard', label: '📋 Clipboard', pose: 'clipboard', kind: 'Business' },
-  { id: 'present', label: '📊 Present', pose: 'present_chart', kind: 'Business' },
-  { id: 'coffee', label: '☕ Coffee', pose: 'coffee_sip', kind: 'Business' },
-  { id: 'trophy', label: '🏆 Trophy', pose: 'present_win', kind: 'Flair' },
-  { id: 'horns', label: '🤘 Rock horns', pose: 'rock_horns', kind: 'Flair' },
-  { id: 'relaxed', label: '😎 Chill', pose: 'idle_relaxed', kind: 'Flair' },
+  { id: 'guitar_electric', label: 'Guitar', kind: 'Music', hold: 'hold_guitar_electric', prop: 'prop_music_guitar_electric' },
+  { id: 'mic_handheld', label: 'Mic', kind: 'Music', hold: 'hold_mic_handheld', prop: 'prop_music_mic_handheld' },
+  { id: 'headphones', label: 'Headphones', kind: 'Music', hold: 'hold_headphones', prop: 'prop_music_headphones' },
+  { id: 'keytar', label: 'Keytar', kind: 'Music', hold: 'hold_keytar', prop: 'prop_music_keytar' },
+  { id: 'cowbell', label: 'Cowbell', kind: 'Music', hold: 'hold_cowbell', prop: 'prop_flair_cowbell' },
+  { id: 'laptop', label: 'Laptop', kind: 'Business', hold: 'hold_laptop', prop: 'prop_biz_laptop' },
+  { id: 'clipboard', label: 'Clipboard', kind: 'Business', hold: 'hold_clipboard', prop: 'prop_biz_clipboard' },
+  { id: 'document', label: 'RFP docs', kind: 'Business', hold: 'hold_document', prop: 'prop_biz_document_stack' },
+  { id: 'pointer', label: 'Pointer', kind: 'Business', hold: 'hold_pointer', prop: 'prop_biz_pointer' },
+  { id: 'coffee_mug', label: 'Coffee', kind: 'Business', hold: 'hold_coffee_mug', prop: 'prop_biz_coffee_mug' },
+  { id: 'sunglasses', label: 'Shades', kind: 'Flair', hold: 'hold_sunglasses', prop: 'prop_flair_sunglasses' },
+  { id: 'trophy', label: 'Trophy', kind: 'Flair', hold: 'hold_trophy', prop: 'prop_flair_trophy' },
+  { id: 'confetti', label: 'Confetti', kind: 'Flair', hold: 'hold_confetti', prop: 'prop_flair_confetti' },
 ]
+const CLOSET_KINDS = ['Music', 'Business', 'Flair']
 
 export default function ChatBot() {
   const [view, setView] = useState('stage')      // 'stage' | 'min' | 'call'
@@ -493,22 +492,27 @@ export default function ChatBot() {
               <button className="closet-put" disabled={!closetPose}
                 onClick={() => setClosetPose(null)}>Put away</button>
             </div>
-            <div className="closet-grid">
-              {CLOSET.map((it) => (
-                <button key={it.id}
-                  className={`closet-item ${closetPose === it.pose ? 'sel' : ''}`}
-                  title={`${it.kind} — ${it.label}`}
-                  onClick={() => {
-                    if (seqTimer.current) clearTimeout(seqTimer.current)
-                    setSeqPlay(null); setClosetPose(it.pose)
-                  }}>
-                  <img className={it.prop ? 'prop' : ''} alt=""
-                    src={it.prop
-                      ? `/matt-frames/props/${it.prop}.png`
-                      : `/matt-frames/poses/matt_pose_${it.pose}.png`} />
-                  <span>{it.label}</span>
-                </button>
-              ))}
+            <div className="closet-groups-scroll">
+            {CLOSET_KINDS.map((kind) => (
+              <div key={kind} className="closet-group">
+                <div className="closet-kind">{kind}</div>
+                <div className="closet-grid">
+                  {CLOSET.filter((it) => it.kind === kind).map((it) => (
+                    <button key={it.id}
+                      className={`closet-item ${closetPose === it.hold ? 'sel' : ''}`}
+                      title={`Matt grabs the ${it.label.toLowerCase()}`}
+                      onClick={() => {
+                        if (seqTimer.current) clearTimeout(seqTimer.current)
+                        setSeqPlay(null); setClosetPose(it.hold)
+                      }}>
+                      <img className="prop" alt=""
+                        src={`/matt-frames/props/${it.prop}.png`} />
+                      <span>{it.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
             </div>
           </div>
         )}

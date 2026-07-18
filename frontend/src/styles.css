@@ -277,8 +277,11 @@ th.sorted { color: var(--accent); }
   border: 1px solid var(--line); background: var(--field); color: var(--ink);
   cursor: pointer; }
 .closet-put:disabled { opacity: 0.4; cursor: default; }
-.closet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
-  max-height: 190px; overflow-y: auto; }
+.closet-groups-scroll { max-height: 210px; overflow-y: auto; }
+.closet-group + .closet-group { margin-top: 6px; }
+.closet-kind { font-size: 9.5px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 3px 2px; }
+.closet-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .closet-item { display: flex; flex-direction: column; align-items: center;
   gap: 2px; padding: 4px 2px; border-radius: 9px; cursor: pointer;
   background: var(--field); border: 1px solid transparent; }

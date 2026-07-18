@@ -1,0 +1,324 @@
+{
+  "character": "Matt",
+  "background": "#00b140",
+  "items": [
+    {
+      "id": "music_guitar_electric",
+      "category": "music",
+      "image": "props/prop_music_guitar_electric.png",
+      "hold_pose": "poses/matt_hold_guitar_electric.png"
+    },
+    {
+      "id": "music_guitar_acoustic",
+      "category": "music",
+      "image": "props/prop_music_guitar_acoustic.png"
+    },
+    {
+      "id": "music_bass",
+      "category": "music",
+      "image": "props/prop_music_bass.png"
+    },
+    {
+      "id": "music_keytar",
+      "category": "music",
+      "image": "props/prop_music_keytar.png",
+      "hold_pose": "poses/matt_hold_keytar.png"
+    },
+    {
+      "id": "music_mic_handheld",
+      "category": "music",
+      "image": "props/prop_music_mic_handheld.png",
+      "hold_pose": "poses/matt_hold_mic_handheld.png"
+    },
+    {
+      "id": "music_mic_stand",
+      "category": "music",
+      "image": "props/prop_music_mic_stand.png"
+    },
+    {
+      "id": "music_headphones",
+      "category": "music",
+      "image": "props/prop_music_headphones.png",
+      "hold_pose": "poses/matt_hold_headphones.png"
+    },
+    {
+      "id": "music_amp",
+      "category": "music",
+      "image": "props/prop_music_amp.png"
+    },
+    {
+      "id": "music_drumsticks",
+      "category": "music",
+      "image": "props/prop_music_drumsticks.png"
+    },
+    {
+      "id": "music_drum_kit",
+      "category": "music",
+      "image": "props/prop_music_drum_kit.png"
+    },
+    {
+      "id": "music_synth",
+      "category": "music",
+      "image": "props/prop_music_synth.png"
+    },
+    {
+      "id": "music_cable",
+      "category": "music",
+      "image": "props/prop_music_cable.png"
+    },
+    {
+      "id": "music_pick",
+      "category": "music",
+      "image": "props/prop_music_pick.png"
+    },
+    {
+      "id": "music_vinyl",
+      "category": "music",
+      "image": "props/prop_music_vinyl.png"
+    },
+    {
+      "id": "music_cassette",
+      "category": "music",
+      "image": "props/prop_music_cassette.png"
+    },
+    {
+      "id": "music_boombox",
+      "category": "music",
+      "image": "props/prop_music_boombox.png"
+    },
+    {
+      "id": "music_gold_record",
+      "category": "music",
+      "image": "props/prop_music_gold_record.png"
+    },
+    {
+      "id": "music_tour_case",
+      "category": "music",
+      "image": "props/prop_music_tour_case.png"
+    },
+    {
+      "id": "biz_laptop",
+      "category": "biz",
+      "image": "props/prop_biz_laptop.png",
+      "hold_pose": "poses/matt_hold_laptop.png"
+    },
+    {
+      "id": "biz_tablet",
+      "category": "biz",
+      "image": "props/prop_biz_tablet.png"
+    },
+    {
+      "id": "biz_smartphone",
+      "category": "biz",
+      "image": "props/prop_biz_smartphone.png"
+    },
+    {
+      "id": "biz_clipboard",
+      "category": "biz",
+      "image": "props/prop_biz_clipboard.png",
+      "hold_pose": "poses/matt_hold_clipboard.png"
+    },
+    {
+      "id": "biz_document_stack",
+      "category": "biz",
+      "image": "props/prop_biz_document_stack.png",
+      "hold_pose": "poses/matt_hold_document.png"
+    },
+    {
+      "id": "biz_contract",
+      "category": "biz",
+      "image": "props/prop_biz_contract.png"
+    },
+    {
+      "id": "biz_pen",
+      "category": "biz",
+      "image": "props/prop_biz_pen.png"
+    },
+    {
+      "id": "biz_briefcase",
+      "category": "biz",
+      "image": "props/prop_biz_briefcase.png"
+    },
+    {
+      "id": "biz_coffee_mug",
+      "category": "biz",
+      "image": "props/prop_biz_coffee_mug.png",
+      "hold_pose": "poses/matt_hold_coffee_mug.png"
+    },
+    {
+      "id": "biz_whiteboard",
+      "category": "biz",
+      "image": "props/prop_biz_whiteboard.png"
+    },
+    {
+      "id": "biz_chart_easel",
+      "category": "biz",
+      "image": "props/prop_biz_chart_easel.png"
+    },
+    {
+      "id": "biz_calculator",
+      "category": "biz",
+      "image": "props/prop_biz_calculator.png"
+    },
+    {
+      "id": "biz_desk_phone",
+      "category": "biz",
+      "image": "props/prop_biz_desk_phone.png"
+    },
+    {
+      "id": "biz_name_badge",
+      "category": "biz",
+      "image": "props/prop_biz_name_badge.png"
+    },
+    {
+      "id": "biz_pointer",
+      "category": "biz",
+      "image": "props/prop_biz_pointer.png",
+      "hold_pose": "poses/matt_hold_pointer.png"
+    },
+    {
+      "id": "biz_folder",
+      "category": "biz",
+      "image": "props/prop_biz_folder.png"
+    },
+    {
+      "id": "biz_sticky_notes",
+      "category": "biz",
+      "image": "props/prop_biz_sticky_notes.png"
+    },
+    {
+      "id": "biz_filing_box",
+      "category": "biz",
+      "image": "props/prop_biz_filing_box.png"
+    },
+    {
+      "id": "flair_sunglasses",
+      "category": "flair",
+      "image": "props/prop_flair_sunglasses.png",
+      "hold_pose": "poses/matt_hold_sunglasses.png"
+    },
+    {
+      "id": "flair_leather_jacket",
+      "category": "flair",
+      "image": "props/prop_flair_leather_jacket.png"
+    },
+    {
+      "id": "flair_scarf",
+      "category": "flair",
+      "image": "props/prop_flair_scarf.png"
+    },
+    {
+      "id": "flair_hat",
+      "category": "flair",
+      "image": "props/prop_flair_hat.png"
+    },
+    {
+      "id": "flair_cowbell",
+      "category": "flair",
+      "image": "props/prop_flair_cowbell.png",
+      "hold_pose": "poses/matt_hold_cowbell.png"
+    },
+    {
+      "id": "flair_trophy",
+      "category": "flair",
+      "image": "props/prop_flair_trophy.png",
+      "hold_pose": "poses/matt_hold_trophy.png"
+    },
+    {
+      "id": "flair_confetti",
+      "category": "flair",
+      "image": "props/prop_flair_confetti.png",
+      "hold_pose": "poses/matt_hold_confetti.png"
+    },
+    {
+      "id": "flair_backstage_pass",
+      "category": "flair",
+      "image": "props/prop_flair_backstage_pass.png"
+    },
+    {
+      "id": "studio_stool",
+      "category": "studio",
+      "image": "props/prop_studio_stool.png"
+    },
+    {
+      "id": "studio_couch",
+      "category": "studio",
+      "image": "props/prop_studio_couch.png"
+    },
+    {
+      "id": "studio_rug",
+      "category": "studio",
+      "image": "props/prop_studio_rug.png"
+    },
+    {
+      "id": "studio_floor_lamp",
+      "category": "studio",
+      "image": "props/prop_studio_floor_lamp.png"
+    },
+    {
+      "id": "studio_neon_sign",
+      "category": "studio",
+      "image": "props/prop_studio_neon_sign.png"
+    },
+    {
+      "id": "studio_plant",
+      "category": "studio",
+      "image": "props/prop_studio_plant.png"
+    },
+    {
+      "id": "studio_poster",
+      "category": "studio",
+      "image": "props/prop_studio_poster.png"
+    },
+    {
+      "id": "studio_standing_desk",
+      "category": "studio",
+      "image": "props/prop_studio_standing_desk.png"
+    },
+    {
+      "id": "studio_monitor",
+      "category": "studio",
+      "image": "props/prop_studio_monitor.png"
+    },
+    {
+      "id": "studio_desk_chair",
+      "category": "studio",
+      "image": "props/prop_studio_desk_chair.png"
+    },
+    {
+      "id": "studio_spotlight",
+      "category": "studio",
+      "image": "props/prop_studio_spotlight.png"
+    },
+    {
+      "id": "studio_amp_stack",
+      "category": "studio",
+      "image": "props/prop_studio_amp_stack.png"
+    },
+    {
+      "id": "studio_closet_closed",
+      "category": "studio",
+      "image": "props/prop_studio_closet_closed.png"
+    },
+    {
+      "id": "studio_closet_open",
+      "category": "studio",
+      "image": "props/prop_studio_closet_open.png"
+    }
+  ],
+  "hold_poses": [
+    "poses/matt_hold_guitar_electric.png",
+    "poses/matt_hold_mic_handheld.png",
+    "poses/matt_hold_headphones.png",
+    "poses/matt_hold_keytar.png",
+    "poses/matt_hold_laptop.png",
+    "poses/matt_hold_clipboard.png",
+    "poses/matt_hold_document.png",
+    "poses/matt_hold_pointer.png",
+    "poses/matt_hold_coffee_mug.png",
+    "poses/matt_hold_sunglasses.png",
+    "poses/matt_hold_cowbell.png",
+    "poses/matt_hold_trophy.png",
+    "poses/matt_hold_confetti.png"
+  ]
+}
