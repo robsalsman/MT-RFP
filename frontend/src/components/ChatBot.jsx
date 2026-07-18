@@ -5,6 +5,7 @@ import { useMattPhysics } from '../useMattPhysics.js'
 import Matt from './Matt.jsx'
 import MattStage from './MattStage.jsx'
 import MattPuppet from './MattPuppet.jsx'
+import MattFrames from './MattFrames.jsx'
 import StageGear from './StageGear.jsx'
 import * as mattAudio from '../mattAudio.js'
 
@@ -59,6 +60,7 @@ export default function ChatBot() {
   const [view, setView] = useState('stage')      // 'stage' | 'min' | 'call'
   const [chatOpen, setChatOpen] = useState(false)
   const [puppetFailed, setPuppetFailed] = useState(false)
+  const [framesReady, setFramesReady] = useState(false)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -449,16 +451,20 @@ export default function ChatBot() {
               downloadDraft(bubbleDownloads.id, 'pdf')}>⬇ Download PDF</button>
           </div>)}
 
-        {puppetFailed ? (
-          <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
-            lean={phys.lean} stumble={phys.stumble} props={phys.props} />
-        ) : (
-          <div className="puppet-wrap">
+        <div className="puppet-wrap">
+          {/* painted frames (top tier) — activate once real art is dropped in */}
+          <MattFrames state={avatar.state} mouth={avatar.mouth} lean={phys.lean}
+            onReady={() => setFramesReady(true)} onFail={() => {}} />
+          {/* until frames are ready: vector puppet, then hand-drawn fallback */}
+          {!framesReady && (puppetFailed ? (
+            <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
+              lean={phys.lean} stumble={phys.stumble} props={phys.props} />
+          ) : (
             <MattPuppet state={avatar.state} mouth={avatar.mouth}
               lean={phys.lean} onFail={() => setPuppetFailed(true)} />
-            <StageGear props={phys.props} />
-          </div>
-        )}
+          ))}
+          <StageGear props={phys.props} />
+        </div>
 
         <div className="stage-name">Matt<span className="stage-status">
           {statusLabel}</span></div>

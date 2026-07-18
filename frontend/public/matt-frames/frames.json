@@ -1,0 +1,23 @@
+{
+  "canvas": [512, 768],
+  "chromaKey": "#00b140",
+  "note": "Drop the green-screen PNGs named below into this folder. The app auto-keys the green and switches Matt to the painted frames. Until the idle frame exists it uses the vector puppet.",
+  "states": {
+    "idle":      { "src": "pose_idle_sit_stool.png" },
+    "listening": { "src": "pose_listening.png" },
+    "speaking":  { "mouths": {
+      "closed": "talk_closed.png",
+      "mid":    "talk_mid.png",
+      "open":   "talk_open.png"
+    } }
+  },
+  "actions": {
+    "thinking":   { "src": "pose_thinking.png" },
+    "phone_look": { "src": "pose_phone_look.png" },
+    "point":      { "src": "pose_point.png" },
+    "guitar":     { "src": "pose_guitar.png" },
+    "celebrate":  { "src": "pose_celebrate.png" },
+    "wave":       { "src": "pose_wave.png" },
+    "shrug":      { "src": "pose_shrug.png" }
+  }
+}
