@@ -145,6 +145,11 @@ th.sorted { color: var(--accent); }
     #0c0a1c 100%);
   border: 1px solid #2a2350; box-shadow: 0 18px 50px rgba(0,0,0,.45);
   padding: 8px 10px 12px; }
+.matt-dock.draggable .stage-card { cursor: grab; }
+.matt-dock.dragging .stage-card { cursor: grabbing; }
+.matt-dock.dragging { user-select: none; }
+.stage-grab { position: absolute; top: 7px; left: 10px; font-size: 10px;
+  color: #8f7fd6; letter-spacing: .02em; opacity: .8; pointer-events: none; }
 .stage-top { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px;
   z-index: 3; }
 .stage-icon { background: rgba(255,255,255,.1); color: #cbb9ff;

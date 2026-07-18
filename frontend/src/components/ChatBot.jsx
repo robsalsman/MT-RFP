@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { authFetch, auth } from '../api.js'
+import { useIsMobile } from '../useMediaQuery.js'
+import { useMattPhysics } from '../useMattPhysics.js'
 import Matt from './Matt.jsx'
 import MattStage from './MattStage.jsx'
 import * as mattAudio from '../mattAudio.js'
@@ -64,6 +66,9 @@ export default function ChatBot() {
   const bodyRef = useRef(null)
   const recRef = useRef(null)
   const name = auth.name()
+  const isMobile = useIsMobile()
+  const { style: dockStyle, phys, onPointerDown: onDockDown, dragging, resetPos }
+    = useMattPhysics(!isMobile)
 
   // refs so the auto-relisten effect reads live values, not stale closures
   const viewRef = useRef(view); const chatRef = useRef(chatOpen)
@@ -316,7 +321,9 @@ export default function ChatBot() {
 
   // ---- stage (default): full-body Matt in a spotlight, chat slides out ----
   return (
-    <div className={`matt-dock ${chatOpen ? 'with-chat' : ''}`}>
+    <div className={`matt-dock ${chatOpen ? 'with-chat' : ''} `
+      + `${!isMobile ? 'draggable' : ''} ${dragging ? 'dragging' : ''}`}
+      style={dockStyle} onPointerDown={onDockDown}>
       {chatOpen && (
         <div className="chat-side">
           <div className="chat-head">
@@ -338,15 +345,22 @@ export default function ChatBot() {
 
       <div className="stage-card">
         <div className="stage-top">
+          {!isMobile && dockStyle.left && (
+            <button className="stage-icon" title="Reset Matt's position"
+              onClick={resetPos}>⟲</button>)}
           <button className="stage-icon" title="Full-screen call"
             onClick={() => setView('call')}>⤢</button>
           <button className="stage-icon" title="Minimize Matt"
             onClick={minimize}>–</button>
         </div>
 
+        {!isMobile && (
+          <div className="stage-grab">⠿ drag Matt anywhere</div>)}
         {!chatOpen && <div className="stage-bubble">{bubble.slice(0, 180)}</div>}
 
-        <MattStage state={avatar.state} mouth={avatar.mouth} height={300} />
+        <MattStage state={avatar.state} mouth={avatar.mouth} height={300}
+          lean={phys.lean} stumble={phys.stumble}
+          mic={phys.mic} bottle={phys.bottle} />
 
         <div className="stage-name">Matt<span className="stage-status">
           {statusLabel}</span></div>

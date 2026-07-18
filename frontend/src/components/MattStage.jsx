@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react'
 // leather jacket, guitar, ripped jeans, boots. Rim-lit by the spotlight so he
 // pops against the dark stage. Mouth opens with `mouth` (0..1, his voice);
 // blinks on his own; `state` adds a speaking/listening pulse.
-export default function MattStage({ state = 'idle', mouth = 0, height = 300 }) {
+export default function MattStage({ state = 'idle', mouth = 0, height = 300,
+  lean = 0, stumble = false, mic = { angle: 0, down: false },
+  bottle = { angle: 0, down: false } }) {
   const [blink, setBlink] = useState(0)
   useEffect(() => {
     let t
@@ -25,7 +27,7 @@ export default function MattStage({ state = 'idle', mouth = 0, height = 300 }) {
   const hairDk = '#170f0b'
 
   return (
-    <div className={`mattstage matt-${state}`}>
+    <div className={`mattstage matt-${state} ${stumble ? 'matt-stumble' : ''}`}>
       <svg viewBox="0 0 260 440" width="100%" height={height} preserveAspectRatio="xMidYMax meet"
         xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -48,6 +50,30 @@ export default function MattStage({ state = 'idle', mouth = 0, height = 300 }) {
         <ellipse className="pool" cx="130" cy="410" rx="92" ry="24" fill="url(#pool)" />
         <ellipse cx="130" cy="150" rx="70" ry="150" fill="url(#rimg)" opacity=".45" />
 
+        {/* stage props — they topple if you fling Matt too fast */}
+        <g transform={`rotate(${mic.angle.toFixed(1)} 50 410)`}>
+          <rect x="47" y="300" width="6" height="112" rx="3" fill="#2b2b33" />
+          <ellipse cx="50" cy="296" rx="9" ry="12" fill="#15151b" />
+          <ellipse cx="50" cy="296" rx="5.5" ry="8" fill="#39404d" />
+          <path d="M36 410 L50 402 L64 410 Z" fill="#1c1c22" />
+        </g>
+        <g transform={`rotate(${bottle.angle.toFixed(1)} 210 410)`}>
+          <rect x="204" y="382" width="12" height="28" rx="4" fill="#2f7d5b"
+            opacity=".92" />
+          <rect x="207" y="374" width="6" height="10" rx="2" fill="#1f5a41" />
+          <rect x="205" y="390" width="10" height="8" rx="2" fill="#d9ead0"
+            opacity=".5" />
+        </g>
+
+        {/* whoosh streaks when he stumbles */}
+        {stumble && (
+          <g stroke="#fff4cf" strokeOpacity=".5" strokeWidth="3" fill="none"
+            strokeLinecap="round">
+            <path d={lean < 0 ? 'M198 150 q16 40 6 90' : 'M62 150 q-16 40 -6 90'} />
+            <path d={lean < 0 ? 'M212 172 q14 34 6 72' : 'M48 172 q-14 34 -6 72'} />
+          </g>)}
+
+        <g transform={`rotate(${lean.toFixed(2)} 130 410)`}>
         <g transform="translate(130 0)">
           {/* legs — dark ripped jeans */}
           <path d="M-30 250 L-36 388 L-14 388 L-8 256 Z" fill="#20283f" />
@@ -120,6 +146,7 @@ export default function MattStage({ state = 'idle', mouth = 0, height = 300 }) {
               <path d="M-8 22 q8 4 16 0" stroke="#5c3128" strokeWidth="2"
                 fill="none" strokeLinecap="round" />)}
           </g>
+        </g>
         </g>
       </svg>
     </div>
