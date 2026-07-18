@@ -3,18 +3,6 @@ import { authFetch, auth } from '../api.js'
 import Matt from './Matt.jsx'
 import * as mattAudio from '../mattAudio.js'
 
-const welcome = () => {
-  const name = auth.name()
-  const hi = name ? `Hey ${name}! ` : 'Hey! '
-  return {
-    role: 'assistant', _welcome: true,
-    content: hi + "I'm Matt. Ask me anything about the app, your RFP " +
-      'pipeline, or Mission Telecom — by text or voice (🎤). Try: "which ' +
-      'deals close this week?", "show open libraries in Ohio", "what do our ' +
-      'broadband plans cost?"',
-  }
-}
-
 // ---- 16-bit mono WAV recorder (Riva ASR wants real WAV, not webm) ----
 function createRecorder() {
   let ctx, source, proc, stream, chunks = [], sampleRate = 48000
@@ -61,8 +49,8 @@ function createRecorder() {
 }
 
 export default function ChatBot() {
-  const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState(() => [welcome()])
+  const [open, setOpen] = useState(true)   // Matt drives — he's up on login
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [recording, setRecording] = useState(false)
@@ -70,7 +58,9 @@ export default function ChatBot() {
   const [voiceOk, setVoiceOk] = useState(false)
   const [avatar, setAvatar] = useState({ state: 'idle', mouth: 0 })
   const bodyRef = useRef(null)
+  const inputRef = useRef(null)
   const recRef = useRef(null)
+  const name = auth.name()
 
   useEffect(() => {
     fetch('/api/health').then((r) => r.json())
@@ -83,7 +73,8 @@ export default function ChatBot() {
     if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight
   }, [messages, open, busy])
 
-  const history = (msgs) => msgs.filter((m) => !m._welcome)
+  const started = messages.some((m) => m.role === 'user')
+  const history = (msgs) => msgs.filter((m) => !m._local)
     .map(({ role, content }) => ({ role, content }))
 
   const applyResult = (d, next) => {
@@ -107,8 +98,8 @@ export default function ChatBot() {
     } catch { /* voice is best-effort */ }
   }
 
-  const send = async () => {
-    const text = input.trim()
+  const send = async (preset) => {
+    const text = (preset ?? input).trim()
     if (!text || busy) return
     const next = [...messages, { role: 'user', content: text }]
     setMessages(next)
@@ -124,7 +115,8 @@ export default function ChatBot() {
       applyResult(d, next)
     } catch (e) {
       setMessages((m) => [...m, {
-        role: 'assistant', content: `Something went wrong: ${e.message}` }])
+        role: 'assistant', _local: true,
+        content: `Something went wrong: ${e.message}` }])
     } finally { setBusy(false) }
   }
 
@@ -138,7 +130,7 @@ export default function ChatBot() {
         setRecording(true)
         mattAudio.setState('listening')
       } catch {
-        setMessages((m) => [...m, { role: 'assistant',
+        setMessages((m) => [...m, { role: 'assistant', _local: true,
           content: 'Microphone access was blocked — allow it and try again.' }])
       }
       return
@@ -161,7 +153,8 @@ export default function ChatBot() {
       applyResult(d, next)
     } catch (e) {
       setMessages((m) => [...m, {
-        role: 'assistant', content: `Voice error: ${e.message}` }])
+        role: 'assistant', _local: true,
+        content: `Voice error: ${e.message}` }])
     } finally { setBusy(false) }
   }
 
@@ -196,7 +189,32 @@ export default function ChatBot() {
                 onClick={() => setOpen(false)}>✕</button>
             </span>
           </div>
+
           <div className="chat-body" ref={bodyRef}>
+            {!started && (
+              <div className="matt-hero">
+                <Matt state={avatar.state} mouth={avatar.mouth} size={104} />
+                <div className="matt-hero-title">
+                  Hey {name || 'there'}! I'm Matt.</div>
+                <div className="small">Talk to me or type — I'll pull up open
+                  RFPs, score them for us, draft responses, and take you right
+                  to what you need.</div>
+                {voiceOk && (
+                  <button className="primary cta-voice" onClick={toggleMic}
+                    disabled={busy && !recording}>
+                    {recording ? '⏹  Stop & send'
+                      : '🎤  Start a voice conversation'}
+                  </button>)}
+                <div className="cta-chips">
+                  {['Which deals close this week?',
+                    'Show open libraries', "What's our best RFP right now?"]
+                    .map((q) => (
+                      <button key={q} className="chip" disabled={busy}
+                        onClick={() => send(q)}>{q}</button>))}
+                </div>
+                <div className="small">…or type / dictate in the box below.</div>
+              </div>
+            )}
             {messages.map((m, i) => (
               <div key={i} className={`chat-msg ${m.role}`}>
                 {m.content}
@@ -210,22 +228,23 @@ export default function ChatBot() {
               </div>
             ))}
             {busy && <div className="chat-msg assistant">Working…</div>}
-            {recording && <div className="chat-msg assistant rec">
-              ● Recording — click the mic again to send</div>}
+            {recording && started && <div className="chat-msg assistant rec">
+              ● Recording — tap the mic again to send</div>}
           </div>
+
           <div className="chat-input">
             {voiceOk && (
               <button className={`mic ${recording ? 'rec' : ''}`}
                 onClick={toggleMic} disabled={busy}
-                title={recording ? 'Stop & send' : 'Talk to Matt'}>
+                title={recording ? 'Stop & send' : 'Talk / dictate'}>
                 🎤
               </button>
             )}
-            <input value={input} disabled={busy || recording}
+            <input ref={inputRef} value={input} disabled={busy || recording}
               placeholder={recording ? 'Listening…' : 'Message Matt…'}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()} />
-            <button className="primary" onClick={send}
+            <button className="primary" onClick={() => send()}
               disabled={busy || recording || !input.trim()}>Send</button>
           </div>
         </div>
