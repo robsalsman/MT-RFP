@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 // Frame-based Matt: plays painted pose frames (green-screen PNGs) and swaps a
 // "talking" frame by voice amplitude for lip-sync. Chroma-keys #00b140 to
@@ -7,6 +7,23 @@ import React, { useEffect, useState } from 'react'
 // puppet until real frames are added to /public/matt-frames.
 const BASE = '/matt-frames'
 const level = (m) => (m < 0.08 ? 'closed' : m < 0.34 ? 'mid' : 'open')
+
+// Amplitude-driven lip-sync for the chest-up viseme busts. We only have voice
+// loudness (not phonemes), so we map openness → a band of mouth shapes and
+// rotate within the band over time so it reads as varied talking, not one
+// repeating frame. Bands are ordered closed → wide.
+const VISEME_BANDS = [
+  ['rest', 'MBP'],        // ~silent / lips together
+  ['WQ', 'U', 'O', 'FV'], // small / rounded
+  ['E', 'etc', 'L'],      // mid-open
+  ['AI', 'wide'],         // wide open
+]
+function pickViseme(mouth, tick, has) {
+  const bi = mouth < 0.08 ? 0 : mouth < 0.2 ? 1 : mouth < 0.4 ? 2 : 3
+  const band = VISEME_BANDS[bi].filter((k) => has(k))
+  if (!band.length) return 'rest'
+  return band[tick % band.length]
+}
 
 function loadImage(url) {
   return new Promise((resolve, reject) => {
@@ -37,9 +54,10 @@ async function keyGreen(url) {
 }
 
 export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
-  onReady, onFail }) {
+  closeup = false, onReady, onFail }) {
   const [manifest, setManifest] = useState(null)
   const [frames, setFrames] = useState(null)   // { filename: dataURL }
+  const tickRef = useRef(0)
 
   useEffect(() => {
     let alive = true
@@ -54,6 +72,7 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
         add(mf.states?.idle?.src); add(mf.states?.listening?.src)
         add(mf.states?.speaking?.src)
         Object.values(mf.states?.speaking?.mouths || {}).forEach(add)
+        Object.values(mf.visemes || {}).forEach(add)
         Object.values(mf.actions || {}).forEach((a) => add(a.src))
         const out = {}
         if (mf.preKeyed) {
@@ -78,6 +97,25 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
   }, [])   // eslint-disable-line
 
   if (!frames || !manifest) return null
+
+  // ---- close-up call view: chest-up viseme busts with amplitude lip-sync ----
+  const vis = manifest.visemes
+  if (closeup && vis && frames[vis.rest]) {
+    const has = (k) => !!frames[vis[k]]
+    let key = 'rest'
+    if (state === 'speaking') {
+      tickRef.current++
+      key = pickViseme(mouth, tickRef.current, has)
+    } else if (state === 'listening') {
+      key = has('E') ? 'E' : 'rest'   // a soft, attentive half-smile
+    }
+    const burl = frames[vis[key]] || frames[vis.rest]
+    return (
+      <div className="matt-bust-host">
+        <img src={burl} alt="Matt" draggable={false} />
+      </div>
+    )
+  }
 
   const idleSrc = manifest.states.idle.src
   let src = idleSrc

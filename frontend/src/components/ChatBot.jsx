@@ -367,7 +367,13 @@ export default function ChatBot() {
         <button className="call-min" onClick={exitCall}
           title="Exit full screen">⤢ Exit full screen</button>
         <div className="call-stage">
-          <Matt state={avatar.state} mouth={avatar.mouth} size={260} />
+          <div className="call-face">
+            {/* painted viseme lip-sync when frames are ready, SVG until then */}
+            <MattFrames state={avatar.state} mouth={avatar.mouth} closeup
+              onReady={() => setFramesReady(true)} onFail={() => {}} />
+            {!framesReady && (
+              <Matt state={avatar.state} mouth={avatar.mouth} size={260} />)}
+          </div>
           <div className="call-name">Matt</div>
           <div className="call-status">{statusLabel}</div>
           {lastReply && <div className="call-caption">{lastReply}</div>}

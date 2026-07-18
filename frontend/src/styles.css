@@ -244,6 +244,10 @@ th.sorted { color: var(--accent); }
   gap: 6px; padding: 0 20px; text-align: center; }
 .matt-call .matt, .matt-call .matt svg { width: min(70vw, 300px) !important;
   height: auto !important; }
+.call-face { display: flex; justify-content: center; align-items: flex-end; }
+.matt-bust-host { width: min(78vw, 420px); will-change: contents; }
+.matt-bust-host img { width: 100%; height: auto; display: block;
+  filter: drop-shadow(0 12px 30px rgba(0,0,0,0.45)); }
 .call-name { font-size: 26px; font-weight: 800; letter-spacing: 0.02em; }
 .call-status { color: #ff8fbf; font-weight: 600; }
 .call-caption { max-width: min(90vw, 520px); margin-top: 10px; font-size: 14px;

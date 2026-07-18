@@ -7,6 +7,20 @@
     "listening": { "src": "matt_pose_listening.png" },
     "speaking":  { "src": "matt_pose_talking.png" }
   },
+  "visemeNote": "Chest-up talking busts (fixed anchor). Used for lip-sync in the close-up call view; amplitude is mapped to mouth openness across these shapes.",
+  "visemes": {
+    "rest": "visemes/matt_viseme_rest.png",
+    "MBP":  "visemes/matt_viseme_MBP.png",
+    "WQ":   "visemes/matt_viseme_WQ.png",
+    "U":    "visemes/matt_viseme_U.png",
+    "O":    "visemes/matt_viseme_O.png",
+    "FV":   "visemes/matt_viseme_FV.png",
+    "L":    "visemes/matt_viseme_L.png",
+    "E":    "visemes/matt_viseme_E.png",
+    "etc":  "visemes/matt_viseme_etc.png",
+    "AI":   "visemes/matt_viseme_AI.png",
+    "wide": "visemes/matt_viseme_wide.png"
+  },
   "actions": {
     "idle_stand":  { "src": "matt_pose_idle_stand.png" },
     "thinking":    { "src": "matt_pose_thinking.png" },
