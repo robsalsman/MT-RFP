@@ -137,6 +137,57 @@ th.sorted { color: var(--accent); }
 .opt:hover { background: #eef4ff; }
 .opt-no { border-color: var(--closed); color: var(--muted); }
 
+/* ---- Matt on a spotlit stage (floating dock, bottom-right) ---- */
+.matt-dock { position: fixed; right: 20px; bottom: 20px; z-index: 95;
+  display: flex; align-items: flex-end; gap: 12px; }
+.stage-card { position: relative; width: 236px; border-radius: 16px;
+  background: radial-gradient(120% 90% at 50% 16%, #241a3a, #14112a 55%,
+    #0c0a1c 100%);
+  border: 1px solid #2a2350; box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  padding: 8px 10px 12px; }
+.stage-top { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px;
+  z-index: 3; }
+.stage-icon { background: rgba(255,255,255,.1); color: #cbb9ff;
+  border: 1px solid rgba(255,255,255,.18); border-radius: 6px; width: 24px;
+  height: 22px; font-size: 14px; line-height: 1; padding: 0; }
+.stage-bubble { position: relative; margin: 2px 2px 0; background: #fff;
+  color: #1c2733; border-radius: 12px 12px 12px 3px; padding: 8px 10px;
+  font-size: 12.5px; line-height: 1.35; max-height: 92px; overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+.mattstage { display: block; margin-top: -4px; }
+.mattstage svg { display: block; }
+.mattstage.matt-speaking .pool { animation: mattPulse .7s ease-in-out infinite; }
+.mattstage.matt-listening .pool { animation: mattPulse 1.6s ease-in-out infinite; }
+.stage-name { text-align: center; color: #fff; font-weight: 800; font-size: 16px;
+  margin-top: -8px; }
+.stage-status { display: block; font-size: 11px; font-weight: 400;
+  color: #ff8fbf; }
+.stage-controls { display: flex; gap: 8px; justify-content: center;
+  margin-top: 8px; }
+.stage-btn { flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 2px; background: rgba(255,255,255,.12); color: #fff;
+  border: 1px solid rgba(255,255,255,.22); border-radius: 10px; padding: 7px 4px;
+  font-size: 18px; }
+.stage-btn span { font-size: 10px; font-weight: 600; }
+.stage-btn.mic { background: #0b5fff; border-color: #0b5fff; }
+.stage-btn.mic.rec { background: var(--red); border-color: var(--red);
+  animation: pulse 1.2s infinite; }
+.stage-btn.on { background: #1b3a5b; border-color: #33507a; }
+
+.chat-side { width: min(340px, 82vw); height: 440px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; display: flex;
+  flex-direction: column; overflow: hidden; box-shadow: 0 12px 40px
+  rgba(0,0,0,.25); }
+.chat-side .chat-body { background: var(--bg); }
+
+@media (max-width: 720px) {
+  .matt-dock { right: 8px; left: 8px; bottom: 8px; justify-content: flex-end; }
+  .stage-card { width: 172px; }
+  .stage-bubble { font-size: 12px; }
+  .matt-dock.with-chat .stage-card { display: none; }  /* chat takes over */
+  .chat-side { width: 100%; height: min(74vh, 560px); }
+}
+
 /* ---- full-screen video-call mode ---- */
 .matt-call { position: fixed; inset: 0; z-index: 120;
   background: radial-gradient(120% 120% at 50% 0%, #1a1030, #0d1b2a 70%);
