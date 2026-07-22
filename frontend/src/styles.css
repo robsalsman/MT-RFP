@@ -387,9 +387,12 @@ th.sorted { color: var(--accent); }
   transition: transform 60ms linear; transform-origin: 50% 88%; }
 .matt-bust-host img { width: 100%; height: auto; display: block;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,0.45)); }
-.matt-bust-host img.bust-top { position: absolute; inset: 0;
-  animation: bustFade 80ms ease-out; }
-@keyframes bustFade { from { opacity: 0; } to { opacity: 1; } }
+/* dissolve: the current frame is always fully opaque; the outgoing frame
+   fades out on top and is unmounted by a timer ~130ms later — removal never
+   depends on the animation actually running */
+.matt-bust-host img.bust-out { position: absolute; inset: 0;
+  animation: bustOut 70ms ease-out both; pointer-events: none; }
+@keyframes bustOut { from { opacity: 0.5; } to { opacity: 0; } }
 @keyframes bustBreathe {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(2px) scale(1.006); }

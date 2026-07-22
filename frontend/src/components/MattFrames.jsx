@@ -68,11 +68,27 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
   const [talkTick, setTalkTick] = useState(0)  // close-up talk clock
   const [blink, setBlink] = useState('open')   // close-up blink state
   const mouthAlive = useRef(0)                 // last time real amplitude seen
-  const prevBustRef = useRef(null)             // previous close-up frame (fade)
-  const pendingBustRef = useRef(null)
-  useEffect(() => { prevBustRef.current = null }, [closeup])
-  // after each paint, the frame just shown becomes the next fade underlay
-  useEffect(() => { prevBustRef.current = pendingBustRef.current })
+  // dissolve bookkeeping: when the close-up frame changes, the old frame
+  // briefly renders on top fading out, then is UNMOUNTED by a timer — its
+  // removal never depends on a CSS animation actually running
+  const [outFrame, setOutFrame] = useState(null)
+  const lastBurlRef = useRef(null)
+  const outTimerRef = useRef(null)
+  const noteFrame = (burl) => {
+    if (lastBurlRef.current && lastBurlRef.current !== burl) {
+      setOutFrame(lastBurlRef.current)
+      if (outTimerRef.current) clearTimeout(outTimerRef.current)
+      outTimerRef.current = setTimeout(() => setOutFrame(null), 130)
+    }
+    lastBurlRef.current = burl
+  }
+  useEffect(() => () => outTimerRef.current
+    && clearTimeout(outTimerRef.current), [])
+  const renderedBurlRef = useRef(null)
+  // after each paint, register the frame that was just shown
+  useEffect(() => {
+    if (renderedBurlRef.current) noteFrame(renderedBurlRef.current)
+  })
 
   // amplitude liveness: if the analyser feeds us real mouth values we use
   // them; if it's dead we fall back to the synthesized cadence
@@ -192,8 +208,7 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
     // crossfade: the previous frame sits underneath while the new one fades
     // in (~90ms) — hides render-to-render detail differences so the swaps
     // read as motion, not flicker
-    pendingBustRef.current = burl
-    const under = prevBustRef.current || burl
+    renderedBurlRef.current = burl
     // 60fps motion layer: amplitude drives a continuous micro head-bob and
     // lean (updates every analyser emit, smoothed by a CSS transition) —
     // this is what makes him feel alive BETWEEN the discrete mouth frames
@@ -201,13 +216,18 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
     const motion = `translateY(${(-bob * 5).toFixed(1)}px) `
       + `rotate(${(bob * 0.7 - 0.35).toFixed(2)}deg) `
       + `scale(${(1 + bob * 0.01).toFixed(3)})`
+    // Dissolve, not an overlay: the current frame is always fully opaque
+    // (no animation to depend on); the outgoing frame briefly fades out on
+    // top and is then unmounted — so silhouette differences can never
+    // ghost as doubled hair/jacket edges.
     return (
       <div className={`matt-bust-host ${state === 'listening' ? 'listen' : ''}`}>
         <div className="bust-motion"
           style={{ transform: state === 'speaking' ? motion : undefined }}>
-          <img src={under} alt="" aria-hidden draggable={false} />
-          <img key={burl} src={burl} alt="Matt" draggable={false}
-            className="bust-top" />
+          <img src={burl} alt="Matt" draggable={false} />
+          {outFrame && outFrame !== burl && (
+            <img key={outFrame} src={outFrame} alt="" aria-hidden
+              draggable={false} className="bust-out" />)}
         </div>
       </div>
     )
