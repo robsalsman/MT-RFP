@@ -17,7 +17,7 @@ from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import ai, auth, config, db, ingest, keepawake, respond
+from . import ai, auth, config, db, ingest, keepawake, leads, respond
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -198,6 +198,17 @@ def list_rfps(status: str | None = None, state: str | None = None,
         r.pop("analysis", None)
     rows.sort(key=lambda r: (r["fit_score"] or 0), reverse=True)
     return {"count": len(rows), "rfps": rows}
+
+
+@app.get("/api/leads")
+def api_leads(state: str, cities: str | None = None,
+              wireless_only: bool = True, limit: int = 12):
+    """Lead-gen: districts already buying connectivity/LTE in a state.
+    `cities` is a comma-separated metro keyword list (e.g. Dallas,Plano)."""
+    name_contains = ([c.strip() for c in cities.split(",") if c.strip()]
+                     if cities else None)
+    return leads.find_leads(state=state, name_contains=name_contains,
+                            wireless_only=wireless_only, limit=limit)
 
 
 @app.get("/api/rfps-facets")

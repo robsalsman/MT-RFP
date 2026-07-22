@@ -13,7 +13,7 @@ import re
 
 import httpx
 
-from . import ai, config, db, respond, scoring
+from . import ai, config, db, leads, respond, scoring
 from . import status as status_mod
 
 log = logging.getLogger(__name__)
@@ -138,6 +138,26 @@ nothing is ever auto-submitted.
 red-flagged [NEEDS INPUT]; company facts come only from the uploaded \
 profile.
 
+LEAD GENERATION (find_leads) — how to hunt for Kim
+- "find targets in <area>" -> call find_leads. For a metro ("DFW", "the Bay \
+Area") pass the metro's city/district names in name_contains — you know the \
+geography. Start wireless_only=true; if that comes back empty, call again \
+with wireless_only=false and say no district there has a funded LTE line — \
+then the biggest connectivity budgets are GREENFIELD targets.
+- A lead's pitch angle writes itself from the data: who bills them today \
+(incumbent), what they pay per year (that is their proven LTE/connectivity \
+budget), when the contract expires (timing), enrollment/budget (size). \
+Districts paying Kajeet/Verizon/AT&T for hotspots are the hottest — proven \
+LTE spend Mission Telecom can beat at $20-25/mo nonprofit pricing.
+- COLD OUTREACH: when asked to draft an email, write a short (under 150 \
+words) plain-text email from Kim at Mission Telecom to the contact. Use ONLY \
+real data from find_leads (their spend, incumbent, expiration, enrollment) — \
+NEVER invent names, titles, or numbers. If you only have the filing-contact \
+email, address it neutrally ("Hi there" / team). Subject line included. \
+Angle: nonprofit wireless ISP on T-Mobile, E-Rate eligible, hotspot lending \
+for students, cite THEIR numbers. End with a specific ask (15-min call). \
+Never send anything — you only draft; Kim sends.
+
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
 - When the user asks to see/go to something, call navigate (optionally with \
@@ -244,6 +264,31 @@ TOOLS = [
                        "website (the uploaded RFP price list is a separate, "
                        "internal thing).",
         "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {
+        "name": "find_leads",
+        "description": "LEAD GENERATION from public USAC Form 471 + NCES "
+                       "data: districts in a state that already buy "
+                       "connectivity — their actual annual spend, the "
+                       "incumbent provider billing them, LTE/cellular "
+                       "signals, contract expiration dates, filing contact "
+                       "emails, E-Rate consultants, and (when matchable) "
+                       "district enrollment + total budget. For metro-area "
+                       "asks ('DFW', 'Chicagoland'), pass the metro's "
+                       "city/district names in name_contains. Start with "
+                       "wireless_only=true (districts already paying for "
+                       "LTE = proven budget + incumbent to displace); if "
+                       "empty, retry wireless_only=false — no LTE line at "
+                       "a big district is a GREENFIELD pitch.",
+        "parameters": {"type": "object", "properties": {
+            "state": {"type": "string",
+                      "description": "2-letter state code"},
+            "name_contains": {"type": "array", "items": {"type": "string"},
+                              "description": "city/district keywords for "
+                              "metro targeting, e.g. ['Dallas','Plano',"
+                              "'Frisco','Arlington'] for DFW"},
+            "wireless_only": {"type": "boolean", "default": True},
+            "limit": {"type": "integer", "default": 10}},
+            "required": ["state"]}}},
     {"type": "function", "function": {
         "name": "navigate",
         "description": "Move the user's UI: switch page, apply dashboard "
@@ -414,6 +459,20 @@ def _exec_tool(name: str, args: dict) -> dict:
                 return {"knowledge_base": kb.read_text(encoding="utf-8")}
             return {"error": "company knowledge base not found; re-run the "
                              "site crawl to data/company_knowledge.md"}
+        if name == "find_leads":
+            r = leads.find_leads(
+                state=str(args.get("state", "")),
+                name_contains=args.get("name_contains"),
+                wireless_only=bool(args.get("wireless_only", True)),
+                limit=int(args.get("limit", 10)))
+            # keep the model's context lean: cap list fields per lead
+            for o in r.get("leads", []):
+                o.pop("ben", None)
+                o["providers"] = o.get("providers", [])[:3]
+                o["contacts"] = o.get("contacts", [])[:3]
+                o["consultants"] = o.get("consultants", [])[:2]
+                o["narratives"] = o.get("narratives", [])[:2]
+            return r
         if name == "navigate":
             if args.get("state_filter"):
                 args["state_filter"] = _norm_state(args["state_filter"])
@@ -439,11 +498,30 @@ def _looks_degenerate(text: str) -> bool:
     return False
 
 
+# Nemotron sometimes leaks its planning monologue into the answer after
+# multi-round tool use ("Okay, I need to respond to Kim's request...").
+# Leading paragraphs that narrate the task in the third person are reasoning,
+# not the reply — drop them until real content starts.
+_REASONING_PARA_RE = re.compile(
+    r"^(okay, i need|alright, i need|let me |i need to respond|i should |"
+    r"i used |i tried |i called |the user (asked|wants|is asking)|"
+    r"since the user)", re.IGNORECASE)
+
+
+def _strip_reasoning(reply: str) -> str:
+    reply = re.sub(r"<think>.*?</think>", "", reply, flags=re.DOTALL)
+    paras = [p for p in re.split(r"\n\s*\n", reply.strip()) if p.strip()]
+    while len(paras) > 1 and _REASONING_PARA_RE.match(paras[0].strip()):
+        paras.pop(0)
+    return "\n\n".join(paras).strip()
+
+
 def _clean_reply(reply: str, has_options: bool) -> str:
-    """Strip markdown the widget renders as plain text, and — as a hard
-    backstop for the 'keep listings minimal' rule — drop any markdown table
-    Nemotron produces (it loves tables) since the RFP picks are shown as
-    tappable buttons instead."""
+    """Strip leaked reasoning and markdown the widget renders as plain text,
+    and — as a hard backstop for the 'keep listings minimal' rule — drop any
+    markdown table Nemotron produces (it loves tables) since the RFP picks
+    are shown as tappable buttons instead."""
+    reply = _strip_reasoning(reply)
     lines = []
     for line in reply.splitlines():
         s = line.strip()
@@ -494,7 +572,11 @@ def run_chat(messages: list[dict], voice: bool = False,
                 headers={"Authorization":
                          f"Bearer {config.NEMOTRON_API_KEY}"},
                 json={"model": config.NEMOTRON_MODEL, "messages": convo,
-                      "tools": TOOLS, "max_tokens": 1200,
+                      # 4x headroom: Nemotron burns hidden reasoning tokens
+                      # from the same budget, and with large tool payloads
+                      # (find_leads) a small cap collapses the visible
+                      # answer to a generic greeting.
+                      "tools": TOOLS, "max_tokens": 4096,
                       "temperature": 0.2},
                 timeout=300)
             resp.raise_for_status()
