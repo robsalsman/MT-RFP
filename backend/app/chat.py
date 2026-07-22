@@ -13,7 +13,7 @@ import re
 
 import httpx
 
-from . import ai, config, db, leads, respond, scoring
+from . import ai, competitors, config, db, leads, respond, scoring
 from . import status as status_mod
 
 log = logging.getLogger(__name__)
@@ -158,6 +158,17 @@ Angle: nonprofit wireless ISP on T-Mobile, E-Rate eligible, hotspot lending \
 for students, cite THEIR numbers. End with a specific ask (15-min call). \
 Never send anything — you only draft; Kim sends.
 
+COMPETITOR DISPLACEMENT (competitor_accounts + prep_outreach) — the hottest \
+pipeline. A nationwide sweep tracks every district paying Kajeet, Mobile \
+Beacon, Mobile Citizen, Verizon, or AT&T Mobility for mobile broadband — \
+proven LTE budget with an incumbent to beat. "find the Kajeet accounts" -> \
+competitor_accounts(competitor=kajeet). Soonest-expiring contracts are the \
+best timing (sort=expiration). For "prep the outreach" -> prep_outreach \
+(lead_id): it finds named district staff from their website and drafts \
+Kim's email from their real numbers; show her the draft and the recommended \
+recipient. The Leads page (navigate tab=leads) is the workable board. \
+T-Mobile itself is NOT a competitor — Mission delivers on T-Mobile.
+
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
 - When the user asks to see/go to something, call navigate (optionally with \
@@ -290,12 +301,48 @@ TOOLS = [
             "limit": {"type": "integer", "default": 10}},
             "required": ["state"]}}},
     {"type": "function", "function": {
+        "name": "competitor_accounts",
+        "description": "The competitor displacement board (nationwide "
+                       "sweep of USAC 471 data): every district/library "
+                       "paying a Mission Telecom competitor (Kajeet, "
+                       "Mobile Beacon, Mobile Citizen, Verizon, AT&T "
+                       "Mobility) for mobile broadband — annual spend, "
+                       "contract expiration, contacts, status. Use for "
+                       "'find the Kajeet accounts', 'who's paying "
+                       "Verizon', 'biggest displacement targets'.",
+        "parameters": {"type": "object", "properties": {
+            "competitor": {"type": "string",
+                           "enum": ["kajeet", "mobile_beacon",
+                                    "mobile_citizen", "verizon", "att"]},
+            "state": {"type": "string",
+                      "description": "2-letter code (optional)"},
+            "sort": {"type": "string", "enum": ["spend", "expiration"],
+                     "description": "expiration = soonest-expiring first "
+                     "(best timing)"},
+            "min_spend": {"type": "number"},
+            "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "prep_outreach",
+        "description": "Prepare Kim's outreach for one competitor account "
+                       "(lead_id from competitor_accounts): looks up staff "
+                       "contacts on the district's website (tech director, "
+                       "superintendent — public info) and drafts the cold "
+                       "email from their real spend/incumbent/expiration "
+                       "data. Returns the draft + recommended recipient. "
+                       "Kim sends it herself — never claim it was sent.",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer"},
+            "find_contacts": {"type": "boolean", "default": True,
+                              "description": "crawl the district site for "
+                              "named staff first (slower but better)"}},
+            "required": ["lead_id"]}}},
+    {"type": "function", "function": {
         "name": "navigate",
         "description": "Move the user's UI: switch page, apply dashboard "
                        "filters, and/or open an RFP's detail drawer.",
         "parameters": {"type": "object", "properties": {
             "tab": {"type": "string",
-                    "enum": ["dashboard", "uploads", "settings"]},
+                    "enum": ["dashboard", "leads", "uploads", "settings"]},
             "status_filter": {"type": "string",
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",
                                        "ALL"]},
@@ -473,6 +520,30 @@ def _exec_tool(name: str, args: dict) -> dict:
                 o["consultants"] = o.get("consultants", [])[:2]
                 o["narratives"] = o.get("narratives", [])[:2]
             return r
+        if name == "competitor_accounts":
+            rows = competitors.list_leads(
+                args.get("competitor"), args.get("state"), None,
+                args.get("min_spend") or 0, args.get("sort") or "spend",
+                args.get("limit", 10))
+            compact = [{"lead_id": r["id"], "org": r["org"],
+                        "state": r["state"], "competitor":
+                        r["competitor_label"],
+                        "annual_spend": r["spend"],
+                        "contract_expires": r["next_expiration"],
+                        "contacts": r["contacts"][:2],
+                        "consultants": r["consultants"][:1],
+                        "status": r["status"]} for r in rows]
+            return {"summary": competitors.summary(), "count": len(compact),
+                    "accounts": compact}
+        if name == "prep_outreach":
+            lid = int(args["lead_id"])
+            found = None
+            if args.get("find_contacts", True):
+                found = competitors.find_district_contacts(lid)
+            d = competitors.draft_outreach(lid)
+            if found and not found.get("error"):
+                d["district_contacts"] = found.get("contacts", [])[:6]
+            return d
         if name == "navigate":
             if args.get("state_filter"):
                 args["state_filter"] = _norm_state(args["state_filter"])

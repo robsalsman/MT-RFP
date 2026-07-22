@@ -17,7 +17,8 @@ from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import ai, auth, config, db, ingest, keepawake, leads, respond
+from . import (ai, auth, competitors, config, db, ingest, keepawake, leads,
+               respond)
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -198,6 +199,43 @@ def list_rfps(status: str | None = None, state: str | None = None,
         r.pop("analysis", None)
     rows.sort(key=lambda r: (r["fit_score"] or 0), reverse=True)
     return {"count": len(rows), "rfps": rows}
+
+
+@app.get("/api/competitor-leads")
+def competitor_leads_list(competitor: str | None = None,
+                          state: str | None = None,
+                          status: str | None = None,
+                          min_spend: float = 0, sort: str = "spend",
+                          limit: int = 50):
+    """The competitor displacement board: accounts + summary."""
+    return {"summary": competitors.summary(),
+            "competitors": {k: v["label"]
+                            for k, v in competitors.COMPETITORS.items()},
+            "leads": competitors.list_leads(competitor, state, status,
+                                            min_spend, sort, limit)}
+
+
+@app.post("/api/competitor-leads/sweep")
+def competitor_leads_sweep(background_tasks: BackgroundTasks):
+    """Refresh the nationwide competitor sweep (runs in background)."""
+    background_tasks.add_task(competitors.sweep)
+    return {"ok": True, "started": True}
+
+
+@app.post("/api/competitor-leads/{lead_id}/draft")
+def competitor_lead_draft(lead_id: int):
+    return competitors.draft_outreach(lead_id)
+
+
+@app.post("/api/competitor-leads/{lead_id}/contacts")
+def competitor_lead_contacts(lead_id: int):
+    return competitors.find_district_contacts(lead_id)
+
+
+@app.patch("/api/competitor-leads/{lead_id}")
+def competitor_lead_status(lead_id: int, payload: dict):
+    ok = competitors.set_status(lead_id, str(payload.get("status", "")))
+    return {"ok": ok}
 
 
 @app.get("/api/leads")

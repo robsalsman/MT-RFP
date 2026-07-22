@@ -95,6 +95,29 @@ CREATE TABLE IF NOT EXISTS sync_log (
     status TEXT,
     detail TEXT
 );
+CREATE TABLE IF NOT EXISTS competitor_leads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ben TEXT NOT NULL,
+    competitor TEXT NOT NULL,
+    funding_year INTEGER,
+    org TEXT,
+    entity_type TEXT,
+    state TEXT,
+    spins TEXT DEFAULT '[]',
+    spend REAL DEFAULT 0,
+    next_expiration TEXT,
+    contacts TEXT DEFAULT '[]',
+    consultants TEXT DEFAULT '[]',
+    narratives TEXT DEFAULT '[]',
+    city TEXT,
+    enrollment INTEGER,
+    budget REAL,
+    extra_contacts TEXT DEFAULT '[]',
+    email_draft TEXT,
+    status TEXT DEFAULT 'new',
+    updated_at TEXT,
+    UNIQUE(ben, competitor)
+);
 """
 
 

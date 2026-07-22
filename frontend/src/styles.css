@@ -272,6 +272,62 @@ th.sorted { color: var(--accent); }
   gap: 6px; padding: 0 20px; text-align: center; }
 .matt-call .matt, .matt-call .matt svg { width: min(70vw, 300px) !important;
   height: auto !important; }
+/* ---- Leads (competitor displacement board) ---- */
+.leads-page { display: flex; flex-direction: column; gap: 12px; }
+.leads-summary { display: flex; flex-wrap: wrap; gap: 8px; }
+.lead-sum { display: flex; flex-direction: column; align-items: flex-start;
+  gap: 2px; padding: 10px 14px; border-radius: 12px; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); color: var(--ink);
+  min-width: 150px; }
+.lead-sum:hover { background: var(--hover); }
+.lead-sum.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.lead-sum.sweep { justify-content: center; align-items: center; min-width: 120px;
+  color: var(--muted); }
+.ls-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+.ls-big { font-size: 22px; font-weight: 800; }
+.ls-sub { font-size: 11.5px; color: var(--muted); }
+.leads-filters { display: flex; align-items: center; gap: 10px; }
+.leads-filters select { padding: 6px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--field); color: var(--ink); }
+.leads-list { display: flex; flex-direction: column; gap: 6px; }
+.lead-card { background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; overflow: hidden; }
+.lead-card.contacted { opacity: .75; }
+.lead-row { display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 14px; background: none; border: none; color: var(--ink);
+  cursor: pointer; text-align: left; font-size: 13.5px; }
+.lead-row:hover { background: var(--hover); }
+.lr-org { flex: 1 1 auto; min-width: 0; font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lr-state { margin-left: 6px; font-weight: 600; color: var(--muted);
+  font-size: 11.5px; }
+.lr-tag { margin-left: 8px; font-size: 11px; color: var(--open); }
+.lr-comp { flex: none; font-size: 12px; color: var(--muted); }
+.lr-spend { flex: none; font-weight: 800; }
+.lr-exp { flex: none; font-size: 11.5px; color: var(--closing); }
+.lead-detail { padding: 4px 14px 12px; display: flex; flex-direction: column;
+  gap: 8px; border-top: 1px solid var(--line); }
+.ld-facts { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px;
+  color: var(--muted); }
+.ld-nar { font-size: 12.5px; font-style: italic; color: var(--muted); }
+.ld-contacts { font-size: 12.5px; }
+.ld-person { display: inline-block; margin-right: 10px; }
+.ld-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.ld-actions button, .ld-draft-btns button, .ld-draft-btns .btn {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--field); color: var(--ink); cursor: pointer;
+  font-size: 12.5px; text-decoration: none; }
+.ld-actions button:hover { background: var(--hover); }
+.ld-actions button.danger { color: var(--red); }
+.ld-draft textarea { width: 100%; font: 12.5px/1.45 ui-monospace, monospace;
+  padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--field); color: var(--ink); resize: vertical; }
+.ld-draft-btns { display: flex; gap: 6px; margin-top: 6px; }
+@media (max-width: 720px) {
+  .lr-comp, .lr-exp { display: none; }
+  .lead-sum { min-width: 44%; }
+}
+
 /* Matt's closet drawer */
 .stage-icon.on { background: var(--accent); color: #fff; }
 .closet { margin: 6px 8px 2px; padding: 8px; border-radius: 12px;

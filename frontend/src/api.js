@@ -52,6 +52,22 @@ export const api = {
     return authFetch(`/api/rfps?${qs}`).then(json)
   },
   facets: () => authFetch('/api/rfps-facets').then(json),
+  competitorLeads: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== '' && v != null))
+    return authFetch(`/api/competitor-leads?${qs}`).then(json)
+  },
+  competitorSweep: () =>
+    authFetch('/api/competitor-leads/sweep', { method: 'POST' }).then(json),
+  competitorDraft: (id) =>
+    authFetch(`/api/competitor-leads/${id}/draft`, { method: 'POST' }).then(json),
+  competitorContacts: (id) =>
+    authFetch(`/api/competitor-leads/${id}/contacts`, { method: 'POST' }).then(json),
+  competitorStatus: (id, status) =>
+    authFetch(`/api/competitor-leads/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    }).then(json),
   rfp: (an) => authFetch(`/api/rfps/${an}`).then(json),
   analyze: (an) => authFetch(`/api/rfps/${an}/analyze`, { method: 'POST' }).then(json),
   generateResponse: (an) =>

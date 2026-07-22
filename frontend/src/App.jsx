@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
+import Leads from './components/Leads.jsx'
 import Uploads from './components/Uploads.jsx'
 import Settings from './components/Settings.jsx'
 import ChatBot from './components/ChatBot.jsx'
@@ -76,7 +77,8 @@ export default function App() {
           <span className="sub">AI: {health.ai_provider}</span>
         )}
         <nav>
-          {[['dashboard', 'Dashboard'], ['uploads', 'Price List & Profile'],
+          {[['dashboard', 'Dashboard'], ['leads', 'Leads'],
+            ['uploads', 'Price List & Profile'],
             ['settings', 'Settings']].map(([id, label]) => (
             <button key={id} className={tab === id ? 'active' : ''}
               onClick={() => setTab(id)}>{label}</button>
@@ -101,6 +103,7 @@ export default function App() {
       </header>
       <main className="wrap">
         {tab === 'dashboard' && <Dashboard />}
+        {tab === 'leads' && <Leads />}
         {tab === 'uploads' && <Uploads />}
         {tab === 'settings' && <Settings />}
       </main>
