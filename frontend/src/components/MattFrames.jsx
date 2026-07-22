@@ -60,7 +60,7 @@ async function keyGreen(url) {
 }
 
 export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
-  closeup = false, pose = null, sequence = null, seqFps = 9,
+  closeup = false, pose = null, sequence = null, seqFps = 12,
   onReady, onFail }) {
   const [manifest, setManifest] = useState(null)
   const [frames, setFrames] = useState(null)   // { filename: dataURL }
@@ -80,11 +80,12 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
     if (mouth > 0.04) mouthAlive.current = Date.now()
   }, [mouth])
 
-  // talk clock: a deliberate ~9fps viseme cadence instead of one swap per
-  // React render (60/s flicker)
+  // talk clock: ~12.5fps viseme cadence (the animation "on 12s" sweet spot —
+  // faster discrete swaps read as churn, not smoothness; the 60fps feel
+  // comes from the crossfade + amplitude motion layers on top)
   useEffect(() => {
     if (!closeup || state !== 'speaking') { setTalkTick(0); return }
-    const id = setInterval(() => setTalkTick((t) => t + 1), 110)
+    const id = setInterval(() => setTalkTick((t) => t + 1), 80)
     return () => clearInterval(id)
   }, [closeup, state])
 
@@ -193,11 +194,21 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
     // read as motion, not flicker
     pendingBustRef.current = burl
     const under = prevBustRef.current || burl
+    // 60fps motion layer: amplitude drives a continuous micro head-bob and
+    // lean (updates every analyser emit, smoothed by a CSS transition) —
+    // this is what makes him feel alive BETWEEN the discrete mouth frames
+    const bob = state === 'speaking' ? Math.min(mouth, 1) : 0
+    const motion = `translateY(${(-bob * 5).toFixed(1)}px) `
+      + `rotate(${(bob * 0.7 - 0.35).toFixed(2)}deg) `
+      + `scale(${(1 + bob * 0.01).toFixed(3)})`
     return (
       <div className={`matt-bust-host ${state === 'listening' ? 'listen' : ''}`}>
-        <img src={under} alt="" aria-hidden draggable={false} />
-        <img key={burl} src={burl} alt="Matt" draggable={false}
-          className="bust-top" />
+        <div className="bust-motion"
+          style={{ transform: state === 'speaking' ? motion : undefined }}>
+          <img src={under} alt="" aria-hidden draggable={false} />
+          <img key={burl} src={burl} alt="Matt" draggable={false}
+            className="bust-top" />
+        </div>
       </div>
     )
   }
