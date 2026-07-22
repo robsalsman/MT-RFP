@@ -175,8 +175,17 @@ def list_rfps(status: str | None = None, state: str | None = None,
         clauses.append("applicant_type=?")
         params.append(applicant_type)
     if q:
-        clauses.append("(billed_entity_name LIKE ? OR application_number LIKE ?)")
-        params += [f"%{q}%", f"%{q}%"]
+        # match entity/number AND the RFP's content (descriptions + line
+        # items), so keyword searches like "LTE" find real opportunities
+        clauses.append(
+            "(billed_entity_name LIKE ? OR application_number LIKE ? "
+            "OR cat1_description LIKE ? OR service_types LIKE ? "
+            "OR functions LIKE ? OR doc_text LIKE ? "
+            "OR application_number IN "
+            "(SELECT application_number FROM service_requests "
+            " WHERE service_type LIKE ? OR function LIKE ? "
+            " OR manufacturer LIKE ?))")
+        params += [f"%{q}%"] * 9
     if clauses:
         sql += " WHERE " + " AND ".join(clauses)
     with db.closing_conn() as conn:

@@ -1,25 +1,43 @@
-"""Mission Telecom biddability: the app must surface Category 1 internet /
-data transmission RFPs a wireless carrier can serve, and exclude fiber builds
-and Category 2 LAN hardware."""
+"""Mission Telecom biddability: LTE is the product — the app must surface
+RFPs carrying an explicit LTE/cellular signal (in the structured fields OR
+the attached RFP document text), and exclude generic wired internet, fiber
+builds, and Category 2 LAN hardware."""
 import json
 
 from app import mission_fit
 
 
-def _row(service_types, functions, cat1=None, applicant_type="School"):
+def _row(service_types, functions, cat1=None, applicant_type="School",
+         doc_text=None):
     return {"service_types": json.dumps(service_types),
             "functions": json.dumps(functions),
             "cat1_description": cat1, "cat2_description": None,
-            "applicant_type": applicant_type}
+            "doc_text": doc_text, "applicant_type": applicant_type}
 
 
-def test_plain_internet_access_is_biddable():
+def test_plain_internet_access_without_lte_is_not_biddable():
+    # generic internet access with no LTE/cellular signal anywhere — not
+    # what Kim sells, must not surface as an opportunity
     fit = mission_fit.assess(
         _row(["Data Transmission and/or Internet Access"],
              ["Internet Access and Data Transmission Service"]),
         [{"min_capacity": "100.00 Mbps", "max_capacity": "500.00 Mbps"}])
+    assert fit["biddable"] is False
+    assert any("lte" in b.lower() for b in fit["blockers"])
+
+
+def test_lte_in_rfp_document_makes_it_biddable():
+    # applicants write generic "internet access" in the portal and only say
+    # LTE inside the attached RFP document — the doc text must count
+    fit = mission_fit.assess(
+        _row(["Data Transmission and/or Internet Access"],
+             ["Internet Access and Data Transmission Service"],
+             doc_text="Vendor shall provide LTE wireless hotspot service "
+                      "for student home connectivity."),
+        [{"min_capacity": "100.00 Mbps", "max_capacity": "500.00 Mbps"}])
     assert fit["biddable"] is True
     assert fit["blockers"] == []
+    assert fit["wireless_signal"] is True
 
 
 def test_leased_fiber_is_not_biddable():
@@ -44,10 +62,11 @@ def test_category2_hardware_only_is_not_biddable():
 
 def test_inflated_bandwidth_does_not_disqualify():
     # a small school listing a 76.8 Gbps "minimum" is a portal artifact, not
-    # a real fiber need — it must stay biddable, but flagged as a concern.
+    # a real fiber need — an LTE RFP must stay biddable, flagged as a concern.
     fit = mission_fit.assess(
         _row(["Data Transmission and/or Internet Access"],
-             ["Internet Access and Data Transmission Service"]),
+             ["Internet Access and Data Transmission Service"],
+             cat1="Cellular LTE data service for the district"),
         [{"min_capacity": "76800.00 Mbps", "max_capacity": "102400.00 Mbps"}])
     assert fit["biddable"] is True
     assert fit["concerns"]

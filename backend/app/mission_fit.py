@@ -24,6 +24,13 @@ from . import config
 _BW_RE = re.compile(
     r"([\d,.]+)\s*(gbps|mbps|tbps|gbit|mbit|kbps|gig|gb|mb|kb|g|m|t|k)(?![a-z])")
 
+# The product: LTE mobile broadband. An RFP is an opportunity only when it
+# carries one of these unambiguous LTE / cellular wireless-WAN signals.
+# (Bare "wireless" is deliberately absent — see the note in assess().)
+LTE_TERMS = ("lte", "cellular", "4g", "5g", "fixed wireless", "hotspot",
+             "mobile broadband", "mobile data", "mobile hotspot", "wireless wan",
+             "wireless broadband", "wireless internet")
+
 
 def _mbps(text: str | None) -> float:
     """Parse a bandwidth figure (in Mbps) from a structured capacity string:
@@ -64,9 +71,12 @@ def assess(row: dict, service_requests: list[dict]) -> dict:
     st_lower = [s.lower() for s in service_types]
     fn_lower = [f.lower() for f in functions]
 
-    # text blob for term matching
+    # text blob for term matching. Includes the attached RFP document text —
+    # applicants typically write generic "internet access" in the portal's
+    # structured fields and only name the actual technology (LTE, cellular,
+    # hotspots) inside the RFP document itself.
     parts = list(service_types) + list(functions)
-    for f in ("cat1_description", "cat2_description"):
+    for f in ("cat1_description", "cat2_description", "doc_text"):
         if row.get(f):
             parts.append(str(row[f]))
     for sr in service_requests:
@@ -105,32 +115,32 @@ def assess(row: dict, service_requests: list[dict]) -> dict:
         st in prof["excluded_service_types"] for st in st_lower)
 
     matched = sorted({t for t in prof["core_terms"] if t in blob})
-    # A wireless-WAN signal means the applicant wants connectivity delivered
-    # wirelessly — Mission Telecom's exact product. Match only unambiguous
-    # terms; bare "wireless" is excluded because E-Rate's Category 2
-    # "Wireless Access Points / Controllers" are building-Wi-Fi LAN hardware,
-    # not wireless WAN.
-    wireless_signal = any(t in blob for t in
-                          ("cellular", "lte", "5g", "4g", "fixed wireless",
-                           "hotspot", "mobile broadband", "mobile data"))
+    # LTE is the whole business — it's all Kim sells. A biddable opportunity
+    # MUST carry an LTE / cellular wireless-WAN signal. Match only unambiguous
+    # terms; bare "wireless" is excluded because E-Rate's Category 2 "Wireless
+    # Access Points / Controllers" are building-Wi-Fi LAN hardware, not the
+    # LTE mobile-broadband service Mission Telecom delivers on T-Mobile.
+    lte_signal = any(t in blob for t in LTE_TERMS)
+    wireless_signal = lte_signal   # kept for scoring/UI compatibility
 
-    biddable = has_serviceable and not has_fiber
+    # LTE opportunity = an LTE/cellular signal, not a fiber build, not
+    # Category-2 LAN hardware only.
+    biddable = lte_signal and not has_fiber and not only_excluded
 
     blockers = []
-    if has_fiber:
-        blockers.append(
-            "requires leased fiber — beyond Mission Telecom's wireless "
-            "delivery on the T-Mobile network")
-    if not has_serviceable:
+    if not lte_signal:
         if only_excluded:
             blockers.append(
                 "Category 2 internal-connections hardware only (switches, "
-                "routers, firewalls, access points, cabling) — Mission "
-                "Telecom provides connectivity, not LAN equipment")
+                "routers, firewalls, access points, cabling) — not LTE service")
         else:
             blockers.append(
-                "no wireless-serviceable internet-access / data-transmission "
-                "line item")
+                "no LTE / cellular signal — Kim sells LTE mobile-broadband "
+                "service only")
+    if has_fiber:
+        blockers.append(
+            "requires leased fiber — beyond LTE wireless delivery on the "
+            "T-Mobile network")
 
     concerns = []
     if biddable and min_need >= 2000:  # 2 Gbps floor
@@ -142,13 +152,15 @@ def assess(row: dict, service_requests: list[dict]) -> dict:
     if not biddable:
         frac = 0.1
     else:
-        frac = 0.6  # a serviceable Category 1 internet/data RFP
-        if wireless_signal:
-            frac += 0.25  # RFP explicitly wants wireless — Mission's product
+        frac = 0.6  # an LTE/cellular opportunity
+        if "lte" in blob:
+            frac += 0.2   # says LTE outright — Kim's exact product
+        if has_serviceable:
+            frac += 0.1   # clean Category 1 internet/data line item
         if max_mbps and max_mbps <= prof["sweet_spot_mbps"]:
-            frac += 0.1  # modest bandwidth is the wireless sweet spot
+            frac += 0.1   # modest bandwidth is the LTE sweet spot
         if min_need >= 2000:
-            frac -= 0.15  # high floor — less certain wireless can serve
+            frac -= 0.15  # high floor — less certain LTE can serve
         if "librar" in (row.get("applicant_type") or "").lower() \
                 and ("hotspot" in blob or "lending" in blob):
             frac += 0.1  # library hotspot-lending = Project: Volume Up

@@ -110,13 +110,16 @@ how well the RFP matches Mission Telecom's wireless-connectivity catalog; \
 Deal size (20) — log-scaled prior-FY 471 spend; Winnability (20) — bid \
 barriers, remaining window, restrictions; Strategic fit (20) — entity type \
 (libraries and schools rank highest), wireless demand, priority states.
-- MISSION FIT: scoring is tuned to Mission Telecom's real business — a \
-nonprofit WIRELESS ISP on the T-Mobile network. "Biddable" RFPs are E-Rate \
-Category 1 internet access / data transmission a wireless carrier can serve. \
-RFPs requiring leased fiber, or that are only Category 2 internal-connections \
-hardware (switches, routers, firewalls, access points, cabling), are marked \
-NOT a fit and scored far lower — Mission Telecom sells connectivity, not \
-fiber builds or LAN equipment. The dashboard defaults to Mission-fit-only.
+- MISSION FIT: scoring is tuned to what the team ACTUALLY SELLS: LTE. \
+Mission Telecom is a nonprofit wireless ISP on the T-Mobile network, and the \
+product is LTE mobile broadband (hotspots, fixed wireless, cellular data). \
+"Biddable" RFPs must carry an explicit LTE/cellular signal (LTE, 4G/5G, \
+cellular, fixed wireless, hotspot, mobile broadband). RFPs requiring leased \
+fiber, or that are only Category 2 internal-connections hardware (switches, \
+routers, firewalls, access points, cabling), are NOT a fit and scored far \
+lower. When someone asks what to bid on, they mean LTE opportunities — lead \
+with the ones that literally say LTE. The dashboard defaults to \
+Mission-fit-only (= LTE opportunities).
 
 PAGES (use navigate to send the user there)
 - "dashboard": sortable/filterable RFP table (filters: status, state, text \
