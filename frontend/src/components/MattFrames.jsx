@@ -68,6 +68,11 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
   const [talkTick, setTalkTick] = useState(0)  // close-up talk clock
   const [blink, setBlink] = useState('open')   // close-up blink state
   const mouthAlive = useRef(0)                 // last time real amplitude seen
+  const prevBustRef = useRef(null)             // previous close-up frame (fade)
+  const pendingBustRef = useRef(null)
+  useEffect(() => { prevBustRef.current = null }, [closeup])
+  // after each paint, the frame just shown becomes the next fade underlay
+  useEffect(() => { prevBustRef.current = pendingBustRef.current })
 
   // amplitude liveness: if the analyser feeds us real mouth values we use
   // them; if it's dead we fall back to the synthesized cadence
@@ -183,9 +188,16 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
         : (has('E') ? vis.E : vis.rest)
     }
     const burl = frames[src] || frames[vis.rest]
+    // crossfade: the previous frame sits underneath while the new one fades
+    // in (~90ms) — hides render-to-render detail differences so the swaps
+    // read as motion, not flicker
+    pendingBustRef.current = burl
+    const under = prevBustRef.current || burl
     return (
       <div className={`matt-bust-host ${state === 'listening' ? 'listen' : ''}`}>
-        <img src={burl} alt="Matt" draggable={false} />
+        <img src={under} alt="" aria-hidden draggable={false} />
+        <img key={burl} src={burl} alt="Matt" draggable={false}
+          className="bust-top" />
       </div>
     )
   }

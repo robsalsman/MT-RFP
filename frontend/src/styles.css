@@ -383,8 +383,12 @@ th.sorted { color: var(--accent); }
   animation: bustBreathe 4.6s ease-in-out infinite;
   transform-origin: 50% 100%; }
 .matt-bust-host.listen { animation: bustSway 2.6s ease-in-out infinite; }
+.matt-bust-host { position: relative; }
 .matt-bust-host img { width: 100%; height: auto; display: block;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,0.45)); }
+.matt-bust-host img.bust-top { position: absolute; inset: 0;
+  animation: bustFade 90ms ease-out; }
+@keyframes bustFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes bustBreathe {
   0%, 100% { transform: translateY(0) scale(1); }
   50% { transform: translateY(2px) scale(1.006); }
