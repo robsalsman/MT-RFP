@@ -25,6 +25,12 @@ function pickViseme(mouth, tick, has) {
   return band[tick % band.length]
 }
 
+// When the amplitude signal is dead (autoplay policy blocked the analyser,
+// muted tab, etc.) the mouth would freeze at 0 — instead we synthesize a
+// natural-looking talk cadence so Matt visibly speaks whenever TTS plays.
+const SYNTH_MOUTH = [0.12, 0.5, 0.3, 0.72, 0.22, 0.55, 0.1, 0.42, 0.66,
+  0.28, 0.05, 0.48]
+
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const im = new Image()
@@ -59,7 +65,43 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
   const [manifest, setManifest] = useState(null)
   const [frames, setFrames] = useState(null)   // { filename: dataURL }
   const [seqIdx, setSeqIdx] = useState(0)
-  const tickRef = useRef(0)
+  const [talkTick, setTalkTick] = useState(0)  // close-up talk clock
+  const [blink, setBlink] = useState('open')   // close-up blink state
+  const mouthAlive = useRef(0)                 // last time real amplitude seen
+
+  // amplitude liveness: if the analyser feeds us real mouth values we use
+  // them; if it's dead we fall back to the synthesized cadence
+  useEffect(() => {
+    if (mouth > 0.04) mouthAlive.current = Date.now()
+  }, [mouth])
+
+  // talk clock: a deliberate ~9fps viseme cadence instead of one swap per
+  // React render (60/s flicker)
+  useEffect(() => {
+    if (!closeup || state !== 'speaking') { setTalkTick(0); return }
+    const id = setInterval(() => setTalkTick((t) => t + 1), 110)
+    return () => clearInterval(id)
+  }, [closeup, state])
+
+  // blink scheduler: every few seconds, half -> closed -> open
+  useEffect(() => {
+    if (!closeup) return
+    let alive = true
+    const timers = []
+    const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t) }
+    const schedule = () => {
+      if (!alive) return
+      later(() => {
+        setBlink('half')
+        later(() => {
+          setBlink('closed')
+          later(() => { setBlink('open'); schedule() }, 130)
+        }, 70)
+      }, 2600 + Math.random() * 3400)
+    }
+    schedule()
+    return () => { alive = false; timers.forEach(clearTimeout) }
+  }, [closeup])
 
   // Sequence playback: loop the named sequence's frames at seqFps. The caller
   // controls how long it runs by clearing the `sequence` prop.
@@ -88,6 +130,8 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
         add(mf.states?.speaking?.src)
         Object.values(mf.states?.speaking?.mouths || {}).forEach(add)
         Object.values(mf.visemes || {}).forEach(add)
+        Object.values(mf.blinks || {}).forEach(add)
+        Object.values(mf.expressions || {}).forEach(add)
         Object.values(mf.actions || {}).forEach((a) => add(a.src))
         Object.values(mf.poses || {}).forEach(add)
         Object.values(mf.sequences || {}).forEach((arr) =>
@@ -96,8 +140,11 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
         if (mf.preKeyed) {
           await loadImage(url(idle))          // confirms it exists (else fall back)
           refs.forEach((s) => { out[s] = url(s) })
-          // warm the state frames so swaps are instant
-          for (const s of [mf.states?.listening?.src, mf.states?.speaking?.src]) {
+          // warm the frames used in animation so swaps are instant
+          const warm = [mf.states?.listening?.src, mf.states?.speaking?.src,
+                        ...Object.values(mf.visemes || {}),
+                        ...Object.values(mf.blinks || {})]
+          for (const s of warm) {
             if (s) { const i = new Image(); i.src = url(s) }
           }
         } else {
@@ -120,16 +167,24 @@ export default function MattFrames({ state = 'idle', mouth = 0, lean = 0,
   const vis = manifest.visemes
   if (closeup && vis && frames[vis.rest]) {
     const has = (k) => !!frames[vis[k]]
-    let key = 'rest'
+    let src = vis.rest
     if (state === 'speaking') {
-      tickRef.current++
-      key = pickViseme(mouth, tickRef.current, has)
+      // real amplitude when the analyser is alive; synthesized cadence when
+      // it isn't (so the mouth always moves while TTS plays)
+      const live = Date.now() - mouthAlive.current < 500
+      const m = live ? mouth : SYNTH_MOUTH[talkTick % SYNTH_MOUTH.length]
+      src = vis[pickViseme(m, talkTick, has)] || vis.rest
+    } else if (blink !== 'open' && manifest.blinks?.[blink]
+               && frames[manifest.blinks[blink]]) {
+      src = manifest.blinks[blink]     // mid-blink frame
     } else if (state === 'listening') {
-      key = has('E') ? 'E' : 'rest'   // a soft, attentive half-smile
+      const attentive = manifest.expressions?.look_screen
+      src = (attentive && frames[attentive]) ? attentive
+        : (has('E') ? vis.E : vis.rest)
     }
-    const burl = frames[vis[key]] || frames[vis.rest]
+    const burl = frames[src] || frames[vis.rest]
     return (
-      <div className="matt-bust-host">
+      <div className={`matt-bust-host ${state === 'listening' ? 'listen' : ''}`}>
         <img src={burl} alt="Matt" draggable={false} />
       </div>
     )

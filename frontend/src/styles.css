@@ -379,9 +379,20 @@ th.sorted { color: var(--accent); }
   line-height: 1.1; }
 
 .call-face { display: flex; justify-content: center; align-items: flex-end; }
-.matt-bust-host { width: min(78vw, 420px); will-change: contents; }
+.matt-bust-host { width: min(78vw, 420px); will-change: transform;
+  animation: bustBreathe 4.6s ease-in-out infinite;
+  transform-origin: 50% 100%; }
+.matt-bust-host.listen { animation: bustSway 2.6s ease-in-out infinite; }
 .matt-bust-host img { width: 100%; height: auto; display: block;
   filter: drop-shadow(0 12px 30px rgba(0,0,0,0.45)); }
+@keyframes bustBreathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(2px) scale(1.006); }
+}
+@keyframes bustSway {
+  0%, 100% { transform: rotate(-0.5deg); }
+  50% { transform: rotate(0.5deg); }
+}
 .call-name { font-size: 26px; font-weight: 800; letter-spacing: 0.02em; }
 .call-status { color: #ff8fbf; font-weight: 600; }
 .call-caption { max-width: min(90vw, 520px); margin-top: 10px; font-size: 14px;

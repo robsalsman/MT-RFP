@@ -89,3 +89,9 @@ export function stop() {
   current = { state: 'idle', mouth: 0 }
   emit()
 }
+
+// debug handle — lets automated checks (and console debugging) drive Matt's
+// state without playing real audio
+if (typeof window !== 'undefined') {
+  window.__mattAudio = { setState, stop }
+}
