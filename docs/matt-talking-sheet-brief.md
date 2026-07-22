@@ -1,7 +1,8 @@
 # Matt — Talking-Head Sheet (single-master, grid spec)
 
-**Paste into ChatGPT (image generation/editing). Attach the reference bust
-(`matt_viseme_rest.png` — Matt chest-up, red bandana, leather jacket).**
+**Paste into ChatGPT (image generation/editing). Attach the reference bust:
+`frontend/public/matt-frames/visemes/matt_viseme_rest.png` (Matt chest-up,
+red bandana, leather jacket, transparent background).**
 
 ## The goal (read carefully — this is the whole point)
 
@@ -75,5 +76,23 @@ frames of the same person at the same camera distance:
 5. If the tool cannot hold the rest of the image constant, say so rather
    than delivering drifting frames.
 
-Deliver the single 4096×4096 grid PNG. I will slice it programmatically —
-cell geometry matters more than beauty of any one mouth shape.
+## What matters (priority order)
+
+1. **Zero drift** between cells — this is fatal if violated. A slightly
+   imperfect mouth shape is fine; a frame where the hair/jacket/head moved
+   is useless and playback will flicker.
+2. Exact cell geometry (I slice programmatically).
+3. Beauty of individual mouth shapes — least important; frames are
+   crossfaded in playback, so minor shape imperfections disappear.
+
+## Delivery
+
+Preferred: the single 4096×4096 grid PNG (one canvas helps you keep all 16
+consistent). **Fallback:** if you cannot guarantee exact grid geometry,
+deliver 16 individual 1024×1024 PNGs instead, named
+`matt_face_01_rest.png` … `matt_face_16_surprised.png` per the table —
+but the zero-drift rule still applies across all 16.
+
+Before delivering, self-check: overlay any two cells in your mind — do the
+pupils, bandana, hair silhouette, and jacket land on the same pixels? If
+not, redo the offending cell. State plainly if you cannot maintain this.
