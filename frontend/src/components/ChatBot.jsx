@@ -475,14 +475,21 @@ export default function ChatBot() {
       )}
 
       <div className="stage-card">
-        <div className="stage-top">
-          {!isMobile && dockStyle.left && (
-            <button className="stage-icon" title="Reset Matt's position"
-              onClick={resetPos}>⟲</button>)}
-          <button className={`stage-icon ${closetOpen ? 'on' : ''}`}
-            title="Matt's closet" onClick={() => setClosetOpen((o) => !o)}>🚪</button>
-          <button className="stage-icon" title="Minimize Matt"
-            onClick={minimize}>–</button>
+        {/* header is a normal flex row — never absolute, so the buttons can
+            never overlap the tray/closet/bubble that render below it */}
+        <div className="stage-head">
+          {!isMobile && (
+            <div className="stage-grab">⠿ drag Matt anywhere</div>)}
+          <div className="stage-top">
+            {!isMobile && dockStyle.left && (
+              <button className="stage-icon" title="Reset Matt's position"
+                onClick={resetPos}>⟲</button>)}
+            <button className={`stage-icon ${closetOpen ? 'on' : ''}`}
+              title="Matt's closet"
+              onClick={() => setClosetOpen((o) => !o)}>🚪</button>
+            <button className="stage-icon" title="Minimize Matt"
+              onClick={minimize}>–</button>
+          </div>
         </div>
 
         {closetOpen && (
@@ -516,9 +523,6 @@ export default function ChatBot() {
             </div>
           </div>
         )}
-
-        {!isMobile && (
-          <div className="stage-grab">⠿ drag Matt anywhere</div>)}
 
         {!chatOpen && (
           <div className={`stage-tray ${trayOpen ? 'open' : ''}`}>

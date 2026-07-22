@@ -188,13 +188,18 @@ th.sorted { color: var(--accent); }
 .matt-dock.draggable .stage-card { cursor: grab; }
 .matt-dock.dragging .stage-card { cursor: grabbing; }
 .matt-dock.dragging { user-select: none; }
-.stage-grab { position: absolute; top: 7px; left: 10px; font-size: 10px;
-  color: #8f7fd6; letter-spacing: .02em; opacity: .8; pointer-events: none; }
-.stage-top { position: absolute; top: 6px; right: 8px; display: flex; gap: 4px;
-  z-index: 3; }
-.stage-icon { background: rgba(255,255,255,.1); color: #cbb9ff;
-  border: 1px solid rgba(255,255,255,.18); border-radius: 6px; width: 24px;
-  height: 22px; font-size: 14px; line-height: 1; padding: 0; }
+/* header row IN FLOW (never absolute): grab hint left, icon buttons right.
+   Being part of the layout means nothing can render underneath it. */
+.stage-head { display: flex; align-items: center; gap: 8px;
+  margin-bottom: 4px; min-height: 24px; }
+.stage-grab { flex: 1 1 auto; min-width: 0; font-size: 10px;
+  color: #8f7fd6; letter-spacing: .02em; opacity: .8; pointer-events: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage-top { flex: none; display: flex; gap: 4px; margin-left: auto; }
+.stage-icon { flex: none; background: rgba(255,255,255,.1); color: #cbb9ff;
+  border: 1px solid rgba(255,255,255,.18); border-radius: 6px; width: 26px;
+  height: 24px; font-size: 14px; line-height: 1; padding: 0; cursor: pointer; }
+.stage-icon:hover { background: rgba(255,255,255,.2); }
 .stage-bubble { position: relative; background: #fff;
   color: #1c2733; border-radius: 12px 12px 12px 3px; padding: 8px 10px;
   font-size: 12.5px; line-height: 1.35; cursor: pointer;
