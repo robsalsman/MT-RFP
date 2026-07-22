@@ -66,6 +66,7 @@ export default function Leads() {
         <select value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="spend">Biggest spend first</option>
           <option value="expiration">Soonest contract expiration</option>
+          <option value="competitor">Group by competitor</option>
         </select>
         <span className="muted">{(data.leads || []).length} accounts</span>
       </div>

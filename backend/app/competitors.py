@@ -176,8 +176,13 @@ def list_leads(competitor: str | None = None, state: str | None = None,
     if min_spend:
         sql += " AND spend >= ?"
         params.append(float(min_spend))
-    sql += (" ORDER BY next_expiration ASC" if sort == "expiration"
-            else " ORDER BY spend DESC")
+    if sort == "expiration":
+        sql += " ORDER BY next_expiration ASC"
+    elif sort == "competitor":
+        # group by competitor, biggest spend first within each group
+        sql += " ORDER BY competitor ASC, spend DESC"
+    else:
+        sql += " ORDER BY spend DESC"
     sql += " LIMIT ?"
     params.append(max(1, min(int(limit or 50), 200)))
     with db.closing_conn() as conn:

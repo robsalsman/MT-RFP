@@ -316,9 +316,10 @@ TOOLS = [
                                     "mobile_citizen", "verizon", "att"]},
             "state": {"type": "string",
                       "description": "2-letter code (optional)"},
-            "sort": {"type": "string", "enum": ["spend", "expiration"],
+            "sort": {"type": "string",
+                     "enum": ["spend", "expiration", "competitor"],
                      "description": "expiration = soonest-expiring first "
-                     "(best timing)"},
+                     "(best timing); competitor = grouped by competitor"},
             "min_spend": {"type": "number"},
             "limit": {"type": "integer", "default": 10}}}}},
     {"type": "function", "function": {
