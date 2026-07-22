@@ -157,9 +157,18 @@ def summary() -> list[dict]:
              "contacted": r["contacted"] or 0} for r in rows]
 
 
+# sortable columns (whitelist — sort/direction go into SQL)
+_SORT_COLS = {"spend": "spend", "expiration": "next_expiration",
+              "competitor": "competitor", "org": "org", "state": "state",
+              "status": "status"}
+# fields that read naturally ascending when no direction is given
+_ASC_DEFAULT = {"expiration", "org", "state", "competitor", "status"}
+
+
 def list_leads(competitor: str | None = None, state: str | None = None,
                status: str | None = None, min_spend: float = 0,
-               sort: str = "spend", limit: int = 50) -> list[dict]:
+               sort: str = "spend", limit: int = 50,
+               direction: str | None = None) -> list[dict]:
     sql = "SELECT * FROM competitor_leads WHERE 1=1"
     params: list = []
     if competitor:
@@ -168,21 +177,25 @@ def list_leads(competitor: str | None = None, state: str | None = None,
     if state:
         sql += " AND state=?"
         params.append(state.upper())
-    if status:
+    if status and status != "all":
         sql += " AND status=?"
         params.append(status)
-    else:
+    elif status != "all":
         sql += " AND status != 'dismissed'"
     if min_spend:
         sql += " AND spend >= ?"
         params.append(float(min_spend))
-    if sort == "expiration":
-        sql += " ORDER BY next_expiration ASC"
-    elif sort == "competitor":
-        # group by competitor, biggest spend first within each group
-        sql += " ORDER BY competitor ASC, spend DESC"
+    col = _SORT_COLS.get(sort, "spend")
+    if direction not in ("asc", "desc"):
+        direction = "asc" if sort in _ASC_DEFAULT else "desc"
+    if col == "next_expiration":
+        # blanks always last, whichever direction
+        sql += (" ORDER BY next_expiration IS NULL, "
+                f"next_expiration {direction}, spend DESC")
+    elif col in ("competitor", "state", "status", "org"):
+        sql += f" ORDER BY {col} {direction}, spend DESC"
     else:
-        sql += " ORDER BY spend DESC"
+        sql += f" ORDER BY spend {direction}"
     sql += " LIMIT ?"
     params.append(max(1, min(int(limit or 50), 200)))
     with db.closing_conn() as conn:

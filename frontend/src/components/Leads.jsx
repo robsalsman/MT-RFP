@@ -2,28 +2,47 @@ import React, { useEffect, useState } from 'react'
 import { api } from '../api.js'
 
 // Competitor displacement board: every district paying a Mission Telecom
-// competitor for mobile broadband (nationwide USAC 471 sweep). Kim works
-// the list: find contacts, draft the email, copy/send, mark contacted.
+// competitor for mobile broadband (nationwide USAC 471 sweep). Fully
+// filterable (competitor / state / status / min spend) and sortable by any
+// column — click a header to sort, click again to flip direction.
 const fmtUsd = (n) => (n || n === 0)
   ? '$' + Math.round(n).toLocaleString() : '—'
+
+const COLS = [
+  ['org', 'Organization'],
+  ['competitor', 'Competitor'],
+  ['spend', 'Annual spend'],
+  ['expiration', 'Contract ends'],
+  ['status', 'Status'],
+]
 
 export default function Leads() {
   const [data, setData] = useState(null)
   const [competitor, setCompetitor] = useState('')
   const [state, setState] = useState('')
-  const [sort, setSort] = useState('spend')
-  const [open, setOpen] = useState(null)      // expanded lead id
-  const [busyId, setBusyId] = useState(null)  // lead with a running action
+  const [status, setStatus] = useState('')       // '' = active (not dismissed)
+  const [minSpend, setMinSpend] = useState('')
+  const [sort, setSort] = useState({ field: 'spend', dir: 'desc' })
+  const [open, setOpen] = useState(null)
+  const [busyId, setBusyId] = useState(null)
   const [sweeping, setSweeping] = useState(false)
 
-  const load = () => api.competitorLeads({ competitor, state, sort, limit: 60 })
-    .then(setData).catch(() => {})
-  useEffect(() => { load() }, [competitor, state, sort])  // eslint-disable-line
+  const load = () => api.competitorLeads({
+    competitor, state, status, min_spend: minSpend || 0,
+    sort: sort.field, direction: sort.dir, limit: 100,
+  }).then(setData).catch(() => {})
+  useEffect(() => { load() },   // eslint-disable-line
+    [competitor, state, status, minSpend, sort])
+
+  const clickSort = (field) => setSort((s) => ({
+    field,
+    dir: s.field === field ? (s.dir === 'asc' ? 'desc' : 'asc')
+      : (field === 'spend' ? 'desc' : 'asc'),
+  }))
 
   const sweep = async () => {
     setSweeping(true)
     try { await api.competitorSweep() } catch { /* ignore */ }
-    // the sweep runs in the background — poll a couple of times
     setTimeout(load, 15000); setTimeout(() => { load(); setSweeping(false) }, 45000)
   }
 
@@ -35,9 +54,9 @@ export default function Leads() {
 
   const copyDraft = (text) => navigator.clipboard?.writeText(text)
 
-  if (!data) return <div className="leads-page"><p className="muted">Loading the competitor board…</p></div>
-
-  const states = [...new Set((data.leads || []).map((l) => l.state))].sort()
+  if (!data) return (
+    <div className="leads-page"><p className="muted">
+      Loading the competitor board…</p></div>)
 
   return (
     <div className="leads-page">
@@ -59,16 +78,38 @@ export default function Leads() {
       </div>
 
       <div className="leads-filters">
+        <select value={competitor}
+          onChange={(e) => setCompetitor(e.target.value)}>
+          <option value="">All competitors</option>
+          {Object.entries(data.competitors || {}).map(([k, label]) => (
+            <option key={k} value={k}>{label}</option>))}
+        </select>
         <select value={state} onChange={(e) => setState(e.target.value)}>
           <option value="">All states</option>
-          {states.map((s) => <option key={s} value={s}>{s}</option>)}
+          {(data.states || []).map((s) => (
+            <option key={s} value={s}>{s}</option>))}
         </select>
-        <select value={sort} onChange={(e) => setSort(e.target.value)}>
-          <option value="spend">Biggest spend first</option>
-          <option value="expiration">Soonest contract expiration</option>
-          <option value="competitor">Group by competitor</option>
+        <select value={status} onChange={(e) => setStatus(e.target.value)}>
+          <option value="">Active (new + contacted)</option>
+          <option value="new">New only</option>
+          <option value="contacted">Contacted only</option>
+          <option value="dismissed">Dismissed</option>
+          <option value="all">Everything</option>
         </select>
+        <input type="number" min="0" step="1000" placeholder="Min $/yr"
+          value={minSpend} onChange={(e) => setMinSpend(e.target.value)} />
         <span className="muted">{(data.leads || []).length} accounts</span>
+      </div>
+
+      <div className="leads-head">
+        {COLS.map(([field, label]) => (
+          <button key={field} className={`lh-col lh-${field} `
+            + (sort.field === field ? 'on' : '')}
+            onClick={() => clickSort(field)}>
+            {label}{sort.field === field
+              ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+          </button>
+        ))}
       </div>
 
       <div className="leads-list">
@@ -78,7 +119,10 @@ export default function Leads() {
               setOpen(open === l.id ? null : l.id)}>
               <span className="lr-org">{l.org}
                 <span className="lr-state">{l.state}</span>
-                {l.status === 'contacted' && <span className="lr-tag">✓ contacted</span>}
+                {l.status === 'contacted' && (
+                  <span className="lr-tag">✓ contacted</span>)}
+                {l.status === 'dismissed' && (
+                  <span className="lr-tag dim">✕ dismissed</span>)}
               </span>
               <span className="lr-comp">{l.competitor_label}</span>
               <span className="lr-spend">{fmtUsd(l.spend)}/yr</span>
@@ -90,9 +134,11 @@ export default function Leads() {
               <div className="lead-detail">
                 <div className="ld-facts">
                   {l.entity_type && <span>{l.entity_type}</span>}
-                  {l.enrollment && <span>~{l.enrollment.toLocaleString()} students</span>}
+                  {l.enrollment && (
+                    <span>~{l.enrollment.toLocaleString()} students</span>)}
                   {l.budget && <span>budget {fmtUsd(l.budget)}</span>}
-                  {l.spins.length > 0 && <span>billed by {l.spins.join('; ')}</span>}
+                  {l.spins.length > 0 && (
+                    <span>billed by {l.spins.join('; ')}</span>)}
                 </div>
                 {l.narratives.length > 0 && (
                   <div className="ld-nar">“{l.narratives[0]}”</div>)}
@@ -107,7 +153,8 @@ export default function Leads() {
                     : l.contacts.map((c) => (
                       <span key={c} className="ld-person">{c}</span>))}
                   {l.consultants.length > 0 && (
-                    <span className="muted"> · consultant: {l.consultants[0]}</span>)}
+                    <span className="muted"> · consultant: {
+                      l.consultants[0]}</span>)}
                 </div>
 
                 <div className="ld-actions">
@@ -121,10 +168,15 @@ export default function Leads() {
                     <button disabled={busyId === l.id} onClick={() =>
                       act(l.id, () => api.competitorStatus(l.id, 'contacted'))}>
                       ✓ Mark contacted</button>)}
-                  <button className="danger" disabled={busyId === l.id}
-                    onClick={() =>
-                      act(l.id, () => api.competitorStatus(l.id, 'dismissed'))}>
-                    ✕ Dismiss</button>
+                  {l.status === 'dismissed' ? (
+                    <button disabled={busyId === l.id} onClick={() =>
+                      act(l.id, () => api.competitorStatus(l.id, 'new'))}>
+                      ↩ Restore</button>
+                  ) : (
+                    <button className="danger" disabled={busyId === l.id}
+                      onClick={() =>
+                        act(l.id, () => api.competitorStatus(l.id, 'dismissed'))}>
+                      ✕ Dismiss</button>)}
                   {busyId === l.id && <span className="muted">working…</span>}
                 </div>
 
