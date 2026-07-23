@@ -32,8 +32,14 @@ log = logging.getLogger(__name__)
 COMPETITORS = {
     "kajeet": {"label": "Kajeet", "tier": "K-12 specialist",
                "patterns": ["%KAJEET%"]},
+    # Mobile Beacon / Mobile Citizen are brands of Voqal (NACEPF) — they
+    # currently have NO funded 471 lines (they sell to schools outside
+    # E-Rate), but the parent-org patterns are tracked so filings appear
+    # the moment they enter the program.
     "mobile_beacon": {"label": "Mobile Beacon", "tier": "K-12 specialist",
-                      "patterns": ["%MOBILE BEACON%"]},
+                      "patterns": ["%MOBILE BEACON%", "%VOQAL%",
+                                   "%NACEPF%",
+                                   "%CATHOLIC EDUCATIONAL PROGRAMMING%"]},
     "mobile_citizen": {"label": "Mobile Citizen", "tier": "K-12 specialist",
                        "patterns": ["%MOBILE CITIZEN%"]},
     "verizon": {"label": "Verizon Wireless", "tier": "carrier",
@@ -144,17 +150,25 @@ def sweep() -> dict:
 
 
 def summary() -> list[dict]:
+    """Every tracked competitor, including zero-account ones — 'we watch
+    Mobile Beacon and they currently bill nothing through E-Rate' is a
+    fact worth displaying, not an absence."""
     with db.closing_conn() as conn:
         rows = conn.execute(
             """SELECT competitor, COUNT(*) n, ROUND(SUM(spend),2) total,
                       SUM(status='contacted') contacted
                FROM competitor_leads WHERE status != 'dismissed'
-               GROUP BY competitor ORDER BY total DESC""").fetchall()
-    return [{"competitor": r["competitor"],
-             "label": COMPETITORS.get(r["competitor"], {}).get(
-                 "label", r["competitor"]),
-             "accounts": r["n"], "total_spend": r["total"],
-             "contacted": r["contacted"] or 0} for r in rows]
+               GROUP BY competitor""").fetchall()
+    by_key = {r["competitor"]: r for r in rows}
+    out = []
+    for key, cfg in COMPETITORS.items():
+        r = by_key.get(key)
+        out.append({"competitor": key, "label": cfg["label"],
+                    "accounts": r["n"] if r else 0,
+                    "total_spend": (r["total"] if r else 0) or 0,
+                    "contacted": (r["contacted"] if r else 0) or 0})
+    out.sort(key=lambda s: s["total_spend"], reverse=True)
+    return out
 
 
 # sortable columns (whitelist — sort/direction go into SQL)

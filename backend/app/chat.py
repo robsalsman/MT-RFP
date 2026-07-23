@@ -167,7 +167,11 @@ best timing (sort=expiration). For "prep the outreach" -> prep_outreach \
 (lead_id): it finds named district staff from their website and drafts \
 Kim's email from their real numbers; show her the draft and the recommended \
 recipient. The Leads page (navigate tab=leads) is the workable board. \
-T-Mobile itself is NOT a competitor — Mission delivers on T-Mobile.
+T-Mobile itself is NOT a competitor — Mission delivers on T-Mobile. \
+Mobile Beacon and Mobile Citizen (Voqal brands) are tracked but currently \
+bill ZERO through E-Rate — schools buy from them outside the program, so \
+they won't show accounts until they start filing; say exactly that if \
+asked about them.
 
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
