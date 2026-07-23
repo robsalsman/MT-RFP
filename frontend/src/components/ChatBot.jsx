@@ -79,6 +79,24 @@ const CLOSET = [
 ]
 const CLOSET_KINDS = ['Music', 'Business', 'Flair']
 
+// Matt periodically shows off closet gear while idle — {n} = user's name
+const SHOWOFF = [
+  { pose: 'hold_guitar_electric',
+    line: "Check it, {n} — the axe. Land us the next deal and I'll write a riff about you." },
+  { pose: 'hold_keytar',
+    line: 'Keytar break! You close deals, {n}, I shred. Fair division of labour.' },
+  { pose: 'hold_trophy',
+    line: "Keeping this polished for you, {n} — the next win's got your name all over it." },
+  { pose: 'hold_sunglasses',
+    line: "Had to grab the shades, {n} — your pipeline's looking that bright today." },
+  { pose: 'hold_cowbell',
+    line: 'House rule, {n}: every meeting you book, I hit the cowbell. Ready when you are.' },
+  { pose: 'hold_coffee_mug',
+    line: "Brew's on, {n}. You do the hunting, I'll keep the band caffeinated." },
+  { pose: 'hold_mic_handheld',
+    line: 'Mic check — one, two. Say the word, {n}, and I\'ll sing your praises to a school district.' },
+]
+
 export default function ChatBot() {
   const [view, setView] = useState('stage')      // 'stage' | 'min' | 'call'
   const [chatOpen, setChatOpen] = useState(false)
@@ -164,7 +182,7 @@ export default function ChatBot() {
   const history = (msgs) => msgs.filter((m) => !m._local)
     .map(({ role, content }) => ({ role, content }))
   const lastAsst = [...messages].reverse()
-    .find((m) => m.role === 'assistant' && !m._local)
+    .find((m) => m.role === 'assistant' && (!m._local || m._showoff))
   const lastReply = lastAsst?.content
   const bubble = lastReply
     || `Hey ${name || 'there'}! Give me a sec — pulling up the best RFPs for us…`
@@ -261,6 +279,38 @@ export default function ChatBot() {
       setTimeout(() => URL.revokeObjectURL(a.href), 5000)
     } catch { /* ignore */ }
   }
+
+  // Show-off loop: while idle on stage, Matt pulls something from his
+  // closet, drops a line about it (and Kim), then puts it away. Never
+  // interrupts work: skips when busy/recording/speaking or when a pose is
+  // already held.
+  const showOffIdx = useRef(Math.floor(Math.random() * SHOWOFF.length))
+  useEffect(() => {
+    let alive = true
+    const timers = []
+    const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t) }
+    const tryShowOff = () => {
+      if (!alive) return
+      const idle = viewRef.current === 'stage' && !busyRef.current
+        && !recRecording.current && !chatRef.current
+      if (idle && framesReady) {
+        setClosetPose((cur) => {
+          if (cur) return cur          // she's holding something — don't touch
+          const item = SHOWOFF[showOffIdx.current % SHOWOFF.length]
+          showOffIdx.current += 1
+          setMessages((m) => [...m, { role: 'assistant', _local: true,
+            _showoff: true,
+            content: item.line.replace(/\{n\}/g, name || 'mate') }])
+          later(() => setClosetPose(
+            (p) => (p === item.pose ? null : p)), 9000)
+          return item.pose
+        })
+      }
+      later(tryShowOff, 180000 + Math.random() * 180000)  // every 3-6 min
+    }
+    later(tryShowOff, 35000 + Math.random() * 20000)      // first: ~35-55s in
+    return () => { alive = false; timers.forEach(clearTimeout) }
+  }, [framesReady])   // eslint-disable-line
 
   // greeting picks are mixed-kind: RFP draft / competitor lead / board nav
   const goLeads = (leadId) => {
