@@ -31,6 +31,8 @@ DATASET_FORM470 = "jt8s-3q52"       # Form 470 Tool Data (primary feed)
 DATASET_FORM470_BASIC = "jp7a-89nd"
 DATASET_FORM470_SERVICES = "39tn-hjzv"
 DATASET_FRN_STATUS = "qdmp-ygft"    # Form 471 FRN Status (prior-spend join)
+DATASET_ECF_471 = "i5j4-3rvr"       # Emergency Connectivity Fund Form 471
+                                    # (hotspot buyers outside E-Rate)
 
 USAC_APP_TOKEN = os.environ.get("USAC_APP_TOKEN", "")
 

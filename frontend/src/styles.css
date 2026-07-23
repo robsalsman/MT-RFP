@@ -310,6 +310,8 @@ th.sorted { color: var(--accent); }
 .lr-spend { width: 110px; }
 .lr-exp { width: 120px; }
 .lr-tag.dim { color: var(--muted); }
+.lr-tag.ecf { color: #fff; background: var(--accent); border-radius: 5px;
+  padding: 1px 5px; font-size: 10px; font-weight: 800; }
 @media (max-width: 720px) {
   .lh-competitor, .lh-expiration, .lh-status { display: none; }
 }

@@ -124,8 +124,8 @@ def sweep() -> dict:
                 """INSERT INTO competitor_leads
                    (ben, competitor, funding_year, org, entity_type, state,
                     spins, spend, next_expiration, contacts, consultants,
-                    narratives, updated_at)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    narratives, updated_at, source)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'erate')
                    ON CONFLICT(ben, competitor) DO UPDATE SET
                      funding_year=excluded.funding_year,
                      org=excluded.org, entity_type=excluded.entity_type,
@@ -135,7 +135,8 @@ def sweep() -> dict:
                      contacts=excluded.contacts,
                      consultants=excluded.consultants,
                      narratives=excluded.narratives,
-                     updated_at=excluded.updated_at""",
+                     updated_at=excluded.updated_at,
+                     source='erate'""",
                 (ben, comp, used_fy, o["org"], o["entity_type"], o["state"],
                  json.dumps(sorted(o["spins"])), round(o["spend"], 2),
                  min(o["expirations"], default=None),
@@ -144,9 +145,90 @@ def sweep() -> dict:
                  json.dumps(o["narratives"]), now))
             upserted += 1
         conn.commit()
-    log.info("competitor sweep FY%s: %d accounts", used_fy, upserted)
+    ecf_added = _sweep_ecf(now)
+    log.info("competitor sweep FY%s: %d E-Rate + %d ECF accounts",
+             used_fy, upserted, ecf_added)
     return {"funding_year": used_fy, "accounts": upserted,
-            "summary": summary()}
+            "ecf_accounts": ecf_added, "summary": summary()}
+
+
+def _sweep_ecf(now: str) -> int:
+    """Hotspot buyers OUTSIDE E-Rate: the Emergency Connectivity Fund
+    funded competitor hotspots for thousands of schools/libraries
+    (Mobile Beacon's entire K-12 footprint lives here). ECF has ended, so
+    every funded org is a win-back target — they either still pay the
+    competitor out of pocket or lost their hotspots when funding stopped.
+
+    E-Rate rows are authoritative: ECF only fills orgs that have no
+    current E-Rate line with that competitor (ON CONFLICT DO NOTHING)."""
+    pats = [p for c in COMPETITORS.values() for p in c["patterns"]]
+    likes = " OR ".join(
+        f"upper(service_provider_name) like '{p}'" for p in pats)
+    select = ("billed_entity_number, applicant_name, applicant_type, "
+              "billed_entity_state, billed_entity_city, "
+              "service_provider_name, frn_approved_amount, "
+              "monthly_quantity, contact_name, contact_email, "
+              "consulting_firm, service_end_date, funding_request_status")
+    try:
+        rows = soda.fetch_all(config.DATASET_ECF_471,
+                              where=f"({likes})", select=select,
+                              order="billed_entity_number")
+    except Exception as e:
+        log.warning("ECF sweep failed: %s", e)
+        return 0
+    agg: dict[tuple, dict] = {}
+    for r in rows:
+        if (r.get("funding_request_status") or "") != "Funded":
+            continue
+        comp = competitor_for_spin(r.get("service_provider_name"))
+        ben = r.get("billed_entity_number")
+        if not comp or not ben:
+            continue
+        o = agg.setdefault((ben, comp), {
+            "org": r.get("applicant_name") or "",
+            "entity_type": r.get("applicant_type") or "",
+            "state": r.get("billed_entity_state") or "",
+            "city": r.get("billed_entity_city") or "",
+            "spend": 0.0, "devices": 0, "spins": set(), "contacts": set(),
+            "consultants": set(), "end": ""})
+        o["spend"] += leads_mod._f(r.get("frn_approved_amount"))
+        try:
+            o["devices"] += int(float(r.get("monthly_quantity") or 0))
+        except (TypeError, ValueError):
+            pass
+        if r.get("service_provider_name"):
+            o["spins"].add(r["service_provider_name"].strip())
+        email = (r.get("contact_email") or "").strip().lower()
+        name = (r.get("contact_name") or "").strip()
+        if email:
+            o["contacts"].add(f"{name} <{email}>" if name else email)
+        cons = leads_mod._consultant(r.get("consulting_firm"))
+        if cons:
+            o["consultants"].add(cons)
+        o["end"] = max(o["end"], (r.get("service_end_date") or "")[:10])
+    added = 0
+    with db.closing_conn() as conn:
+        for (ben, comp), o in agg.items():
+            if o["spend"] <= 0:
+                continue
+            note = (f"{o['devices'] or 'unknown number of'} hotspot/device "
+                    f"lines funded by ECF"
+                    + (f"; service ended {o['end']}" if o["end"] else ""))
+            cur = conn.execute(
+                """INSERT INTO competitor_leads
+                   (ben, competitor, funding_year, org, entity_type, state,
+                    city, spins, spend, contacts, consultants, narratives,
+                    updated_at, source, devices)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'ecf',?)
+                   ON CONFLICT(ben, competitor) DO NOTHING""",
+                (ben, comp, 2022, o["org"], o["entity_type"], o["state"],
+                 o["city"], json.dumps(sorted(o["spins"])),
+                 round(o["spend"], 2), json.dumps(sorted(o["contacts"])),
+                 json.dumps(sorted(o["consultants"])),
+                 json.dumps([note]), now, o["devices"] or None))
+            added += cur.rowcount
+        conn.commit()
+    return added
 
 
 def summary() -> list[dict]:
@@ -256,10 +338,23 @@ def set_status(lead_id: int, status: str) -> bool:
 
 # ------------------------------------------------- contact enrichment
 
+def _parse_contact(c: str) -> tuple[str | None, str | None]:
+    """'Name <email>' or bare 'email' -> (name, email)."""
+    m = re.match(r"^(.*?)\s*<([^>]+@[^>]+)>$", c.strip())
+    if m:
+        return (m.group(1).strip() or None), m.group(2).strip().lower()
+    if "@" in c:
+        return None, c.strip().lower()
+    return c.strip() or None, None
+
+
 def district_domain(lead: dict) -> str | None:
     """The filing contact's email domain is usually the district's website."""
-    for email in lead.get("contacts", []):
-        dom = email.split("@")[-1].lower()
+    for c in lead.get("contacts", []):
+        _, email = _parse_contact(c)
+        if not email:
+            continue
+        dom = email.split("@")[-1]
         if not any(x in dom for x in _NON_DISTRICT_DOMAINS):
             return dom
     return None
@@ -422,7 +517,7 @@ def draft_outreach(lead_id: int) -> dict:
 
 
 def _best_contact(lead: dict) -> dict:
-    """Named district staff (from enrichment) beats the bare filing email."""
+    """Named district staff (from enrichment) beats the filing contact."""
     for c in lead.get("extra_contacts", []):
         title = (c.get("title") or "").lower()
         if c.get("email") and any(k in title for k in
@@ -431,5 +526,8 @@ def _best_contact(lead: dict) -> dict:
     for c in lead.get("extra_contacts", []):
         if c.get("email"):
             return c
-    emails = lead.get("contacts", [])
-    return {"email": emails[0] if emails else None}
+    for c in lead.get("contacts", []):
+        name, email = _parse_contact(c)
+        if email:
+            return {"name": name, "email": email}
+    return {"email": None}

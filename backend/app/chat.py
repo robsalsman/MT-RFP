@@ -13,7 +13,7 @@ import re
 
 import httpx
 
-from . import ai, competitors, config, db, leads, respond, scoring
+from . import ai, competitors, config, db, leads, mentions, respond, scoring
 from . import status as status_mod
 
 log = logging.getLogger(__name__)
@@ -168,10 +168,16 @@ best timing (sort=expiration). For "prep the outreach" -> prep_outreach \
 Kim's email from their real numbers; show her the draft and the recommended \
 recipient. The Leads page (navigate tab=leads) is the workable board. \
 T-Mobile itself is NOT a competitor — Mission delivers on T-Mobile. \
-Mobile Beacon and Mobile Citizen (Voqal brands) are tracked but currently \
-bill ZERO through E-Rate — schools buy from them outside the program, so \
-they won't show accounts until they start filing; say exactly that if \
-asked about them.
+The board covers TWO funding programs: E-Rate (recurring annual spend, \
+contract expirations) and ECF — the ended Emergency Connectivity Fund \
+hotspot program. ECF leads (spend_kind says so) are WIN-BACK targets: \
+they bought competitor hotspots with federal money that's now gone, so \
+they're either paying out of pocket or lost service — Mission's nonprofit \
+pricing is the answer. Mobile Beacon and Mobile Citizen customers appear \
+via ECF (they sell outside E-Rate); ~107 Mobile Beacon accounts are on \
+the board. For customers no USAC dataset can see, use \
+find_competitor_mentions (board minutes, news, and Mobile Beacon's own \
+published case studies) — cite the source URL and mark them unverified.
 
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
@@ -326,6 +332,23 @@ TOOLS = [
                      "(best timing); competitor = grouped by competitor"},
             "min_spend": {"type": "number"},
             "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "find_competitor_mentions",
+        "description": "Public-web intel beyond USAC data: searches board "
+                       "minutes, tech plans, news, and (for Mobile Beacon) "
+                       "the vendor's own published case studies for named "
+                       "customer organizations. Soft leads with source "
+                       "URLs — use when USAC data can't see a competitor's "
+                       "customers (Mobile Beacon sells outside E-Rate) or "
+                       "to enrich a region hunt.",
+        "parameters": {"type": "object", "properties": {
+            "competitor": {"type": "string",
+                           "description": "competitor name, e.g. 'Mobile "
+                           "Beacon', 'Kajeet'"},
+            "region": {"type": "string",
+                       "description": "optional state/metro to focus, "
+                       "e.g. 'Texas' or 'DFW'"}},
+            "required": ["competitor"]}}},
     {"type": "function", "function": {
         "name": "prep_outreach",
         "description": "Prepare Kim's outreach for one competitor account "
@@ -533,13 +556,21 @@ def _exec_tool(name: str, args: dict) -> dict:
             compact = [{"lead_id": r["id"], "org": r["org"],
                         "state": r["state"], "competitor":
                         r["competitor_label"],
-                        "annual_spend": r["spend"],
+                        "spend": r["spend"],
+                        "spend_kind": ("ECF program total (ended - "
+                                       "win-back)" if r.get("source")
+                                       == "ecf" else "per year"),
+                        "devices": r.get("devices"),
                         "contract_expires": r["next_expiration"],
                         "contacts": r["contacts"][:2],
                         "consultants": r["consultants"][:1],
                         "status": r["status"]} for r in rows]
             return {"summary": competitors.summary(), "count": len(compact),
                     "accounts": compact}
+        if name == "find_competitor_mentions":
+            return mentions.competitor_mentions(
+                str(args.get("competitor", "")).strip() or "Mobile Beacon",
+                args.get("region"))
         if name == "prep_outreach":
             lid = int(args["lead_id"])
             found = None

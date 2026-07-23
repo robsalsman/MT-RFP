@@ -145,6 +145,17 @@ def _migrate(conn) -> None:
     if "mission_blockers" not in cols:
         conn.execute(
             "ALTER TABLE rfps ADD COLUMN mission_blockers TEXT DEFAULT '[]'")
+    ccols = {r[1] for r in conn.execute(
+        "PRAGMA table_info(competitor_leads)")}
+    if ccols:
+        # funding program the lead was found in: 'erate' (recurring annual
+        # spend) or 'ecf' (one-time hotspot program -> win-back targets)
+        if "source" not in ccols:
+            conn.execute("ALTER TABLE competitor_leads ADD COLUMN "
+                         "source TEXT DEFAULT 'erate'")
+        if "devices" not in ccols:
+            conn.execute(
+                "ALTER TABLE competitor_leads ADD COLUMN devices INTEGER")
 
 
 @contextmanager

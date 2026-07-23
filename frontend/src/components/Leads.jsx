@@ -119,13 +119,18 @@ export default function Leads() {
               setOpen(open === l.id ? null : l.id)}>
               <span className="lr-org">{l.org}
                 <span className="lr-state">{l.state}</span>
+                {l.source === 'ecf' && (
+                  <span className="lr-tag ecf"
+                    title="Found via the Emergency Connectivity Fund — the
+ program ended, so this is a win-back target">ECF</span>)}
                 {l.status === 'contacted' && (
                   <span className="lr-tag">✓ contacted</span>)}
                 {l.status === 'dismissed' && (
                   <span className="lr-tag dim">✕ dismissed</span>)}
               </span>
               <span className="lr-comp">{l.competitor_label}</span>
-              <span className="lr-spend">{fmtUsd(l.spend)}/yr</span>
+              <span className="lr-spend">{fmtUsd(l.spend)}
+                {l.source === 'ecf' ? ' total' : '/yr'}</span>
               <span className="lr-exp">{l.next_expiration
                 ? `exp ${l.next_expiration}` : ''}</span>
             </button>
@@ -134,6 +139,10 @@ export default function Leads() {
               <div className="lead-detail">
                 <div className="ld-facts">
                   {l.entity_type && <span>{l.entity_type}</span>}
+                  {l.source === 'ecf' && (
+                    <span>ECF-funded (program ended — win-back)</span>)}
+                  {l.devices ? <span>{l.devices.toLocaleString()} hotspot
+                    lines</span> : null}
                   {l.enrollment && (
                     <span>~{l.enrollment.toLocaleString()} students</span>)}
                   {l.budget && <span>budget {fmtUsd(l.budget)}</span>}
