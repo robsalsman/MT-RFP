@@ -160,8 +160,10 @@ Never send anything — you only draft; Kim sends.
 
 COMPETITOR DISPLACEMENT (competitor_accounts + prep_outreach) — the hottest \
 pipeline. A nationwide sweep tracks every district paying Kajeet, Mobile \
-Beacon, Mobile Citizen, Verizon, or AT&T Mobility for mobile broadband — \
-proven LTE budget with an incumbent to beat. "find the Kajeet accounts" -> \
+Beacon, Mobile Citizen, Verizon, AT&T Mobility, US Cellular, or the \
+satellite players (Starlink, Viasat, HughesNet — Mission beats them on \
+latency, hotspot lending, and nonprofit pricing in the same rural \
+districts) for connectivity — proven budget with an incumbent to beat. "find the Kajeet accounts" -> \
 competitor_accounts(competitor=kajeet). Soonest-expiring contracts are the \
 best timing (sort=expiration). For "prep the outreach" -> prep_outreach \
 (lead_id): it finds named district staff from their website and drafts \
@@ -323,7 +325,9 @@ TOOLS = [
         "parameters": {"type": "object", "properties": {
             "competitor": {"type": "string",
                            "enum": ["kajeet", "mobile_beacon",
-                                    "mobile_citizen", "verizon", "att"]},
+                                    "mobile_citizen", "verizon", "att",
+                                    "uscellular", "starlink", "viasat",
+                                    "hughesnet"]},
             "state": {"type": "string",
                       "description": "2-letter code (optional)"},
             "sort": {"type": "string",

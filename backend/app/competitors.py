@@ -45,7 +45,17 @@ COMPETITORS = {
     "verizon": {"label": "Verizon Wireless", "tier": "carrier",
                 "patterns": ["%CELLCO%", "%VERIZON WIRELESS%"]},
     "att": {"label": "AT&T Mobility", "tier": "carrier",
-            "patterns": ["%AT&T MOBILITY%"]},
+            "patterns": ["%AT&T MOBILITY%", "%FIRSTNET%"]},
+    # qualified 2026-07 by probing both datasets (see docs/competitor-intel):
+    "uscellular": {"label": "US Cellular", "tier": "carrier",
+                   "patterns": ["%US CELLULAR%", "%U.S. CELLULAR%"]},
+    # satellite players compete for the same rural districts LTE serves
+    "starlink": {"label": "Starlink", "tier": "satellite",
+                 "patterns": ["%STARLINK%", "%SPACE EXPLORATION%"]},
+    "viasat": {"label": "Viasat", "tier": "satellite",
+               "patterns": ["%VIASAT%"]},
+    "hughesnet": {"label": "HughesNet", "tier": "satellite",
+                  "patterns": ["%HUGHES NETWORK%", "%HUGHESNET%"]},
 }
 
 # consultant/vendor email domains that are NOT the district's own website

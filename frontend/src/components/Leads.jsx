@@ -34,6 +34,14 @@ export default function Leads() {
   useEffect(() => { load() },   // eslint-disable-line
     [competitor, state, status, minSpend, sort])
 
+  // deep-link from Matt's greeting: open the lead he recommended
+  useEffect(() => {
+    if (window.__openLeadId) {
+      setOpen(window.__openLeadId)
+      window.__openLeadId = null
+    }
+  }, [])
+
   const clickSort = (field) => setSort((s) => ({
     field,
     dir: s.field === field ? (s.dir === 'asc' ? 'desc' : 'asc')

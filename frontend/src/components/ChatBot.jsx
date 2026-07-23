@@ -174,22 +174,52 @@ export default function ChatBot() {
     : avatar.state === 'speaking' ? 'talking…'
       : busy ? 'thinking…' : 'online'
 
-  // Proactive open: as soon as Matt is up, he pulls the top mission-fit RFPs
-  // and offers to draft one — instead of waiting to be asked.
+  // Proactive open: Matt greets with BOTH pipelines — top mission-fit RFPs
+  // and the best competitor-displacement targets — and asks which hunt
+  // Kim fancies today.
   const proactiveDone = useRef(false)
   useEffect(() => {
     if (proactiveDone.current) return
     proactiveDone.current = true
-    api.rfps({ status: 'OPEN', mission_only: true }).then((d) => {
-      const top = (d.rfps || []).slice(0, 3)
-      if (!top.length) return
-      const picks = top.map((r) => ({ application_number: r.application_number,
+    Promise.allSettled([
+      api.rfps({ status: 'OPEN', mission_only: true }),
+      api.competitorLeads({ sort: 'spend', limit: 150 }),
+    ]).then(([rfpRes, leadRes]) => {
+      const picks = []
+      const rfps = rfpRes.status === 'fulfilled'
+        ? (rfpRes.value.rfps || []).slice(0, 2) : []
+      rfps.forEach((r) => picks.push({ kind: 'rfp',
+        application_number: r.application_number,
         label: `${r.billed_entity_name} · ${r.state}`,
         entity: r.billed_entity_name }))
+      const leads = leadRes.status === 'fulfilled'
+        ? (leadRes.value.leads || []) : []
+      // best displacement = big E-Rate spender whose contract comes up
+      // within ~15 months (renewal window opening)
+      const today = new Date().toISOString().slice(0, 10)
+      const horizon = new Date(Date.now() + 456 * 864e5)
+        .toISOString().slice(0, 10)
+      const expiring = leads.filter((l) => l.source !== 'ecf'
+        && l.next_expiration && l.next_expiration >= today
+        && l.next_expiration <= horizon
+        && l.status === 'new').sort((a, b) => b.spend - a.spend)
+      if (expiring[0]) picks.push({ kind: 'lead', lead_id: expiring[0].id,
+        label: `${expiring[0].org} — $${Math.round(expiring[0].spend)
+          .toLocaleString()}/yr to ${expiring[0].competitor_label}, `
+          + `expires ${expiring[0].next_expiration}` })
+      // best win-back = biggest ECF account not yet contacted
+      const winback = leads.filter((l) => l.source === 'ecf'
+        && l.status === 'new').sort((a, b) => b.spend - a.spend)
+      if (winback[0]) picks.push({ kind: 'lead', lead_id: winback[0].id,
+        label: `${winback[0].org} — ${winback[0].competitor_label} `
+          + `win-back ($${Math.round(winback[0].spend).toLocaleString()} ECF)` })
+      if (leads.length) picks.push({ kind: 'nav',
+        label: 'Open the full Leads board' })
+      if (!picks.length) return
       const hi = name ? `Hey ${name}! ` : 'Hey! '
-      const content = hi + "I went through the open RFPs — these look like our "
-        + 'strongest shots right now. Want me to prepare a reply for one? '
-        + 'Tap it and I\'ll draft it.'
+      const content = hi + 'What are we hunting today — fresh RFPs, or '
+        + 'raiding competitor accounts? These are my best targets right '
+        + 'now. Tap one and I\'ll get to work.'
       setMessages((m) => [...m, { role: 'assistant', _proactive: true,
         content, picks }])
       playSeq('wave', 2400)   // he waves hello when he greets you
@@ -231,6 +261,20 @@ export default function ChatBot() {
       setTimeout(() => URL.revokeObjectURL(a.href), 5000)
     } catch { /* ignore */ }
   }
+
+  // greeting picks are mixed-kind: RFP draft / competitor lead / board nav
+  const goLeads = (leadId) => {
+    if (leadId) window.__openLeadId = leadId
+    window.dispatchEvent(new CustomEvent('mtrfp:navigate',
+      { detail: { tab: 'leads' } }))
+  }
+  const pickClick = (p) => {
+    if (p.kind === 'lead') goLeads(p.lead_id)
+    else if (p.kind === 'nav') goLeads(null)
+    else prepareReply(p.application_number, p.entity)
+  }
+  const pickIcon = (p) => (p.kind === 'lead' ? '⚔️'
+    : p.kind === 'nav' ? '📋' : '🎸')
 
   const openRfp = (an) => {
     setView('stage')
@@ -380,10 +424,11 @@ export default function ChatBot() {
             </div>)}
           {m.picks?.length > 0 && (
             <div className="chat-options">{m.picks.map((p) => (
-              <button key={p.application_number} className="opt pick"
-                disabled={busy}
-                onClick={() => prepareReply(p.application_number, p.entity)}>
-                🎸 Draft reply — {p.label}</button>))}
+              <button key={p.application_number || p.lead_id || p.label}
+                className="opt pick" disabled={busy && p.kind !== 'nav'}
+                onClick={() => pickClick(p)}>
+                {pickIcon(p)} {p.kind === 'rfp' || !p.kind
+                  ? `Draft reply — ${p.label}` : p.label}</button>))}
             </div>)}
           {m.downloads && (
             <div className="chat-options">
@@ -541,10 +586,11 @@ export default function ChatBot() {
                 {bubblePicks.length > 0 && (
                   <div className="stage-picks">
                     {bubblePicks.map((p) => (
-                      <button key={p.application_number} className="stage-pick"
-                        disabled={busy} title={`Draft reply — ${p.label}`}
-                        onClick={() => prepareReply(p.application_number, p.entity)}>
-                        🎸 {p.label}</button>))}
+                      <button key={p.application_number || p.lead_id || p.label}
+                        className="stage-pick"
+                        disabled={busy && p.kind !== 'nav'} title={p.label}
+                        onClick={() => pickClick(p)}>
+                        {pickIcon(p)} {p.label}</button>))}
                   </div>)}
                 {bubbleDownloads && (
                   <div className="stage-picks stage-dl">
