@@ -154,6 +154,66 @@ def find_leads(state: str, name_contains: list[str] | None = None,
             "leads": leads}
 
 
+def find_denied(state: str, limit: int = 15) -> dict:
+    """Districts whose E-Rate data-transmission funding was DENIED — a
+    documented connectivity need with no funding behind it. The pitch
+    writes itself: Mission's nonprofit pricing works without E-Rate."""
+    state = (state or "").strip().upper()
+    fy = current_funding_year()
+    rows = []
+    used_fy = fy
+    for try_fy in (fy, fy - 1):
+        where = (f"funding_year='{try_fy}' AND state='{state}' AND "
+                 "form_471_frn_status_name='Denied' AND "
+                 "form_471_service_type_name='Data Transmission and/or "
+                 "Internet Access'")
+        select = ("ben, organization_name, organization_entity_type_name, "
+                  "spin_name, cnct_email, crn_data, narrative, nickname, "
+                  "total_pre_discount_costs, fcdl_comment_frn")
+        try:
+            rows = soda.fetch_all(config.DATASET_FRN_STATUS, where=where,
+                                  select=select, order="ben")
+        except Exception as e:
+            log.warning("denied query failed (%s FY%s): %s", state, try_fy, e)
+            rows = []
+        if rows:
+            used_fy = try_fy
+            break
+    orgs: dict[str, dict] = {}
+    for r in rows:
+        ben = r.get("ben")
+        if not ben:
+            continue
+        o = orgs.setdefault(ben, {
+            "org": r.get("organization_name") or "",
+            "entity_type": r.get("organization_entity_type_name") or "",
+            "denied_amount": 0.0, "contacts": set(), "consultants": set(),
+            "reasons": [], "wanted": []})
+        o["denied_amount"] += _f(r.get("total_pre_discount_costs"))
+        if r.get("cnct_email"):
+            o["contacts"].add(r["cnct_email"].strip().lower())
+        cons = _consultant(r.get("crn_data"))
+        if cons:
+            o["consultants"].add(cons)
+        reason = (r.get("fcdl_comment_frn") or "").strip()
+        if reason and len(o["reasons"]) < 2:
+            o["reasons"].append(reason[:160])
+        nar = (r.get("narrative") or r.get("nickname") or "").strip()
+        if nar and len(o["wanted"]) < 2:
+            o["wanted"].append(nar[:120])
+    leads = sorted(orgs.values(), key=lambda o: -o["denied_amount"])
+    leads = leads[:max(1, min(int(limit or 15), 50))]
+    for o in leads:
+        o["denied_amount"] = round(o["denied_amount"], 2)
+        o["contacts"] = sorted(o["contacts"])[:3]
+        o["consultants"] = sorted(o["consultants"])[:2]
+    return {"state": state, "funding_year": used_fy, "count": len(leads),
+            "denied_leads": leads,
+            "note": "Funding requests DENIED — these orgs asked for "
+                    "connectivity and didn't get it funded. Angle: "
+                    "Mission's nonprofit pricing works without E-Rate."}
+
+
 # ---------------------------------------------------------------- internals
 
 def _frn_rows(state: str, fy: int) -> list:

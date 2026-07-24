@@ -156,6 +156,11 @@ def _migrate(conn) -> None:
         if "devices" not in ccols:
             conn.execute(
                 "ALTER TABLE competitor_leads ADD COLUMN devices INTEGER")
+        if "zip" not in ccols:
+            conn.execute("ALTER TABLE competitor_leads ADD COLUMN zip TEXT")
+        if "website" not in ccols:
+            conn.execute(
+                "ALTER TABLE competitor_leads ADD COLUMN website TEXT")
 
 
 @contextmanager

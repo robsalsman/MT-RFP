@@ -156,10 +156,55 @@ def sweep() -> dict:
             upserted += 1
         conn.commit()
     ecf_added = _sweep_ecf(now)
-    log.info("competitor sweep FY%s: %d E-Rate + %d ECF accounts",
-             used_fy, upserted, ecf_added)
+    geo = enrich_geo()
+    log.info("competitor sweep FY%s: %d E-Rate + %d ECF accounts, "
+             "%d geo-enriched", used_fy, upserted, ecf_added, geo)
     return {"funding_year": used_fy, "accounts": upserted,
-            "ecf_accounts": ecf_added, "summary": summary()}
+            "ecf_accounts": ecf_added, "geo_enriched": geo,
+            "summary": summary()}
+
+
+def enrich_geo(batch: int = 100) -> int:
+    """Fill city/zip/website from the USAC entity directory for board rows
+    missing them — turns metro targeting into real geography instead of
+    guessed name matching, and gives contact crawls the actual website."""
+    with db.closing_conn() as conn:
+        rows = [dict(r) for r in conn.execute(
+            "SELECT id, ben FROM competitor_leads "
+            "WHERE zip IS NULL OR city IS NULL OR city=''")]
+    if not rows:
+        return 0
+    by_ben: dict[str, list[int]] = {}
+    for r in rows:
+        by_ben.setdefault(str(r["ben"]), []).append(r["id"])
+    bens = sorted(by_ben)
+    updated = 0
+    for i in range(0, len(bens), batch):
+        chunk = bens[i:i + batch]
+        blist = ",".join(f"'{b}'" for b in chunk)
+        try:
+            ents = soda.fetch_all(
+                config.DATASET_ENTITY,
+                where=f"entity_number in({blist})",
+                select="entity_number, physical_city, physical_zipcode, "
+                       "website_url", order="entity_number")
+        except Exception as e:
+            log.warning("entity enrichment failed: %s", e)
+            break
+        with db.closing_conn() as conn:
+            for e in ents:
+                ben = str(e.get("entity_number") or "")
+                for lid in by_ben.get(ben, []):
+                    conn.execute(
+                        "UPDATE competitor_leads SET "
+                        "city=COALESCE(NULLIF(city,''), ?), zip=?, "
+                        "website=COALESCE(website, ?) WHERE id=?",
+                        ((e.get("physical_city") or "").title() or None,
+                         (e.get("physical_zipcode") or "")[:5] or None,
+                         e.get("website_url"), lid))
+                    updated += 1
+            conn.commit()
+    return updated
 
 
 def _sweep_ecf(now: str) -> int:
@@ -274,7 +319,9 @@ _ASC_DEFAULT = {"expiration", "org", "state", "competitor", "status"}
 def list_leads(competitor: str | None = None, state: str | None = None,
                status: str | None = None, min_spend: float = 0,
                sort: str = "spend", limit: int = 50,
-               direction: str | None = None) -> list[dict]:
+               direction: str | None = None,
+               cities: list[str] | None = None,
+               zip_prefixes: list[str] | None = None) -> list[dict]:
     sql = "SELECT * FROM competitor_leads WHERE 1=1"
     params: list = []
     if competitor:
@@ -283,6 +330,18 @@ def list_leads(competitor: str | None = None, state: str | None = None,
     if state:
         sql += " AND state=?"
         params.append(state.upper())
+    if cities:
+        cl = [c.strip() for c in cities if c and c.strip()]
+        if cl:
+            sql += (" AND (" + " OR ".join(
+                "city LIKE ? OR org LIKE ?" for _ in cl) + ")")
+            for c in cl:
+                params += [f"%{c}%", f"%{c}%"]
+    if zip_prefixes:
+        zl = [z.strip() for z in zip_prefixes if z and z.strip()]
+        if zl:
+            sql += (" AND (" + " OR ".join("zip LIKE ?" for _ in zl) + ")")
+            params += [f"{z}%" for z in zl]
     if status and status != "all":
         sql += " AND status=?"
         params.append(status)
@@ -499,6 +558,16 @@ def draft_outreach(lead_id: int) -> dict:
         facts.append(f"Total district budget: ${lead['budget']:,.0f}.")
     if lead.get("narratives"):
         facts.append(f"Their filing describes: {lead['narratives'][0]}")
+    try:
+        from . import acp
+        hh = acp.households_for_zip(lead.get("zip"))
+        if hh and hh > 200:
+            facts.append(
+                f"Local need: about {hh:,} households in their zip code "
+                f"({lead['zip']}) lost the ACP internet subsidy when the "
+                "program ended in 2024.")
+    except Exception:   # need signal is optional, never blocks a draft
+        pass
     if best.get("name"):
         facts.append(f"Recipient: {best['name']}"
                      + (f", {best['title']}" if best.get("title") else ""))

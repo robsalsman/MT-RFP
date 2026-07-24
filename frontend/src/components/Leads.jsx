@@ -26,6 +26,24 @@ export default function Leads() {
   const [open, setOpen] = useState(null)
   const [busyId, setBusyId] = useState(null)
   const [sweeping, setSweeping] = useState(false)
+  const [view, setView] = useState('accounts')   // 'accounts' | 'consultants'
+  const [consultants, setConsultants] = useState(null)
+  const [pitch, setPitch] = useState({})          // name -> {draft,to}|'busy'
+
+  useEffect(() => {
+    if (view === 'consultants' && !consultants) {
+      api.consultants(30).then((d) =>
+        setConsultants(d.consultants || [])).catch(() => {})
+    }
+  }, [view])   // eslint-disable-line
+
+  const draftPitch = async (name) => {
+    setPitch((p) => ({ ...p, [name]: 'busy' }))
+    try {
+      const d = await api.consultantPitch(name)
+      setPitch((p) => ({ ...p, [name]: d }))
+    } catch { setPitch((p) => ({ ...p, [name]: null })) }
+  }
 
   const load = () => api.competitorLeads({
     competitor, state, status, min_spend: minSpend || 0,
@@ -66,6 +84,61 @@ export default function Leads() {
     <div className="leads-page"><p className="muted">
       Loading the competitor board…</p></div>)
 
+  if (view === 'consultants') {
+    return (
+      <div className="leads-page">
+        <div className="leads-filters">
+          <button className="lead-sum" onClick={() => setView('accounts')}>
+            ← Back to accounts</button>
+          <span className="muted">E-Rate consultants ranked by client
+            reach — one relationship opens every door on their roster.</span>
+        </div>
+        <div className="leads-list">
+          {(consultants || []).map((c) => (
+            <div key={c.name} className="lead-card">
+              <button className="lead-row" onClick={() =>
+                setOpen(open === c.name ? null : c.name)}>
+                <span className="lr-org">{c.name}</span>
+                <span className="lr-comp">{c.states.slice(0, 4).join(' ')}
+                  {c.states.length > 4 ? '…' : ''}</span>
+                <span className="lr-spend">{c.client_count} clients</span>
+                <span className="lr-exp">{fmtUsd(c.competitor_spend)}</span>
+              </button>
+              {open === c.name && (
+                <div className="lead-detail">
+                  <div className="ld-contacts"><b>Email:</b>{' '}
+                    {c.emails.join(', ') || '—'}</div>
+                  <div className="ld-facts">
+                    {c.top_clients.map((t) => (
+                      <span key={t.org}>{t.org} ({fmtUsd(t.spend)})</span>))}
+                  </div>
+                  <div className="ld-actions">
+                    <button disabled={pitch[c.name] === 'busy'}
+                      onClick={() => draftPitch(c.name)}>
+                      ✍️ {pitch[c.name] && pitch[c.name] !== 'busy'
+                        ? 'Redraft pitch' : 'Draft partnership pitch'}</button>
+                    {pitch[c.name] === 'busy' && (
+                      <span className="muted">drafting…</span>)}
+                  </div>
+                  {pitch[c.name] && pitch[c.name] !== 'busy'
+                    && pitch[c.name].draft && (
+                    <div className="ld-draft">
+                      <textarea readOnly value={pitch[c.name].draft}
+                        rows={10} />
+                      <div className="ld-draft-btns">
+                        <button onClick={() => navigator.clipboard
+                          ?.writeText(pitch[c.name].draft)}>📋 Copy</button>
+                      </div>
+                    </div>)}
+                </div>)}
+            </div>
+          ))}
+          {!consultants && <p className="muted">Loading consultants…</p>}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="leads-page">
       <div className="leads-summary">
@@ -83,6 +156,12 @@ export default function Leads() {
         <button className="lead-sum sweep" onClick={sweep} disabled={sweeping}
           title="Re-run the nationwide USAC sweep">
           {sweeping ? '⏳ Sweeping…' : '🔄 Refresh sweep'}</button>
+        <button className="lead-sum" title="E-Rate consultant channel"
+          onClick={() => setView('consultants')}>
+          <span className="ls-label">Channel</span>
+          <span className="ls-big">🤝</span>
+          <span className="ls-sub">Consultants</span>
+        </button>
       </div>
 
       <div className="leads-filters">

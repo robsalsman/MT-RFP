@@ -33,6 +33,8 @@ DATASET_FORM470_SERVICES = "39tn-hjzv"
 DATASET_FRN_STATUS = "qdmp-ygft"    # Form 471 FRN Status (prior-spend join)
 DATASET_ECF_471 = "i5j4-3rvr"       # Emergency Connectivity Fund Form 471
                                     # (hotspot buyers outside E-Rate)
+DATASET_ENTITY = "7i5i-83qf"        # E-Rate Supplemental Entity Information
+                                    # (BEN -> city/zip/lat-lon/website/contact)
 
 USAC_APP_TOKEN = os.environ.get("USAC_APP_TOKEN", "")
 

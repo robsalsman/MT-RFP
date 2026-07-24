@@ -63,6 +63,13 @@ export const api = {
     authFetch(`/api/competitor-leads/${id}/draft`, { method: 'POST' }).then(json),
   competitorContacts: (id) =>
     authFetch(`/api/competitor-leads/${id}/contacts`, { method: 'POST' }).then(json),
+  consultants: (limit = 25) =>
+    authFetch(`/api/consultants?limit=${limit}`).then(json),
+  consultantPitch: (name) =>
+    authFetch('/api/consultants/pitch', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    }).then(json),
   competitorStatus: (id, status) =>
     authFetch(`/api/competitor-leads/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },

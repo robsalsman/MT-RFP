@@ -88,6 +88,36 @@ def web_search(query: str, limit: int = 8) -> list[dict]:
     return _cached(f"ddg:{query}:{limit}", go)
 
 
+def news_search(query: str, limit: int = 8) -> list[dict]:
+    """Google News RSS (keyless): fresh articles -> [{title, url, date,
+    source}]. Catches same-week signals like a district announcing a
+    hotspot-lending program or a competitor contract award."""
+    def go():
+        try:
+            r = httpx.get("https://news.google.com/rss/search",
+                          params={"q": query, "hl": "en-US", "gl": "US",
+                                  "ceid": "US:en"},
+                          headers=_H, timeout=25, follow_redirects=True)
+            r.raise_for_status()
+        except Exception as e:
+            log.warning("news search failed (%s): %s", query, e)
+            return []
+        items = re.findall(r"<item>(.*?)</item>", r.text, re.DOTALL)
+        out = []
+        for it in items[:limit]:
+            def tag(t):
+                m = re.search(fr"<{t}>(.*?)</{t}>", it, re.DOTALL)
+                return _clean(m.group(1)) if m else ""
+            link = re.search(r"<link/?>?\s*(https?://\S+?)\s*(?:</link>|<)",
+                             it)
+            out.append({"title": tag("title")[:140],
+                        "url": (link.group(1) if link else "")[:300],
+                        "date": tag("pubDate")[:32],
+                        "source": tag("source")[:60]})
+        return out
+    return _cached(f"news:{query}:{limit}", go)
+
+
 def mobile_beacon_case_studies() -> list[dict]:
     """Named customers from mobilebeacon.org's own published stories.
     Their category pages bot-block direct fetches (403), but search
@@ -110,6 +140,32 @@ def mobile_beacon_case_studies() -> list[dict]:
     return _cached("mb:case-studies", go)
 
 
+def find_open_bids(state: str | None = None, limit: int = 10) -> dict:
+    """Non-E-Rate procurement: cellular/hotspot/bus-Wi-Fi bids posted on
+    public bid aggregators. Districts buy plenty of LTE outside E-Rate —
+    these never appear in USAC data. Soft leads with source URLs."""
+    sites = ("site:bidnetdirect.com OR site:demandstar.com OR "
+             "site:bonfirehub.com OR site:publicpurchase.com OR "
+             "site:ionwave.net")
+    q = (f'({sites}) (cellular OR hotspot OR "wireless data" OR '
+         f'"bus wifi") school')
+    if state:
+        q += f" {state}"
+    results = web_search(q, limit)
+    extra = web_search(
+        f'({sites}) library hotspot lending' + (f" {state}" if state else ""),
+        max(3, limit // 2))
+    seen, merged = set(), []
+    for r in results + extra:
+        if r["url"] not in seen:
+            seen.add(r["url"])
+            merged.append(r)
+    return {"state": state, "bids": merged[:limit + 4],
+            "note": "Open bids on public procurement portals (outside "
+                    "E-Rate). Verify posting dates on the source page — "
+                    "search results can include closed bids."}
+
+
 def competitor_mentions(competitor_label: str, region: str | None = None,
                         limit: int = 8) -> dict:
     """Public-web mentions of a competitor's K-12/library customers."""
@@ -126,8 +182,11 @@ def competitor_mentions(competitor_label: str, region: str | None = None,
         if r["url"] not in seen:
             seen.add(r["url"])
             merged.append(r)
+    news = news_search(f'"{competitor_label}" school OR library hotspot'
+                       + (f" {region}" if region else ""), 6)
     out = {"competitor": competitor_label, "region": region,
            "mentions": merged[:limit + 4],
+           "fresh_news": news,
            "note": "Public-web mentions (board minutes, tech plans, news). "
                    "Soft leads — verify before outreach; no USAC filing "
                    "backs these."}

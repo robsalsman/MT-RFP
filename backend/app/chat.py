@@ -13,7 +13,8 @@ import re
 
 import httpx
 
-from . import ai, competitors, config, db, leads, mentions, respond, scoring
+from . import (ai, acp, competitors, config, consultants, db, leads,
+               libraries, mentions, respond, scoring)
 from . import status as status_mod
 
 log = logging.getLogger(__name__)
@@ -195,6 +196,25 @@ the board. For customers no USAC dataset can see, use \
 find_competitor_mentions (board minutes, news, and Mobile Beacon's own \
 published case studies) — cite the source URL and mark them unverified.
 
+MORE HUNTING GROUNDS — pick the right tool for the ask:
+- consultant_channel: the multiplier play. Top E-Rate consultants \
+represent 80-140 board clients each; draft_consultant_pitch writes Kim's \
+partnership email. Use when she asks about consultants, channels, or \
+"reaching many districts at once".
+- find_denied_funding(state): districts whose funding was DENIED — \
+documented need, no money; nonprofit pricing works without E-Rate. A \
+competitive-bidding denial means a NEW Form 470 is coming — flag it.
+- find_library_targets(state): the Project: Volume Up hit list — every \
+public library ranked by ACP-loss need and budget; greenfield vs \
+displacement flagged.
+- acp_impact: the local-need stat ("X households in your zip lost their \
+internet subsidy") — use it to strengthen any pitch; outreach drafts \
+include it automatically when available.
+- find_open_bids(state): non-E-Rate cellular/hotspot/bus-WiFi bids on \
+public procurement portals — verify dates before Kim acts.
+- Metro asks now use REAL geography: pass zip_prefixes (DFW=750-753+\
+760-762, Chicagoland=600-608...) or cities to competitor_accounts.
+
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
 - When the user asks to see/go to something, call navigate (optionally with \
@@ -344,12 +364,86 @@ TOOLS = [
                                     "hughesnet"]},
             "state": {"type": "string",
                       "description": "2-letter code (optional)"},
+            "cities": {"type": "array", "items": {"type": "string"},
+                       "description": "city names for metro targeting "
+                       "(matches real entity addresses)"},
+            "zip_prefixes": {"type": "array", "items": {"type": "string"},
+                             "description": "3-digit zip prefixes for "
+                             "precise metro targeting, e.g. DFW = 750-753,"
+                             "760-762"},
             "sort": {"type": "string",
                      "enum": ["spend", "expiration", "competitor"],
                      "description": "expiration = soonest-expiring first "
                      "(best timing); competitor = grouped by competitor"},
             "min_spend": {"type": "number"},
             "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "consultant_channel",
+        "description": "The consultant channel: E-Rate consultants ranked "
+                       "by how many board clients they represent and the "
+                       "competitor spend they influence. ONE consultant "
+                       "relationship = every client of theirs hearing "
+                       "about Mission at once. Use for 'who are the top "
+                       "consultants', channel/partnership strategy.",
+        "parameters": {"type": "object", "properties": {
+            "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "draft_consultant_pitch",
+        "description": "Draft Kim's partnership email to an E-Rate "
+                       "consultant (from consultant_channel), pitching "
+                       "Mission as a value-add for their whole client "
+                       "base. Kim sends it herself.",
+        "parameters": {"type": "object", "properties": {
+            "name": {"type": "string",
+                     "description": "consultant name from the board"}},
+            "required": ["name"]}}},
+    {"type": "function", "function": {
+        "name": "find_denied_funding",
+        "description": "Districts whose E-Rate data/internet funding was "
+                       "DENIED this year — documented need, no funding. "
+                       "Angle: Mission's nonprofit pricing works without "
+                       "E-Rate. Denial reasons included (a competitive-"
+                       "bidding denial often means a NEW Form 470 is "
+                       "coming - watch for it).",
+        "parameters": {"type": "object", "properties": {
+            "state": {"type": "string", "description": "2-letter code"},
+            "limit": {"type": "integer", "default": 10}},
+            "required": ["state"]}}},
+    {"type": "function", "function": {
+        "name": "acp_impact",
+        "description": "Households that lost the ACP internet subsidy "
+                       "(program ended 2024), by zip — a citable LOCAL "
+                       "NEED stat for hotspot lending ('4,200 households "
+                       "in your area lost their subsidy'). Query by "
+                       "state (uses board zips), exact zips, or prefixes.",
+        "parameters": {"type": "object", "properties": {
+            "state": {"type": "string"},
+            "zips": {"type": "array", "items": {"type": "string"}},
+            "zip_prefixes": {"type": "array", "items": {"type": "string"}},
+            "limit": {"type": "integer", "default": 12}}}}},
+    {"type": "function", "function": {
+        "name": "find_library_targets",
+        "description": "Project: Volume Up hit list — every US public "
+                       "library (IMLS data: budget, population, address) "
+                       "ranked by local ACP-loss need. on_board=true "
+                       "means they already buy competitor LTE "
+                       "(displacement); false = greenfield hotspot-"
+                       "lending pitch.",
+        "parameters": {"type": "object", "properties": {
+            "state": {"type": "string", "description": "2-letter code"},
+            "min_population": {"type": "integer", "default": 0},
+            "limit": {"type": "integer", "default": 10}},
+            "required": ["state"]}}},
+    {"type": "function", "function": {
+        "name": "find_open_bids",
+        "description": "Non-E-Rate procurement: cellular/hotspot/bus-WiFi "
+                       "bids on public bid portals (BidNet, DemandStar, "
+                       "Bonfire...) — purchases USAC data never sees. "
+                       "Soft leads with source URLs; tell Kim to verify "
+                       "posting dates.",
+        "parameters": {"type": "object", "properties": {
+            "state": {"type": "string"},
+            "limit": {"type": "integer", "default": 8}}}}},
     {"type": "function", "function": {
         "name": "find_competitor_mentions",
         "description": "Public-web intel beyond USAC data: searches board "
@@ -570,7 +664,8 @@ def _exec_tool(name: str, args: dict) -> dict:
             rows = competitors.list_leads(
                 args.get("competitor"), args.get("state"), None,
                 args.get("min_spend") or 0, args.get("sort") or "spend",
-                args.get("limit", 10))
+                args.get("limit", 10), None,
+                args.get("cities"), args.get("zip_prefixes"))
             compact = [{"lead_id": r["id"], "org": r["org"],
                         "state": r["state"], "competitor":
                         r["competitor_label"],
@@ -585,6 +680,24 @@ def _exec_tool(name: str, args: dict) -> dict:
                         "status": r["status"]} for r in rows]
             return {"summary": competitors.summary(), "count": len(compact),
                     "accounts": compact}
+        if name == "consultant_channel":
+            return {"consultants": consultants.board(args.get("limit", 10))}
+        if name == "draft_consultant_pitch":
+            return consultants.draft_partner_pitch(str(args.get("name", "")))
+        if name == "find_denied_funding":
+            return leads.find_denied(str(args.get("state", "")),
+                                     args.get("limit", 10))
+        if name == "acp_impact":
+            return acp.impact(args.get("state"), args.get("zips"),
+                              args.get("zip_prefixes"),
+                              args.get("limit", 12))
+        if name == "find_library_targets":
+            return libraries.find_targets(str(args.get("state", "")),
+                                          args.get("min_population", 0),
+                                          args.get("limit", 10))
+        if name == "find_open_bids":
+            return mentions.find_open_bids(args.get("state"),
+                                           args.get("limit", 8))
         if name == "find_competitor_mentions":
             return mentions.competitor_mentions(
                 str(args.get("competitor", "")).strip() or "Mobile Beacon",
@@ -615,11 +728,16 @@ VOICE_STYLE = ("\nVOICE MODE: the user is speaking and will HEAR your reply "
 
 
 def _looks_degenerate(text: str) -> bool:
-    """Detect Nemotron runaway (a token/phrase repeating dozens of times that
-    leaks reasoning into the answer)."""
+    """Detect Nemotron runaway: long repetition loops, or short bursts of
+    punctuation soup (': :izeere::[ (,,:' style glitches)."""
     words = text.split()
     if len(words) > 80 and len(set(words)) / len(words) < 0.3:
         return True
+    stripped = text.strip()
+    if len(stripped) >= 20:
+        alpha = sum(ch.isalpha() or ch.isspace() for ch in stripped)
+        if alpha / len(stripped) < 0.6:
+            return True
     return False
 
 

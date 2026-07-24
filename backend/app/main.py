@@ -17,8 +17,8 @@ from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import (ai, auth, competitors, config, db, ingest, keepawake, leads,
-               respond)
+from . import (ai, auth, competitors, config, consultants, db, ingest,
+               keepawake, leads, respond)
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -242,6 +242,17 @@ def competitor_lead_contacts(lead_id: int):
 def competitor_lead_status(lead_id: int, payload: dict):
     ok = competitors.set_status(lead_id, str(payload.get("status", "")))
     return {"ok": ok}
+
+
+@app.get("/api/consultants")
+def consultants_board(limit: int = 25):
+    """The consultant channel: ranked by client reach on the board."""
+    return {"consultants": consultants.board(limit)}
+
+
+@app.post("/api/consultants/pitch")
+def consultants_pitch(payload: dict):
+    return consultants.draft_partner_pitch(str(payload.get("name", "")))
 
 
 @app.get("/api/leads")

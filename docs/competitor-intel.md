@@ -10,7 +10,14 @@ against both public funding datasets (2026-07).
 |---|---|---|
 | **E-Rate Form 471 FRN Status** (USAC `qdmp-ygft`) | Recurring annual spend per district, incumbent provider, contract expiration, filing contact, consultant | Current funding year |
 | **ECF Form 471** (USAC `i5j4-3rvr`) | The covid hotspot program: named contacts (name/email/phone), device counts, approved $. Program ENDED → every account is a win-back | 2021–2023 vintage |
+| **E-Rate denials** (same dataset, `Denied` filter) | Districts with documented need and NO funding; denial reasons (a bidding-violation denial = a new Form 470 is coming) | Current FY |
+| **Consultant channel** (aggregated from local board) | E-Rate consultants ranked by client reach (top firms: 80–140 board clients each); partnership pitch drafting | live from board |
+| **USAC entity directory** (`7i5i-83qf`) | BEN → city/zip/website/contact; real metro targeting by zip prefix; 4,000 board rows geo-enriched | current |
+| **ACP final snapshot** (usac.org XLSX, Feb 2024) | Households that lost the ACP subsidy per zip (31,583 zips) — citable local-need stat, auto-added to outreach drafts | frozen (program ended) |
+| **IMLS Public Libraries Survey** (FY2022 PUD) | All 9,248 US library systems: budget, population, address; ranked by ACP need; greenfield vs on-board flag | FY2022 |
 | **Public-web mentions** (DuckDuckGo HTML, no key) | Board minutes, tech plans, news naming customers | live |
+| **Google News RSS** (keyless) | Fresh articles: hotspot programs, competitor awards | live |
+| **Bid boards** (site-restricted search: BidNet, DemandStar, Bonfire, PublicPurchase, IonWave) | Non-E-Rate cellular/hotspot/bus-WiFi bids — purchases USAC never sees | live, verify dates |
 | **Vendor case studies** (mobilebeacon.org via search index) | Mobile Beacon's own published customer stories | live |
 | **NCES CCD** (Urban Institute API) | District enrollment + total budget enrichment | 2020–2022 |
 
