@@ -241,6 +241,49 @@ export default function ChatBot() {
       setMessages((m) => [...m, { role: 'assistant', _proactive: true,
         content, picks }])
       playSeq('wave', 2400)   // he waves hello when he greets you
+
+      // one-time tour of the new hunting kit (per browser)
+      const TOUR_KEY = 'mtrfp_tour_leadsources_v1'
+      if (!localStorage.getItem(TOUR_KEY)) {
+        localStorage.setItem(TOUR_KEY, '1')
+        const who = name || 'mate'
+        const tour = `Oh, and ${who} — while you were out I rebuilt the `
+          + 'whole hunting kit. Seven new tricks, all yours:\n\n'
+          + '🤝 CONSULTANT CHANNEL — I ranked every E-Rate consultant by '
+          + 'client reach (E-Rate Central alone touches 139 of our '
+          + 'targets). One partnership = a hundred doors. There\'s a '
+          + 'Consultants view on the Leads page, and I\'ll draft the '
+          + 'partnership pitch.\n'
+          + '📚 LIBRARY HIT LIST — every public library in America, ranked '
+          + 'by how many local families lost the ACP internet subsidy. '
+          + 'That\'s your Project: Volume Up pipeline, sorted by real '
+          + 'need.\n'
+          + '⛔ DENIED FUNDING — districts whose E-Rate money got denied: '
+          + 'documented need, no funding, and our nonprofit pricing works '
+          + 'without E-Rate. Bonus: a bidding-violation denial means a '
+          + 'fresh RFP is coming.\n'
+          + '📉 ACP NEED STATS — I can tell you exactly how many '
+          + 'households lost their internet subsidy in any zip, and I '
+          + 'work it into your outreach emails automatically.\n'
+          + '🗺️ REAL METRO TARGETING — "DFW" now means actual zip codes, '
+          + 'not guesswork. Found Arlington ISD paying Verizon $413k/yr '
+          + 'the first time I used it.\n'
+          + '📰 FRESH NEWS + 📋 BID BOARDS — same-week news on competitor '
+          + 'programs, and cellular/hotspot bids on procurement portals '
+          + 'E-Rate never sees.\n\n'
+          + 'Try one below — you\'re going to be dangerous with these.'
+        setMessages((m) => [...m, { role: 'assistant', _proactive: true,
+          content: tour, picks: [
+            { kind: 'ask', icon: '🤝', label: 'Top consultants to partner with',
+              prompt: 'Who are the top E-Rate consultants we should partner with?' },
+            { kind: 'ask', icon: '📚', label: 'Library targets in Texas',
+              prompt: 'Which Texas libraries need hotspot lending the most?' },
+            { kind: 'ask', icon: '⛔', label: 'Who got denied funding?',
+              prompt: 'Who got denied E-Rate funding in Texas this year?' },
+            { kind: 'ask', icon: '📋', label: 'Bids outside E-Rate',
+              prompt: 'Find open cellular or hotspot bids outside E-Rate' },
+          ] }])
+      }
     }).catch(() => { /* no data yet — the default greeting stands */ })
   }, [])   // eslint-disable-line
 
@@ -319,11 +362,12 @@ export default function ChatBot() {
       { detail: { tab: 'leads' } }))
   }
   const pickClick = (p) => {
-    if (p.kind === 'lead') goLeads(p.lead_id)
+    if (p.kind === 'ask') { setChatOpen(true); send(p.prompt) }
+    else if (p.kind === 'lead') goLeads(p.lead_id)
     else if (p.kind === 'nav') goLeads(null)
     else prepareReply(p.application_number, p.entity)
   }
-  const pickIcon = (p) => (p.kind === 'lead' ? '⚔️'
+  const pickIcon = (p) => p.icon || (p.kind === 'lead' ? '⚔️'
     : p.kind === 'nav' ? '📋' : '🎸')
 
   const openRfp = (an) => {
