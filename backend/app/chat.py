@@ -603,8 +603,8 @@ TOOLS = [
                        "filters, and/or open an RFP's detail drawer.",
         "parameters": {"type": "object", "properties": {
             "tab": {"type": "string",
-                    "enum": ["dashboard", "leads", "guide", "uploads",
-                             "settings"]},
+                    "enum": ["dashboard", "leads", "linkedin", "guide",
+                             "uploads", "settings"]},
             "status_filter": {"type": "string",
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",
                                        "ALL"]},

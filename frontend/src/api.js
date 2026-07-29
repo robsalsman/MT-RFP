@@ -77,6 +77,19 @@ export const api = {
   }).then(json),
   leadLinkedIn: (id) =>
     authFetch(`/api/competitor-leads/${id}/linkedin`).then(json),
+  liQueue: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.entries(params).filter(([, v]) => v !== '' && v != null))
+    return authFetch(`/api/linkedin/queue?${qs}`).then(json)
+  },
+  liBuildTop: (n = 8) => authFetch('/api/linkedin/build-top', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ n }),
+  }).then(json),
+  liStep: (target_id, step) => authFetch('/api/linkedin/step', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target_id, step }),
+  }).then(json),
   leadNote: (id, text) =>
     authFetch(`/api/competitor-leads/${id}/notes`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

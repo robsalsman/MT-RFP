@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
 import Guide from './components/Guide.jsx'
 import Leads from './components/Leads.jsx'
+import LinkedInTab from './components/LinkedInTab.jsx'
 import Uploads from './components/Uploads.jsx'
 import Settings from './components/Settings.jsx'
 import ChatBot from './components/ChatBot.jsx'
@@ -79,6 +80,7 @@ export default function App() {
         )}
         <nav>
           {[['dashboard', 'Dashboard'], ['leads', 'Leads'],
+            ['linkedin', 'LinkedIn'],
             ['uploads', 'Price List & Profile'],
             ['settings', 'Settings'], ['guide', 'Guide']].map(([id, label]) => (
             <button key={id} className={tab === id ? 'active' : ''}
@@ -105,6 +107,7 @@ export default function App() {
       <main className="wrap">
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'leads' && <Leads />}
+        {tab === 'linkedin' && <LinkedInTab />}
         {tab === 'guide' && <Guide />}
         {tab === 'uploads' && <Uploads />}
         {tab === 'settings' && <Settings />}

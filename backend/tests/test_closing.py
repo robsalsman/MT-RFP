@@ -58,10 +58,29 @@ def test_linkedin_org_short_and_titles():
     assert "Superintendent" in _TITLES[_entity_kind("School District")]
 
 
-def test_linkedin_search_links_encode():
-    from app.linkedin import search_links
-    links = search_links({"org": "Plano ISD", "entity_type":
-                          "School District"})
-    assert any("sales/search/people" in x["sales_nav_url"] for x in links)
-    assert all(" " not in x["sales_nav_url"] for x in links)
-    assert links[-1]["title"] == "Organization page"
+def test_linkedin_search_urls_encode():
+    from app.linkedin import _search_urls
+    nav, li = _search_urls('"Plano ISD" "Superintendent"')
+    assert "sales/search/people" in nav and " " not in nav
+    assert "search/results/people" in li and " " not in li
+
+
+def test_name_from_email():
+    from app.linkedin import _name_from_email
+    assert _name_from_email("tom.wilkerson@x.org") == "Tom Wilkerson"
+    assert _name_from_email("info@x.org") is None
+
+
+def test_kit_parser():
+    from app.linkedin import _parse_kit
+    raw = ("CONNECT NOTE: hi there\nDM 1: q1\nDM 2: give\n"
+           "DM 3: bye\nINMAIL: Subject: x\nbody")
+    kit = _parse_kit(raw)
+    assert set(kit) == {"connect", "dm1", "dm2", "dm3", "inmail"}
+    assert kit["connect"] == "hi there"
+
+
+def test_cadence_shape():
+    from app.linkedin import CADENCE
+    keys = [k for k, _, _ in CADENCE]
+    assert keys == ["connect", "dm1", "dm2", "dm3", "inmail"]

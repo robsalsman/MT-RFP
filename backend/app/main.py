@@ -252,10 +252,31 @@ def competitor_lead_note(lead_id: int, payload: dict):
 
 @app.get("/api/competitor-leads/{lead_id}/linkedin")
 def competitor_lead_linkedin(lead_id: int):
-    """The LinkedIn play: targets, pre-filtered Sales Nav links, DM kit."""
+    """Build/refresh this lead's LinkedIn targets; returns its queue rows."""
     r = linkedin.play(lead_id)
     if r.get("error"):
         raise HTTPException(404, r["error"])
+    return r
+
+
+@app.get("/api/linkedin/queue")
+def linkedin_queue(limit: int = 30, due_only: bool = False):
+    """The scored LinkedIn contact queue — who to touch today."""
+    return linkedin.queue(limit, due_only)
+
+
+@app.post("/api/linkedin/build-top")
+def linkedin_build_top(payload: dict | None = None):
+    n = int((payload or {}).get("n", 8))
+    return linkedin.build_top(n)
+
+
+@app.post("/api/linkedin/step")
+def linkedin_step(payload: dict):
+    r = linkedin.mark_step(int(payload.get("target_id", 0)),
+                           str(payload.get("step", "")))
+    if r.get("error"):
+        raise HTTPException(400, r["error"])
     return r
 
 

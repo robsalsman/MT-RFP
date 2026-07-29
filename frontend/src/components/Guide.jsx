@@ -45,12 +45,13 @@ const SECTIONS = [
     ],
   },
   {
-    icon: '💼', title: 'LinkedIn / Sales Navigator',
+    icon: '💼', title: 'LinkedIn — its own tab, its own funnel',
     items: [
-      ['The play', 'Open any lead → 💼 LinkedIn play. Matt picks the right titles for that org (tech director, superintendent, library director…), builds one-click searches that open in YOUR logged-in Sales Navigator, and writes the whole message sequence.'],
-      ['The messages', 'Connect note (under 260 chars, no pitch) → DM 1 on accept (one genuine question, zero selling) → DM 2 at day 3 (one real number as a give + soft 15-min ask) → DM 3 breakup → InMail if they never accept. Copy, personalize one line, send.'],
-      ['The cadence', 'Day 0 connect + like one of their posts. DM 1 on accept. Day +3 DM 2. Day +10 breakup. Tell Matt each touch ("DM\'d the Newark tech director") so the nudges track it.'],
-      ['Ask instead', 'Try: "run the LinkedIn play for lead 8" — same thing in chat.'],
+      ['The queue', 'The LinkedIn tab is a scored list of the exact people to touch today — named contacts from our data get person-specific searches; otherwise the right decision-maker titles per org. Best deals first, DUE NOW on top.'],
+      ['One button per step', 'Open a target → ▶ copies that step\'s message AND opens the pre-filtered search in YOUR logged-in Sales Navigator. Find the person, paste, personalize one line, send. Tap ✓ Sent — the touch logs on the deal, the next step gets a due date. The funnel moves itself.'],
+      ['The cadence', 'Connect note (no pitch) → DM 1 on accept (genuine question) → DM 2 +3 days (one real number as a give) → DM 3 +7 days (breakup) → InMail if they never accepted. Matt schedules it; you just clear the DUE NOW list each morning.'],
+      ['Feeding the queue', '⚡ pulls targets from your top board leads automatically, or press 💼 LinkedIn on any lead. First LinkedIn touch on a fresh lead auto-moves it to "contacted."'],
+      ['Ask instead', 'Try: "add the Newark lead to my LinkedIn queue" or "who am I touching on LinkedIn today?"'],
       ['Why Matt doesn\'t send them', 'Automating a LinkedIn account breaks their rules and risks your Navigator subscription. Matt aims, you pull the trigger — that\'s also what actually works.'],
     ],
   },

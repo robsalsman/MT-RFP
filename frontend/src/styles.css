@@ -365,7 +365,13 @@ th.sorted { color: var(--accent); }
   font-size: 12.5px; text-decoration: none; }
 .ld-actions button:hover { background: var(--hover); }
 .ld-actions button.danger { color: var(--red); }
-.li-play { border-top: 1px dashed var(--line); padding-top: 8px; }
+.li-doctrine { font-size: 12.5px; max-width: 760px; }
+.li-due { color: #fff; background: var(--red); border-radius: 5px;
+  padding: 1px 6px; font-weight: 800; font-size: 10.5px; }
+.li-go { background: linear-gradient(120deg, #0a66c2, #0b5fff) !important;
+  color: #fff !important; border: none !important; font-weight: 700; }
+.li-sent { background: var(--open) !important; color: #fff !important;
+  border: none !important; font-weight: 700; }
 .li-links { display: flex; flex-direction: column; gap: 3px;
   font-size: 12.5px; }
 .li-link a { color: var(--accent); }
