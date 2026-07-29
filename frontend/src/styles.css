@@ -365,6 +365,10 @@ th.sorted { color: var(--accent); }
   font-size: 12.5px; text-decoration: none; }
 .ld-actions button:hover { background: var(--hover); }
 .ld-actions button.danger { color: var(--red); }
+.li-play { border-top: 1px dashed var(--line); padding-top: 8px; }
+.li-links { display: flex; flex-direction: column; gap: 3px;
+  font-size: 12.5px; }
+.li-link a { color: var(--accent); }
 .ld-draft textarea { width: 100%; font: 12.5px/1.45 ui-monospace, monospace;
   padding: 10px; border-radius: 10px; border: 1px solid var(--line);
   background: var(--field); color: var(--ink); resize: vertical; }

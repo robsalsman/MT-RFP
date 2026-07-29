@@ -75,6 +75,8 @@ export const api = {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ids }),
   }).then(json),
+  leadLinkedIn: (id) =>
+    authFetch(`/api/competitor-leads/${id}/linkedin`).then(json),
   leadNote: (id, text) =>
     authFetch(`/api/competitor-leads/${id}/notes`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

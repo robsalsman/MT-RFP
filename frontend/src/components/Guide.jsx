@@ -45,6 +45,16 @@ const SECTIONS = [
     ],
   },
   {
+    icon: '💼', title: 'LinkedIn / Sales Navigator',
+    items: [
+      ['The play', 'Open any lead → 💼 LinkedIn play. Matt picks the right titles for that org (tech director, superintendent, library director…), builds one-click searches that open in YOUR logged-in Sales Navigator, and writes the whole message sequence.'],
+      ['The messages', 'Connect note (under 260 chars, no pitch) → DM 1 on accept (one genuine question, zero selling) → DM 2 at day 3 (one real number as a give + soft 15-min ask) → DM 3 breakup → InMail if they never accept. Copy, personalize one line, send.'],
+      ['The cadence', 'Day 0 connect + like one of their posts. DM 1 on accept. Day +3 DM 2. Day +10 breakup. Tell Matt each touch ("DM\'d the Newark tech director") so the nudges track it.'],
+      ['Ask instead', 'Try: "run the LinkedIn play for lead 8" — same thing in chat.'],
+      ['Why Matt doesn\'t send them', 'Automating a LinkedIn account breaks their rules and risks your Navigator subscription. Matt aims, you pull the trigger — that\'s also what actually works.'],
+    ],
+  },
+  {
     icon: '🏁', title: 'Closing the deal',
     items: [
       ['💰 Savings sheet', 'Button on the lead. One page: their spend vs Mission pricing, savings range, E-Rate timing. THE document your contact forwards to their boss. Word file — tweak before sending.'],

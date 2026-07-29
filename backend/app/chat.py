@@ -14,7 +14,8 @@ import re
 import httpx
 
 from . import (ai, acp, competitors, config, consultants, closing, db,
-               leads, libraries, mentions, respond, savings, scoring)
+               leads, libraries, linkedin, mentions, respond, savings,
+               scoring)
 from . import alerts as alerts_mod
 from . import status as status_mod
 
@@ -236,6 +237,13 @@ kit (kind=champion) arms her contact to sell it to the board — offer it \
 whenever a deal reaches meeting/quote stage.
 - Use the E-Rate clock as honest urgency: acting this cycle means funded \
 service next July; waiting costs a year.
+- LINKEDIN (linkedin_play): when email goes unanswered, contacts are \
+consultant-only, or Kim wants meetings, run the LinkedIn play — right \
+titles to target, one-click searches that open in HER Sales Navigator, \
+and a 3-touch DM kit from real numbers (short, human, no pitch on touch \
+one). Kim sends everything herself; suggest she logs each touch with you \
+so the nudges track it. Never claim to send or read LinkedIn messages — \
+automating her account would violate LinkedIn's terms.
 
 WHEN ASKED "WHAT CAN YOU DO" (or help/confused): give a quick, organized \
 rundown in your voice — Find (RFPs, competitor accounts, libraries, denied \
@@ -407,6 +415,18 @@ TOOLS = [
                      "(best timing); competitor = grouped by competitor"},
             "min_spend": {"type": "number"},
             "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "linkedin_play",
+        "description": "The LinkedIn / Sales Navigator play for a lead: "
+                       "who to target (right titles for the entity type), "
+                       "one-click pre-filtered people searches that open "
+                       "in Kim's own logged-in Sales Navigator, and a "
+                       "complete DM kit (connect note, 3-touch sequence, "
+                       "InMail) written from the deal's real numbers, "
+                       "plus the sending cadence. Kim sends everything "
+                       "herself - never claim messages were sent.",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer"}}, "required": ["lead_id"]}}},
     {"type": "function", "function": {
         "name": "generate_closing_doc",
         "description": "Generate a closing document (DOCX) for a lead: "
@@ -782,6 +802,8 @@ def _exec_tool(name: str, args: dict) -> dict:
                         "status": r["status"]} for r in rows]
             return {"summary": competitors.summary(), "count": len(compact),
                     "accounts": compact}
+        if name == "linkedin_play":
+            return linkedin.play(int(args["lead_id"]))
         if name == "generate_closing_doc":
             r = savings.build_doc(int(args["lead_id"]),
                                   str(args.get("kind", "savings")))

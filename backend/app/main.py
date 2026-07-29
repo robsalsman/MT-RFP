@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
 from . import (ai, alerts, auth, competitors, config, consultants, db,
-               ingest, keepawake, leads, respond, savings)
+               ingest, keepawake, leads, linkedin, respond, savings)
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -248,6 +248,15 @@ def competitor_lead_status(lead_id: int, payload: dict):
 def competitor_lead_note(lead_id: int, payload: dict):
     return {"ok": competitors.add_note(lead_id,
                                       str(payload.get("text", "")))}
+
+
+@app.get("/api/competitor-leads/{lead_id}/linkedin")
+def competitor_lead_linkedin(lead_id: int):
+    """The LinkedIn play: targets, pre-filtered Sales Nav links, DM kit."""
+    r = linkedin.play(lead_id)
+    if r.get("error"):
+        raise HTTPException(404, r["error"])
+    return r
 
 
 @app.get("/api/competitor-leads/{lead_id}/doc")

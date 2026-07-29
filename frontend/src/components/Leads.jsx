@@ -82,6 +82,19 @@ export default function Leads() {
 
   const STAGES = ['new', 'contacted', 'replied', 'meeting', 'quote',
     'verbal', 'won', 'lost']
+  const [liPlay, setLiPlay] = useState({})   // lead id -> play | 'busy'
+
+  const loadLinkedIn = async (id) => {
+    if (liPlay[id] && liPlay[id] !== 'busy') {
+      setLiPlay((p) => ({ ...p, [id]: null }))   // toggle closed
+      return
+    }
+    setLiPlay((p) => ({ ...p, [id]: 'busy' }))
+    try {
+      const d = await api.leadLinkedIn(id)
+      setLiPlay((p) => ({ ...p, [id]: d }))
+    } catch { setLiPlay((p) => ({ ...p, [id]: null })) }
+  }
 
   const downloadDoc = async (id, kind) => {
     setBusyId(id)
@@ -296,6 +309,12 @@ export default function Leads() {
                   <button disabled={busyId === l.id} onClick={() =>
                     act(l.id, () => api.competitorDraft(l.id))}>
                     ✍️ {l.email_draft ? 'Redraft email' : 'Draft email'}</button>
+                  <button disabled={liPlay[l.id] === 'busy'}
+                    title="Who to target + pre-filtered Sales Navigator
+ searches + a DM kit from their real numbers"
+                    onClick={() => loadLinkedIn(l.id)}>
+                    💼 {liPlay[l.id] && liPlay[l.id] !== 'busy'
+                      ? 'Hide LinkedIn play' : 'LinkedIn play'}</button>
                   <button disabled={busyId === l.id}
                     title="One-page savings sheet from their real numbers"
                     onClick={() => downloadDoc(l.id, 'savings')}>
@@ -323,6 +342,36 @@ export default function Leads() {
                   <div className="ld-nar">Latest note ({
                     (l.notes[l.notes.length - 1].at || '').slice(0, 10)}): {
                     l.notes[l.notes.length - 1].text.slice(0, 200)}</div>)}
+
+                {liPlay[l.id] === 'busy' && (
+                  <p className="muted">Building the LinkedIn play…</p>)}
+                {liPlay[l.id] && liPlay[l.id] !== 'busy' && (
+                  <div className="li-play">
+                    <div className="ld-contacts"><b>Find them
+                      (opens in your Sales Navigator):</b></div>
+                    <div className="li-links">
+                      {liPlay[l.id].search_links.map((s) => (
+                        <span key={s.title} className="li-link">
+                          {s.title}: <a href={s.sales_nav_url}
+                            target="_blank" rel="noreferrer">Sales Nav</a>
+                          {' · '}
+                          <a href={s.linkedin_url} target="_blank"
+                            rel="noreferrer">LinkedIn</a>
+                        </span>))}
+                    </div>
+                    <div className="ld-contacts" style={{ marginTop: 8 }}>
+                      <b>The messages (copy, personalize one line,
+                      send):</b></div>
+                    <div className="ld-draft">
+                      <textarea readOnly value={liPlay[l.id].kit}
+                        rows={14} />
+                      <div className="ld-draft-btns">
+                        <button onClick={() => navigator.clipboard
+                          ?.writeText(liPlay[l.id].kit)}>📋 Copy kit</button>
+                      </div>
+                    </div>
+                    <div className="ld-nar">{liPlay[l.id].cadence}</div>
+                  </div>)}
 
                 {l.email_draft && (
                   <div className="ld-draft">

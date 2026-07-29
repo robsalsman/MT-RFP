@@ -48,3 +48,20 @@ def test_erate_clock_orders_correctly():
     assert datetime.date.fromisoformat(cal["post_470_by"]) < \
         datetime.date.fromisoformat(cal["form_471_window_closes"])
     assert cal["next_funding_year"] >= 2026
+
+
+def test_linkedin_org_short_and_titles():
+    from app.linkedin import _org_short, _entity_kind, _TITLES
+    assert _org_short("Newark Indep School District") == "Newark ISD"
+    assert _org_short("Cleveland Public Library") == "Cleveland Library"
+    assert _entity_kind("Public Library System") == "library"
+    assert "Superintendent" in _TITLES[_entity_kind("School District")]
+
+
+def test_linkedin_search_links_encode():
+    from app.linkedin import search_links
+    links = search_links({"org": "Plano ISD", "entity_type":
+                          "School District"})
+    assert any("sales/search/people" in x["sales_nav_url"] for x in links)
+    assert all(" " not in x["sales_nav_url"] for x in links)
+    assert links[-1]["title"] == "Organization page"
