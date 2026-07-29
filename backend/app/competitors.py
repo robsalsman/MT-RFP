@@ -367,7 +367,7 @@ def list_leads(competitor: str | None = None, state: str | None = None,
         rows = [dict(r) for r in conn.execute(sql, params)]
     for r in rows:
         for f in ("spins", "contacts", "consultants", "narratives",
-                  "extra_contacts"):
+                  "extra_contacts", "notes"):
             try:
                 r[f] = json.loads(r.get(f) or "[]")
             except (TypeError, json.JSONDecodeError):
@@ -385,7 +385,7 @@ def get_lead(lead_id: int) -> dict | None:
         return None
     r = dict(row)
     for f in ("spins", "contacts", "consultants", "narratives",
-              "extra_contacts"):
+              "extra_contacts", "notes"):
         try:
             r[f] = json.loads(r.get(f) or "[]")
         except (TypeError, json.JSONDecodeError):
@@ -395,14 +395,47 @@ def get_lead(lead_id: int) -> dict | None:
     return r
 
 
+# the deal pipeline. Engaged stages auto-arm the Form 470 watch (a district
+# talking to Kim that suddenly posts a 470 is THE buying signal).
+STAGES = ("new", "contacted", "replied", "meeting", "quote", "verbal",
+          "won", "lost", "dismissed")
+ENGAGED = ("contacted", "replied", "meeting", "quote", "verbal")
+# days of silence per stage before Matt nudges Kim to follow up
+STALE_AFTER = {"contacted": 8, "replied": 4, "meeting": 3, "quote": 7,
+               "verbal": 5}
+
+
 def set_status(lead_id: int, status: str) -> bool:
-    if status not in ("new", "contacted", "dismissed"):
+    if status not in STAGES:
         return False
+    now = datetime.datetime.utcnow().isoformat(timespec="seconds")
     with db.closing_conn() as conn:
-        cur = conn.execute("UPDATE competitor_leads SET status=? WHERE id=?",
-                           (status, lead_id))
+        cur = conn.execute(
+            "UPDATE competitor_leads SET status=?, stage_date=?, watch=? "
+            "WHERE id=?",
+            (status, now, 1 if status in ENGAGED else 0, lead_id))
         conn.commit()
         return cur.rowcount > 0
+
+
+def add_note(lead_id: int, text: str) -> bool:
+    """Append a timestamped note (call debriefs, objections, commitments)."""
+    with db.closing_conn() as conn:
+        row = conn.execute("SELECT notes FROM competitor_leads WHERE id=?",
+                           (lead_id,)).fetchone()
+        if not row:
+            return False
+        try:
+            notes = json.loads(row["notes"] or "[]")
+        except (TypeError, json.JSONDecodeError):
+            notes = []
+        notes.append({"at": datetime.datetime.utcnow()
+                      .isoformat(timespec="seconds"),
+                      "text": str(text)[:2000]})
+        conn.execute("UPDATE competitor_leads SET notes=? WHERE id=?",
+                     (json.dumps(notes[-50:]), lead_id))
+        conn.commit()
+        return True
 
 
 # ------------------------------------------------- contact enrichment

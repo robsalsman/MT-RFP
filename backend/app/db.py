@@ -161,6 +161,22 @@ def _migrate(conn) -> None:
         if "website" not in ccols:
             conn.execute(
                 "ALTER TABLE competitor_leads ADD COLUMN website TEXT")
+        # deal pipeline: when the stage last changed, call/debrief notes,
+        # and whether we watch USAC for this BEN posting a new Form 470
+        if "stage_date" not in ccols:
+            conn.execute("ALTER TABLE competitor_leads ADD COLUMN "
+                         "stage_date TEXT")
+        if "notes" not in ccols:
+            conn.execute("ALTER TABLE competitor_leads ADD COLUMN "
+                         "notes TEXT DEFAULT '[]'")
+        if "watch" not in ccols:
+            conn.execute("ALTER TABLE competitor_leads ADD COLUMN "
+                         "watch INTEGER DEFAULT 0")
+    conn.execute("""CREATE TABLE IF NOT EXISTS alerts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        kind TEXT, lead_id INTEGER, message TEXT,
+        created_at TEXT, seen INTEGER DEFAULT 0,
+        dedupe_key TEXT UNIQUE)""")
 
 
 @contextmanager

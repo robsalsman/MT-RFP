@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { api } from '../api.js'
+import { api, authFetch } from '../api.js'
 
 // Competitor displacement board: every district paying a Mission Telecom
 // competitor for mobile broadband (nationwide USAC 471 sweep). Fully
@@ -79,6 +79,26 @@ export default function Leads() {
   }
 
   const copyDraft = (text) => navigator.clipboard?.writeText(text)
+
+  const STAGES = ['new', 'contacted', 'replied', 'meeting', 'quote',
+    'verbal', 'won', 'lost']
+
+  const downloadDoc = async (id, kind) => {
+    setBusyId(id)
+    try {
+      const r = await authFetch(`/api/competitor-leads/${id}/doc?kind=${kind}`)
+      if (!r.ok) return
+      const blob = await r.blob()
+      const cd = r.headers.get('Content-Disposition') || ''
+      const m = cd.match(/filename="?([^\";]+)/)
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = (m && m[1]) || `${kind}.docx`
+      document.body.appendChild(a); a.click(); a.remove()
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000)
+    } catch { /* ignore */ }
+    setBusyId(null)
+  }
 
   if (!data) return (
     <div className="leads-page"><p className="muted">
@@ -177,9 +197,15 @@ export default function Leads() {
             <option key={s} value={s}>{s}</option>))}
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option value="">Active (new + contacted)</option>
-          <option value="new">New only</option>
-          <option value="contacted">Contacted only</option>
+          <option value="">Active (not dismissed)</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="replied">Replied</option>
+          <option value="meeting">Meeting</option>
+          <option value="quote">Quote out</option>
+          <option value="verbal">Verbal yes</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
           <option value="dismissed">Dismissed</option>
           <option value="all">Everything</option>
         </select>
@@ -210,10 +236,12 @@ export default function Leads() {
                   <span className="lr-tag ecf"
                     title="Found via the Emergency Connectivity Fund — the
  program ended, so this is a win-back target">ECF</span>)}
-                {l.status === 'contacted' && (
-                  <span className="lr-tag">✓ contacted</span>)}
-                {l.status === 'dismissed' && (
-                  <span className="lr-tag dim">✕ dismissed</span>)}
+                {l.status === 'dismissed' ? (
+                  <span className="lr-tag dim">✕ dismissed</span>
+                ) : l.status === 'won' ? (
+                  <span className="lr-tag won">🏆 won</span>
+                ) : l.status && l.status !== 'new' && (
+                  <span className="lr-tag">{l.status}</span>)}
               </span>
               <span className="lr-comp">{l.competitor_label}</span>
               <span className="lr-spend">{fmtUsd(l.spend)}
@@ -254,16 +282,32 @@ export default function Leads() {
                 </div>
 
                 <div className="ld-actions">
+                  <label className="ld-stage">Stage:{' '}
+                    <select value={STAGES.includes(l.status) ? l.status : 'new'}
+                      disabled={busyId === l.id}
+                      onChange={(e) =>
+                        act(l.id, () => api.competitorStatus(l.id, e.target.value))}>
+                      {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </label>
                   <button disabled={busyId === l.id} onClick={() =>
                     act(l.id, () => api.competitorContacts(l.id))}>
-                    🔎 Find district contacts</button>
+                    🔎 Find contacts</button>
                   <button disabled={busyId === l.id} onClick={() =>
                     act(l.id, () => api.competitorDraft(l.id))}>
                     ✍️ {l.email_draft ? 'Redraft email' : 'Draft email'}</button>
-                  {l.status !== 'contacted' && (
-                    <button disabled={busyId === l.id} onClick={() =>
-                      act(l.id, () => api.competitorStatus(l.id, 'contacted'))}>
-                      ✓ Mark contacted</button>)}
+                  <button disabled={busyId === l.id}
+                    title="One-page savings sheet from their real numbers"
+                    onClick={() => downloadDoc(l.id, 'savings')}>
+                    💰 Savings sheet</button>
+                  <button disabled={busyId === l.id}
+                    title="Board briefing your contact presents internally"
+                    onClick={() => downloadDoc(l.id, 'champion')}>
+                    🏛️ Board kit</button>
+                  {l.status === 'won' && (
+                    <button disabled={busyId === l.id}
+                      onClick={() => downloadDoc(l.id, 'case')}>
+                      🏆 Case study</button>)}
                   {l.status === 'dismissed' ? (
                     <button disabled={busyId === l.id} onClick={() =>
                       act(l.id, () => api.competitorStatus(l.id, 'new'))}>
@@ -275,6 +319,10 @@ export default function Leads() {
                       ✕ Dismiss</button>)}
                   {busyId === l.id && <span className="muted">working…</span>}
                 </div>
+                {(l.notes || []).length > 0 && (
+                  <div className="ld-nar">Latest note ({
+                    (l.notes[l.notes.length - 1].at || '').slice(0, 10)}): {
+                    l.notes[l.notes.length - 1].text.slice(0, 200)}</div>)}
 
                 {l.email_draft && (
                   <div className="ld-draft">

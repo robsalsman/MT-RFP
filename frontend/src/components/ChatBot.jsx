@@ -199,6 +199,25 @@ export default function ChatBot() {
   useEffect(() => {
     if (proactiveDone.current) return
     proactiveDone.current = true
+    // closing alerts first: a Form 470 from a watched district beats
+    // everything else Matt could open with
+    api.alerts().then((d) => {
+      const al = d.alerts || []
+      if (!al.length) return
+      const hot = al.filter((a) => a.kind === 'form470')
+      const stale = al.filter((a) => a.kind === 'stale')
+      const lines = [...hot, ...stale].slice(0, 4)
+        .map((a) => a.message).join('\n\n')
+      const head = hot.length
+        ? `🚨 ${name || 'Oi'} — drop everything, we've got a buying signal:`
+        : `${name ? `Hey ${name}` : 'Hey'} — a few deals need a push:`
+      setMessages((m) => [...m, { role: 'assistant', _proactive: true,
+        content: `${head}\n\n${lines}`,
+        picks: lines ? [{ kind: 'nav', label: 'Open the Leads board' }] : [] }])
+      api.alertsSeen(al.map((a) => a.id)).catch(() => {})
+      if (hot.length) playSeq('lightbulb', 2600)
+    }).catch(() => {})
+
     Promise.allSettled([
       api.rfps({ status: 'OPEN', mission_only: true }),
       api.competitorLeads({ sort: 'spend', limit: 150 }),

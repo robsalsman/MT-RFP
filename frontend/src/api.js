@@ -70,6 +70,16 @@ export const api = {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     }).then(json),
+  alerts: () => authFetch('/api/alerts').then(json),
+  alertsSeen: (ids) => authFetch('/api/alerts/seen', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids }),
+  }).then(json),
+  leadNote: (id, text) =>
+    authFetch(`/api/competitor-leads/${id}/notes`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    }).then(json),
   competitorStatus: (id, status) =>
     authFetch(`/api/competitor-leads/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },

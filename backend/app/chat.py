@@ -13,8 +13,9 @@ import re
 
 import httpx
 
-from . import (ai, acp, competitors, config, consultants, db, leads,
-               libraries, mentions, respond, scoring)
+from . import (ai, acp, competitors, config, consultants, closing, db,
+               leads, libraries, mentions, respond, savings, scoring)
+from . import alerts as alerts_mod
 from . import status as status_mod
 
 log = logging.getLogger(__name__)
@@ -215,6 +216,27 @@ public procurement portals — verify dates before Kim acts.
 - Metro asks now use REAL geography: pass zip_prefixes (DFW=750-753+\
 760-762, Chicagoland=600-608...) or cities to competitor_accounts.
 
+CLOSING PLAYBOOK — your job isn't done at the lead; it's done at the \
+signature. Work the pipeline:
+- Stages: contacted -> replied -> meeting -> quote -> verbal -> won. When \
+Kim reports progress ("they replied!", "meeting booked", "sent the \
+quote"), celebrate it AND call set_deal_stage so the machine tracks it. \
+Engaged stages auto-arm the Form 470 watch.
+- A form470 alert is the BUYING SIGNAL — a watched district legally \
+entered the market. Treat it as the day's top priority: offer to draft \
+the bid immediately (generate_response) plus a heads-up email to her \
+contact.
+- When she pastes a prospect's reply, call handle_objection — every "no" \
+becomes a next email. When a deal's been quiet (stale alert), offer \
+draft_followup. After any call, ask for a 30-second debrief and call \
+log_debrief — same-hour recaps win deals.
+- The savings sheet (generate_closing_doc kind=savings) is the close \
+artifact: their real spend vs Mission pricing, forwardable. The champion \
+kit (kind=champion) arms her contact to sell it to the board — offer it \
+whenever a deal reaches meeting/quote stage.
+- Use the E-Rate clock as honest urgency: acting this cycle means funded \
+service next July; waiting costs a year.
+
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
 - When the user asks to see/go to something, call navigate (optionally with \
@@ -377,6 +399,77 @@ TOOLS = [
                      "(best timing); competitor = grouped by competitor"},
             "min_spend": {"type": "number"},
             "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "generate_closing_doc",
+        "description": "Generate a closing document (DOCX) for a lead: "
+                       "'savings' = one-page savings sheet from their real "
+                       "spend vs Mission pricing (THE forwardable close "
+                       "artifact); 'champion' = board briefing the "
+                       "contact uses to sell the switch internally; "
+                       "'case' = post-win case study draft. Tell Kim the "
+                       "download button is on the lead's card.",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer"},
+            "kind": {"type": "string",
+                     "enum": ["savings", "champion", "case"]}},
+            "required": ["lead_id", "kind"]}}},
+    {"type": "function", "function": {
+        "name": "handle_objection",
+        "description": "When Kim pastes a prospect's reply/objection: "
+                       "classifies it (price, under_contract, coverage, "
+                       "satisfied, no_need, procurement, timing), returns "
+                       "the counter-angle and a drafted response using "
+                       "the lead's real numbers. Logs the objection to "
+                       "the lead's notes.",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer",
+                        "description": "the lead this reply came from "
+                        "(omit if unknown)"},
+            "reply_text": {"type": "string",
+                           "description": "the prospect's reply, pasted"}},
+            "required": ["reply_text"]}}},
+    {"type": "function", "function": {
+        "name": "draft_followup",
+        "description": "Draft the next-touch email for a lead based on "
+                       "its pipeline stage (2nd touch, meeting confirm, "
+                       "quote nudge, get-it-signed). Use when an alert "
+                       "says a deal went quiet or Kim asks to nudge "
+                       "someone.",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer"}}, "required": ["lead_id"]}}},
+    {"type": "function", "function": {
+        "name": "log_debrief",
+        "description": "After Kim's call: she dictates/types a rough "
+                       "debrief; this logs it on the lead and returns "
+                       "extracted next steps + a same-day recap email "
+                       "draft to the prospect. Encourage this after "
+                       "every meeting - fastest recap wins.",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer"},
+            "debrief": {"type": "string"}},
+            "required": ["lead_id", "debrief"]}}},
+    {"type": "function", "function": {
+        "name": "set_deal_stage",
+        "description": "Move a lead through the pipeline: contacted, "
+                       "replied, meeting, quote, verbal, won, lost. "
+                       "Engaged stages auto-arm the Form 470 watch "
+                       "(Matt alerts the moment that district posts a "
+                       "470 - the buying signal).",
+        "parameters": {"type": "object", "properties": {
+            "lead_id": {"type": "integer"},
+            "stage": {"type": "string",
+                      "enum": ["new", "contacted", "replied", "meeting",
+                               "quote", "verbal", "won", "lost",
+                               "dismissed"]}},
+            "required": ["lead_id", "stage"]}}},
+    {"type": "function", "function": {
+        "name": "get_alerts",
+        "description": "Closing signals now: watched districts that just "
+                       "posted a Form 470 (bidding window OPEN) and "
+                       "engaged deals gone quiet past their stage "
+                       "threshold. Check when Kim asks 'what needs my "
+                       "attention'.",
+        "parameters": {"type": "object", "properties": {}}}},
     {"type": "function", "function": {
         "name": "consultant_channel",
         "description": "The consultant channel: E-Rate consultants ranked "
@@ -680,6 +773,31 @@ def _exec_tool(name: str, args: dict) -> dict:
                         "status": r["status"]} for r in rows]
             return {"summary": competitors.summary(), "count": len(compact),
                     "accounts": compact}
+        if name == "generate_closing_doc":
+            r = savings.build_doc(int(args["lead_id"]),
+                                  str(args.get("kind", "savings")))
+            if "path" in r:
+                r.pop("path")
+            r["how_to_get_it"] = ("Leads page -> open the account -> "
+                                  "download buttons")
+            return r
+        if name == "handle_objection":
+            return closing.handle_objection(args.get("lead_id"),
+                                            str(args["reply_text"]))
+        if name == "draft_followup":
+            return closing.draft_followup(int(args["lead_id"]))
+        if name == "log_debrief":
+            return closing.log_debrief(int(args["lead_id"]),
+                                       str(args["debrief"]))
+        if name == "set_deal_stage":
+            ok = competitors.set_status(int(args["lead_id"]),
+                                        str(args["stage"]))
+            return {"ok": ok, "stage": args["stage"],
+                    "watch_armed": args["stage"] in competitors.ENGAGED}
+        if name == "get_alerts":
+            return {"alerts": [{"kind": a["kind"], "lead_id": a["lead_id"],
+                                "message": a["message"]}
+                               for a in alerts_mod.unseen(10)]}
         if name == "consultant_channel":
             return {"consultants": consultants.board(args.get("limit", 10))}
         if name == "draft_consultant_pitch":

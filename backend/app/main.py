@@ -17,8 +17,8 @@ from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import (ai, auth, competitors, config, consultants, db, ingest,
-               keepawake, leads, respond)
+from . import (ai, alerts, auth, competitors, config, consultants, db,
+               ingest, keepawake, leads, respond, savings)
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -241,7 +241,33 @@ def competitor_lead_contacts(lead_id: int):
 @app.patch("/api/competitor-leads/{lead_id}")
 def competitor_lead_status(lead_id: int, payload: dict):
     ok = competitors.set_status(lead_id, str(payload.get("status", "")))
-    return {"ok": ok}
+    return {"ok": ok, "stages": list(competitors.STAGES)}
+
+
+@app.post("/api/competitor-leads/{lead_id}/notes")
+def competitor_lead_note(lead_id: int, payload: dict):
+    return {"ok": competitors.add_note(lead_id,
+                                      str(payload.get("text", "")))}
+
+
+@app.get("/api/competitor-leads/{lead_id}/doc")
+def competitor_lead_doc(lead_id: int, kind: str = "savings"):
+    """Closing documents: savings | champion | case (DOCX)."""
+    r = savings.build_doc(lead_id, kind)
+    if r.get("error"):
+        raise HTTPException(404, r["error"])
+    return FileResponse(r["path"], filename=r["filename"])
+
+
+@app.get("/api/alerts")
+def alerts_unseen():
+    """Closing signals: new Form 470s from watched accounts + stale deals."""
+    return {"alerts": alerts.unseen()}
+
+
+@app.post("/api/alerts/seen")
+def alerts_seen(payload: dict):
+    return {"marked": alerts.mark_seen(payload.get("ids") or [])}
 
 
 @app.get("/api/consultants")
