@@ -93,12 +93,66 @@ want a branded URL).
   Scheduler "At log on", or a tool like NSSM to install it as a service) so it
   survives reboots. On macOS/Linux use `launchd`/`systemd` or `tmux`.
 
+## Always-on hosting — Oracle Cloud Always Free ($0/month, recommended)
+
+Hosting on a laptop means the site dies whenever the laptop is off. Oracle's
+Always Free tier gives a real, permanently-free VM with persistent disk — the
+app runs 24/7 and your laptop becomes just another way to access it.
+
+**One-time setup (~20 minutes, most of it Oracle's signup):**
+
+1. **Create the account** at signup.oraclecloud.com. It asks for a credit
+   card for identity verification — Always Free resources never charge it.
+   Pick a home region near you (e.g. US-Ashburn / US-Phoenix).
+2. **Create the VM**: Compute → Instances → Create.
+   - Image: **Ubuntu 24.04**
+   - Shape: **VM.Standard.E2.1.Micro** (marked "Always Free-eligible").
+     (Ampere A1 is also free and beefier, but often shows "out of capacity" —
+     the Micro always works and is plenty for this app.)
+   - Download the **private key** it offers (`.key` / `.pem`) — that's your
+     SSH login. Note the VM's **public IP** once it's running.
+   - No networking changes needed: the app publishes itself via Tailscale
+     Funnel (outbound-only), so Oracle's default block-all-inbound firewall
+     can stay as-is.
+3. **On this laptop** — bundle the data (DB, drafts, statuses, price list,
+   `.env`) and upload it:
+
+   ```powershell
+   .\scripts\make-data-bundle.ps1
+   scp -i <path-to-key.pem> "$HOME\Desktop\rfp-rockstar-bundle.zip" ubuntu@<VM-IP>:~/
+   ```
+
+4. **On the VM** (`ssh -i <key.pem> ubuntu@<VM-IP>`):
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/robsalsman/MT-RFP/main/scripts/deploy-oracle.sh | bash
+   ```
+
+   Midway it prints a **Tailscale login link** — open it in your browser and
+   approve the machine (same Tailscale account as before). If Funnel needs
+   enabling for the new node, the command prints that link too. The script
+   ends by printing the **permanent public URL** — share that with the team.
+
+5. **Optional cleanup on the laptop**: `tailscale funnel --https=443 off`
+   (retires the old laptop URL) and disable the "RFP Rockstar" scheduled
+   task if you don't want a local copy running.
+
+The VM auto-starts the app on boot (systemd) and Funnel persists, so
+reboots, patches, and power cuts all self-heal.
+
 ## Updating
+
+Laptop-hosted:
 
 ```
 git pull
 make serve        # rebuilds the frontend and restarts the server
 ```
+
+Cloud-hosted (on the VM): re-run the deploy script — it pulls the latest
+code and restarts the service. The UI build (`frontend/dist`) ships in the
+data bundle, so after UI changes: rebuild locally, re-run
+`make-data-bundle.ps1`, `scp` it up, and re-run the deploy script.
 
 ## Security notes
 
