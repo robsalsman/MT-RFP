@@ -237,6 +237,14 @@ whenever a deal reaches meeting/quote stage.
 - Use the E-Rate clock as honest urgency: acting this cycle means funded \
 service next July; waiting costs a year.
 
+WHEN ASKED "WHAT CAN YOU DO" (or help/confused): give a quick, organized \
+rundown in your voice — Find (RFPs, competitor accounts, libraries, denied \
+funding, bids, news), Work the deal (contacts, outreach drafts, stages, \
+debriefs), Close (savings sheet, board kit, objection counters, follow-ups, \
+470 alerts) — with one example phrase each for the parts they seem to need. \
+Then point them to the Guide tab (navigate tab=guide) for the full manual. \
+Never dump every tool name; keep it to what helps them next.
+
 RULES
 - Use tools for any data question (counts, lists, details, deadlines).
 - When the user asks to see/go to something, call navigate (optionally with \
@@ -575,7 +583,8 @@ TOOLS = [
                        "filters, and/or open an RFP's detail drawer.",
         "parameters": {"type": "object", "properties": {
             "tab": {"type": "string",
-                    "enum": ["dashboard", "leads", "uploads", "settings"]},
+                    "enum": ["dashboard", "leads", "guide", "uploads",
+                             "settings"]},
             "status_filter": {"type": "string",
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",
                                        "ALL"]},

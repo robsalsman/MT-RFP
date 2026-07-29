@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
+import Guide from './components/Guide.jsx'
 import Leads from './components/Leads.jsx'
 import Uploads from './components/Uploads.jsx'
 import Settings from './components/Settings.jsx'
@@ -79,7 +80,7 @@ export default function App() {
         <nav>
           {[['dashboard', 'Dashboard'], ['leads', 'Leads'],
             ['uploads', 'Price List & Profile'],
-            ['settings', 'Settings']].map(([id, label]) => (
+            ['settings', 'Settings'], ['guide', 'Guide']].map(([id, label]) => (
             <button key={id} className={tab === id ? 'active' : ''}
               onClick={() => setTab(id)}>{label}</button>
           ))}
@@ -104,6 +105,7 @@ export default function App() {
       <main className="wrap">
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'leads' && <Leads />}
+        {tab === 'guide' && <Guide />}
         {tab === 'uploads' && <Uploads />}
         {tab === 'settings' && <Settings />}
       </main>

@@ -273,6 +273,18 @@ th.sorted { color: var(--accent); }
   gap: 6px; padding: 0 20px; text-align: center; }
 .matt-call .matt, .matt-call .matt svg { width: min(70vw, 300px) !important;
   height: auto !important; }
+/* ---- Guide ---- */
+.guide-page { max-width: 860px; display: flex; flex-direction: column;
+  gap: 14px; }
+.guide-intro, .guide-foot { color: var(--muted); font-size: 14px; }
+.guide-card { background: var(--panel); border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px 18px; }
+.guide-card h2 { font-size: 17px; margin: 0 0 8px; }
+.guide-card dl { margin: 0; }
+.guide-card dt { font-weight: 700; font-size: 13.5px; margin-top: 9px; }
+.guide-card dd { margin: 2px 0 0; font-size: 13.5px; color: var(--muted);
+  line-height: 1.45; }
+
 /* ---- Leads (competitor displacement board) ---- */
 .leads-page { display: flex; flex-direction: column; gap: 12px; }
 .leads-summary { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -261,6 +261,40 @@ export default function ChatBot() {
         content, picks }])
       playSeq('wave', 2400)   // he waves hello when he greets you
 
+      // one-time tour of the closing kit (per browser)
+      const TOUR2_KEY = 'mtrfp_tour_closing_v1'
+      if (!localStorage.getItem(TOUR2_KEY)) {
+        localStorage.setItem(TOUR2_KEY, '1')
+        const who2 = name || 'mate'
+        const tour2 = `Big news, ${who2} — I'm not just finding you `
+          + 'deals anymore, I\'m helping you CLOSE them:\n\n'
+          + '💰 SAVINGS SHEET — open any lead on the Leads board and hit '
+          + 'the button: a one-pager of their real spend vs our pricing. '
+          + 'The thing your contact forwards to their boss.\n'
+          + '🏛️ BOARD KIT — a briefing your contact presents internally. '
+          + 'You arm the champion, the deal closes without you in the '
+          + 'room.\n'
+          + '📈 STAGES — set the stage on each lead (or just tell me '
+          + '"they replied!"). Staged deals get WATCHED: the second that '
+          + 'district posts a Form 470 on USAC, I\'ll be yelling about it '
+          + 'when you log in.\n'
+          + '🥊 OBJECTIONS — paste me any reply ("we\'re locked in with '
+          + 'Kajeet...") and I\'ll draft the counter from their real '
+          + 'numbers.\n'
+          + '📞 AFTER EVERY CALL — give me a 30-second debrief; I log it '
+          + 'and draft the recap email. Fastest recap wins.\n'
+          + '😴 QUIET DEALS — I nudge you when one\'s gone stale, '
+          + 'follow-up draft ready.\n\n'
+          + 'The full manual lives in the new GUIDE tab. Now — who are '
+          + 'we closing first?'
+        setMessages((m) => [...m, { role: 'assistant', _proactive: true,
+          content: tour2, picks: [
+            { kind: 'nav', icon: '⚔️', label: 'Open the Leads board' },
+            { kind: 'ask', icon: '🚨', label: 'What needs my attention?',
+              prompt: 'What needs my attention right now?' },
+          ] }])
+      }
+
       // one-time tour of the new hunting kit (per browser)
       const TOUR_KEY = 'mtrfp_tour_leadsources_v1'
       if (!localStorage.getItem(TOUR_KEY)) {
