@@ -79,6 +79,16 @@ const CLOSET = [
 ]
 const CLOSET_KINDS = ['Music', 'Business', 'Flair']
 
+// URLs in Matt's replies become real links — "the right link, one click"
+const URL_SPLIT_RE = /(https?:\/\/[^\s)"'<>\]]+)/g
+const linkify = (text) => String(text).split(URL_SPLIT_RE).map((part, i) =>
+  part.startsWith('http')
+    ? <a key={i} href={part} target="_blank" rel="noreferrer"
+        onClick={(e) => e.stopPropagation()}>{part.replace(
+        /^https:\/\/(www\.)?/, '').slice(0, 48)}{part.replace(
+        /^https:\/\/(www\.)?/, '').length > 48 ? '…' : ''}</a>
+    : part)
+
 // Matt periodically shows off closet gear while idle — {n} = user's name
 const SHOWOFF = [
   { pose: 'hold_guitar_electric',
@@ -408,6 +418,47 @@ export default function ChatBot() {
     return () => { alive = false; timers.forEach(clearTimeout) }
   }, [framesReady])   // eslint-disable-line
 
+  // Tab awareness: Matt knows which tab Kim is on. On a switch he offers
+  // one contextual line (once per tab per session, never mid-work), and
+  // every chat request carries the current tab so his answers fit where
+  // she's standing.
+  const curTabRef = useRef('dashboard')
+  const tabGreeted = useRef(new Set())
+  useEffect(() => {
+    const LINES = {
+      linkedin: "Ah, the LinkedIn queue — my favourite hunting ground. "
+        + "▶ copies the message and opens your Sales Navigator; ✓ logs "
+        + "it and I schedule the next touch. Any Navigator questions at "
+        + "all, just ask — I know every trick in that tool.",
+      leads: "The competitor board — tap a card up top to filter, or "
+        + "ask me things like 'who's expiring soon?' or 'draft outreach "
+        + "for the biggest Kajeet account'.",
+      dashboard: "Fresh RFPs, scored for our LTE fit. Ask me 'best RFPs "
+        + "right now' or tap one and I'll draft the reply.",
+      guide: "The manual! Everything I can do, with exact phrases to "
+        + "try. Or skip the reading and just ask me.",
+      uploads: "Price list and company profile live here — I use these "
+        + "for every draft, so keep 'em fresh.",
+      settings: "Scoring weights and priorities. Tell me 'prioritize "
+        + "Texas and Ohio' and I'll set them for you.",
+    }
+    const onTab = (e) => {
+      const tab = e.detail?.tab
+      if (!tab) return
+      curTabRef.current = tab
+      if (tabGreeted.current.has(tab) || busyRef.current
+          || recRecording.current || chatRef.current) return
+      tabGreeted.current.add(tab)
+      const line = LINES[tab]
+      if (line) {
+        setMessages((m) => [...m, { role: 'assistant', _local: true,
+          _showoff: true, content: line }])
+      }
+    }
+    window.addEventListener('mtrfp:tab', onTab)
+    return () => window.removeEventListener('mtrfp:tab', onTab)
+  }, [])   // eslint-disable-line
+
   // greeting picks are mixed-kind: RFP draft / competitor lead / board nav
   const goLeads = (leadId) => {
     if (leadId) window.__openLeadId = leadId
@@ -464,7 +515,8 @@ export default function ChatBot() {
     try {
       const r = await authFetch('/api/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history(next) }),
+        body: JSON.stringify({ messages: history(next),
+          tab: curTabRef.current }),
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.detail || 'request failed')
@@ -557,7 +609,7 @@ export default function ChatBot() {
     <div className="chat-body" ref={bodyRef}>
       {messages.map((m, i) => (
         <div key={i} className={`chat-msg ${m.role}`}>
-          {m.content}
+          {linkify(m.content)}
           {m.toolLog?.length > 0 && (
             <div className="chat-tools">{m.toolLog.map((t, j) => (
               <span key={j} className={t.ok ? '' : 'err'}>⚙ {t.tool}</span>))}
@@ -729,7 +781,7 @@ export default function ChatBot() {
               <div className="tray-body">
                 <div className={`stage-bubble ${bubbleExp ? 'exp' : ''}`}
                   onClick={() => setBubbleExp((e) => !e)}
-                  title="Tap to expand">{bubble}</div>
+                  title="Tap to expand">{linkify(bubble)}</div>
                 {bubblePicks.length > 0 && (
                   <div className="stage-picks">
                     {bubblePicks.map((p) => (

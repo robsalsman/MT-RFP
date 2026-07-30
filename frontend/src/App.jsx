@@ -61,6 +61,11 @@ export default function App() {
     return () => window.removeEventListener('mtrfp:navigate', onNav)
   }, [])
 
+  // tell Matt which tab Kim is on (he greets tabs + answers in context)
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('mtrfp:tab', { detail: { tab } }))
+  }, [tab])
+
   if (authed === null) return null  // brief: waiting on /api/health
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />
 

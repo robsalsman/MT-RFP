@@ -501,7 +501,8 @@ def chat_endpoint(payload: dict, request: Request):
     if not isinstance(messages, list) or not messages:
         raise HTTPException(400, "messages list required")
     _, name = auth.user_from_header(request.headers.get("Authorization"))
-    return chat_mod.run_chat(messages, user_name=name)
+    return chat_mod.run_chat(messages, user_name=name,
+                             current_tab=payload.get("tab"))
 
 
 @app.post("/api/voice/converse")

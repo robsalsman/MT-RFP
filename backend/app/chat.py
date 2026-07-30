@@ -14,8 +14,8 @@ import re
 import httpx
 
 from . import (ai, acp, competitors, config, consultants, closing, db,
-               leads, libraries, linkedin, mentions, respond, savings,
-               scoring)
+               leads, libraries, linkedin, linkedin_kb, mentions, respond,
+               savings, scoring)
 from . import alerts as alerts_mod
 from . import status as status_mod
 
@@ -237,13 +237,27 @@ kit (kind=champion) arms her contact to sell it to the board — offer it \
 whenever a deal reaches meeting/quote stage.
 - Use the E-Rate clock as honest urgency: acting this cycle means funded \
 service next July; waiting costs a year.
-- LINKEDIN (linkedin_play): when email goes unanswered, contacts are \
-consultant-only, or Kim wants meetings, run the LinkedIn play — right \
-titles to target, one-click searches that open in HER Sales Navigator, \
-and a 3-touch DM kit from real numbers (short, human, no pitch on touch \
-one). Kim sends everything herself; suggest she logs each touch with you \
-so the nudges track it. Never claim to send or read LinkedIn messages — \
-automating her account would violate LinkedIn's terms.
+- LINKEDIN — a first-class channel with its OWN TAB (navigate \
+tab=linkedin): a scored queue of contacts, each with per-step messages \
+on a cadence (connect -> DM1 -> DM2 -> DM3 -> InMail). One button copies \
+the message and opens HER Sales Navigator; "Sent" logs the touch and \
+schedules the next. linkedin_play(lead_id) adds a lead's targets to the \
+queue. Kim sends everything herself — automating her account would \
+violate LinkedIn's terms; never claim to send or read her messages.
+- YOU ARE HER SALES NAVIGATOR EXPERT — Kim should never have to learn \
+or master LinkedIn; you know everything. For ANY LinkedIn/Navigator \
+question (how do I..., is it safe to..., when should I...) call \
+linkedin_guide and answer with: the expert answer in a sentence or two, \
+the DIRECT URL to the exact LinkedIn screen pasted in your reply (it \
+renders as a clickable link), and ready-to-paste text when relevant. \
+Never tell her to explore, figure it out, or google — hand her the \
+click. End with the next click ("want me to build the saved search?").
+- ROUTING: a search for PEOPLE (directors, superintendents, CTOs, any \
+job title) is a LINKEDIN search — use linkedin_guide (build the search \
+with the search_* params) — NOT the app dashboard. The dashboard \
+searches RFPs and has NO "Save Search" button; NEVER invent app UI \
+that doesn't exist. Saved searches are a Sales Navigator feature at \
+linkedin.com.
 
 WHEN ASKED "WHAT CAN YOU DO" (or help/confused): give a quick, organized \
 rundown in your voice — Find (RFPs, competitor accounts, libraries, denied \
@@ -415,6 +429,36 @@ TOOLS = [
                      "(best timing); competitor = grouped by competitor"},
             "min_spend": {"type": "number"},
             "limit": {"type": "integer", "default": 10}}}}},
+    {"type": "function", "function": {
+        "name": "linkedin_guide",
+        "description": "Matt's Sales Navigator expertise. Call for ANY "
+                       "LinkedIn/Sales Navigator question — how-tos, "
+                       "features, safety limits, profile advice, timing, "
+                       "InMail, saved searches, warm-up tricks. Returns "
+                       "expert facts, DIRECT LINKS into the right "
+                       "LinkedIn screens (include them in your reply — "
+                       "they render as clickable), and click-by-click "
+                       "'do' steps. Can also build a custom boolean "
+                       "people-search URL.",
+        "parameters": {"type": "object", "properties": {
+            "topics": {"type": "array", "items": {"type": "string",
+                       "enum": ["getting_around", "boolean_search",
+                                "saved_searches", "lead_lists",
+                                "connect_etiquette", "inmail", "warmup",
+                                "profile", "timing", "safety", "replies",
+                                "teamlink_intel"]},
+                       "description": "topics relevant to the question "
+                       "(omit for the full overview)"},
+            "search_title": {"type": "string",
+                             "description": "build a search: job titles, "
+                             "comma-separated for OR"},
+            "search_org": {"type": "string",
+                           "description": "build a search: organization "
+                           "name"},
+            "search_keywords": {"type": "string"},
+            "search_exclude": {"type": "string",
+                               "description": "comma-separated NOT terms"}
+        }}}},
     {"type": "function", "function": {
         "name": "linkedin_play",
         "description": "The LinkedIn / Sales Navigator play for a lead: "
@@ -802,6 +846,16 @@ def _exec_tool(name: str, args: dict) -> dict:
                         "status": r["status"]} for r in rows]
             return {"summary": competitors.summary(), "count": len(compact),
                     "accounts": compact}
+        if name == "linkedin_guide":
+            out = {"expertise": linkedin_kb.lookup(args.get("topics"))}
+            if any(args.get(k) for k in ("search_title", "search_org",
+                                         "search_keywords")):
+                out["custom_search"] = linkedin_kb.build_search(
+                    args.get("search_keywords"), args.get("search_title"),
+                    args.get("search_org"), args.get("search_exclude"))
+            out["reminder"] = ("Include the URLs above in your reply text "
+                              "— they render as clickable buttons for Kim.")
+            return out
         if name == "linkedin_play":
             return linkedin.play(int(args["lead_id"]))
         if name == "generate_closing_doc":
@@ -932,7 +986,8 @@ def _clean_reply(reply: str, has_options: bool) -> str:
 
 
 def run_chat(messages: list[dict], voice: bool = False,
-             user_name: str | None = None) -> dict:
+             user_name: str | None = None,
+             current_tab: str | None = None) -> dict:
     """messages: [{role: user|assistant, content: str}, ...] (latest last).
     Returns {reply, navigate|None, tool_log}."""
     if config.llm_provider() != "nemotron" and not config.NEMOTRON_API_KEY:
@@ -943,6 +998,11 @@ def run_chat(messages: list[dict], voice: bool = False,
     if user_name:
         system += (f"\nThe person you're talking to is {user_name}. Greet "
                    f"them by name naturally and address them as {user_name}.")
+    if current_tab:
+        system += (f"\nThey are currently viewing the '{current_tab}' tab "
+                   "of the app — answer in that context (e.g. on the "
+                   "linkedin tab, questions are about the LinkedIn queue "
+                   "and Sales Navigator).")
     convo = [{"role": "system", "content": system}]
     for m in messages[-20:]:
         if m.get("role") in ("user", "assistant") and m.get("content"):
@@ -956,6 +1016,7 @@ def run_chat(messages: list[dict], voice: bool = False,
     navigate = None
     tool_log = []
     options = []  # tappable RFP picks from the most recent listing
+    li_links = []  # links from linkedin_guide — guaranteed into the reply
     degen_retries = 0
     for _ in range(MAX_TOOL_ROUNDS):
         try:
@@ -995,6 +1056,10 @@ def run_chat(messages: list[dict], voice: bool = False,
                 reply = "Done." if tool_log else "How can I help with MT-RFP?"
             else:
                 reply = _clean_reply(reply, bool(options))
+            if li_links and "linkedin.com" not in reply:
+                links_txt = "\n".join(f"{lb}: {u}"
+                                      for lb, u in li_links[:4])
+                reply += "\n\nYour links:\n" + links_txt
             return {"reply": reply, "navigate": navigate,
                     "tool_log": tool_log, "options": options}
         convo.append({"role": "assistant",
@@ -1007,6 +1072,15 @@ def run_chat(messages: list[dict], voice: bool = False,
             except json.JSONDecodeError:
                 fn_args = {}
             result = _exec_tool(fn, fn_args)
+            if fn == "linkedin_guide":
+                li_links.clear()
+                for topic in result.get("expertise", []):
+                    for label, url in topic.get("links", []):
+                        li_links.append((label, url))
+                cs = result.get("custom_search")
+                if cs:
+                    li_links.insert(0, ("Your custom search (Sales Nav)",
+                                        cs["sales_nav_url"]))
             if fn == "navigate" and result.get("ok"):
                 navigate = result["navigation_queued"]
             if fn == "list_rfps" and result.get("rfps"):

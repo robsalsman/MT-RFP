@@ -84,3 +84,16 @@ def test_cadence_shape():
     from app.linkedin import CADENCE
     keys = [k for k, _, _ in CADENCE]
     assert keys == ["connect", "dm1", "dm2", "dm3", "inmail"]
+
+
+def test_linkedin_kb_lookup_and_search():
+    from app.linkedin_kb import KB, lookup, build_search
+    assert len(KB) >= 10
+    got = lookup(["inmail", "safety"])
+    assert [g["key"] for g in got] == ["inmail", "safety"]
+    assert all(g["know"] and "do" in g for g in got)
+    s = build_search(title="Director of Technology, CTO", org="Plano ISD",
+                     exclude="retired")
+    assert '"Plano ISD"' in s["boolean_query"]
+    assert " OR " in s["boolean_query"] and "NOT retired" in s["boolean_query"]
+    assert " " not in s["sales_nav_url"]
