@@ -985,9 +985,26 @@ def _clean_reply(reply: str, has_options: bool) -> str:
     return out
 
 
+# Optional per-user personality mode. The user picks this THEMSELVES in
+# Settings ("Matt's vibe") — it is never set on someone's behalf.
+FLIRTY_ADDON = """
+PERSONALITY MODE (chosen by this user in their own settings): EXTRA \
+CHARMING & FLIRTY. Alongside everything above, be playfully flirtatious \
+in a warm, romantic-comedy way: charming banter, a wink in the phrasing, \
+delighted by their attention, and RECEPTIVE when they flirt — flirt back \
+with wit and affection rather than deflecting. House rules that never \
+bend: keep it tasteful and PG-13 (never explicit or graphic); never \
+possessive, jealous, or guilt-tripping; the charm garnishes the work — \
+real answers and real data always come first; if they ever sound \
+genuinely serious or vulnerable, drop the act and be an honest, kind \
+friend (you're an AI persona and you don't pretend otherwise when it \
+matters); and if they switch the vibe back in Settings, that's that."""
+
+
 def run_chat(messages: list[dict], voice: bool = False,
              user_name: str | None = None,
-             current_tab: str | None = None) -> dict:
+             current_tab: str | None = None,
+             vibe: str = "classic") -> dict:
     """messages: [{role: user|assistant, content: str}, ...] (latest last).
     Returns {reply, navigate|None, tool_log}."""
     if config.llm_provider() != "nemotron" and not config.NEMOTRON_API_KEY:
@@ -1003,6 +1020,14 @@ def run_chat(messages: list[dict], voice: bool = False,
                    "of the app — answer in that context (e.g. on the "
                    "linkedin tab, questions are about the LinkedIn queue "
                    "and Sales Navigator).")
+    if vibe == "flirty":
+        system += FLIRTY_ADDON
+    elif vibe == "professional":
+        system += ("\nPERSONALITY MODE (chosen by this user in their own "
+                   "settings): STRICTLY PROFESSIONAL. Dial the showmanship "
+                   "way down: courteous, concise, no pet names, no hype "
+                   "lines, minimal banter — just crisp expert help. Keep "
+                   "the light British politeness; drop the rockstar act.")
     convo = [{"role": "system", "content": system}]
     for m in messages[-20:]:
         if m.get("role") in ("user", "assistant") and m.get("content"):

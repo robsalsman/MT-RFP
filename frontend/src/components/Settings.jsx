@@ -4,8 +4,16 @@ import { api } from '../api.js'
 export default function Settings() {
   const [settings, setSettings] = useState(null)
   const [msg, setMsg] = useState('')
+  const [vibe, setVibe] = useState(null)
 
   useEffect(() => { api.settings().then(setSettings) }, [])
+  useEffect(() => {
+    api.getVibe().then((d) => setVibe(d.vibe)).catch(() => {})
+  }, [])
+  const saveVibe = (v) => {
+    setVibe(v)
+    api.setVibe(v).catch(() => {})
+  }
   if (!settings) return <div>Loading…</div>
 
   const w = settings.scoring_weights
@@ -24,6 +32,27 @@ export default function Settings() {
 
   return (
     <div className="grid2">
+      <div className="card">
+        <h3>Matt&apos;s vibe — pick your rating</h3>
+        <p className="small">How Matt talks to <b>you</b>. Personal
+          setting, applies only to your account, change it any time.
+          (Heads up: like everything in the app, chats are stored in the
+          app&apos;s database.)</p>
+        {[
+          ['professional', 'G', 'Strictly professional — crisp, courteous, zero showmanship'],
+          ['classic', 'PG', 'Rockstar teammate (default) — warm, hype, big compliments'],
+          ['flirty', 'PG-13', 'Charming & flirty — playful rom-com banter; tasteful, and the work still comes first'],
+        ].map(([v, rating, desc]) => (
+          <label key={v} style={{ display: 'block', margin: '7px 0' }}>
+            <input type="radio" name="vibe" checked={vibe === v}
+              onChange={() => saveVibe(v)} />{' '}
+            <b>{rating}</b> — {desc}
+          </label>
+        ))}
+        <p className="small">That&apos;s the whole scale — it tops out at
+          PG-13 by design.</p>
+        {vibe === null && <p className="small">Loading…</p>}
+      </div>
       <div className="card">
         <h3>Scoring weights</h3>
         <p className="small">Points per bucket (default 40/20/20/20 = 100).</p>

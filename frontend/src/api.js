@@ -70,6 +70,11 @@ export const api = {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name }),
     }).then(json),
+  getVibe: () => authFetch('/api/me/vibe').then(json),
+  setVibe: (vibe) => authFetch('/api/me/vibe', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vibe }),
+  }).then(json),
   alerts: () => authFetch('/api/alerts').then(json),
   alertsSeen: (ids) => authFetch('/api/alerts/seen', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
