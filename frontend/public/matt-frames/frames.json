@@ -95,7 +95,15 @@
     "hold_mic_handheld": "poses/matt_hold_mic_handheld.png",
     "hold_pointer": "poses/matt_hold_pointer.png",
     "hold_sunglasses": "poses/matt_hold_sunglasses.png",
-    "hold_trophy": "poses/matt_hold_trophy.png"
+    "hold_trophy": "poses/matt_hold_trophy.png",
+    "stage_bow": "poses/matt_stage_bow.png",
+    "stage_guitar": "poses/matt_stage_guitar.png",
+    "stage_horns": "poses/matt_stage_horns.png",
+    "stage_idle": "poses/matt_stage_idle.png",
+    "stage_mic": "poses/matt_stage_mic.png",
+    "stage_solo": "poses/matt_stage_solo.png",
+    "stage_towel": "poses/matt_stage_towel.png",
+    "stage_wave": "poses/matt_stage_wave.png"
   },
   "sequences": {
     "air_guitar": [

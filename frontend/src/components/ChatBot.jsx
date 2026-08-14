@@ -76,8 +76,17 @@ const CLOSET = [
   { id: 'sunglasses', label: 'Shades', kind: 'Flair', hold: 'hold_sunglasses', prop: 'prop_flair_sunglasses' },
   { id: 'trophy', label: 'Trophy', kind: 'Flair', hold: 'hold_trophy', prop: 'prop_flair_trophy' },
   { id: 'confetti', label: 'Confetti', kind: 'Flair', hold: 'hold_confetti', prop: 'prop_flair_confetti' },
+  // Stage looks — thumbnails are the poses themselves
+  { id: 'stage_idle', label: 'Stage look', kind: 'Stage looks', hold: 'stage_idle', thumb: 'poses/matt_stage_idle.png' },
+  { id: 'stage_guitar', label: 'Guitar', kind: 'Stage looks', hold: 'stage_guitar', thumb: 'poses/matt_stage_guitar.png' },
+  { id: 'stage_solo', label: 'Solo', kind: 'Stage looks', hold: 'stage_solo', thumb: 'poses/matt_stage_solo.png' },
+  { id: 'stage_mic', label: 'Sing', kind: 'Stage looks', hold: 'stage_mic', thumb: 'poses/matt_stage_mic.png' },
+  { id: 'stage_horns', label: 'Rock horns', kind: 'Stage looks', hold: 'stage_horns', thumb: 'poses/matt_stage_horns.png' },
+  { id: 'stage_towel', label: 'Post-show', kind: 'Stage looks', hold: 'stage_towel', thumb: 'poses/matt_stage_towel.png' },
+  { id: 'stage_bow', label: 'Take a bow', kind: 'Stage looks', hold: 'stage_bow', thumb: 'poses/matt_stage_bow.png' },
+  { id: 'stage_wave', label: 'Wave', kind: 'Stage looks', hold: 'stage_wave', thumb: 'poses/matt_stage_wave.png' },
 ]
-const CLOSET_KINDS = ['Music', 'Business', 'Flair']
+const CLOSET_KINDS = ['Music', 'Business', 'Flair', 'Stage looks']
 
 // URLs in Matt's replies become real links — "the right link, one click"
 const URL_SPLIT_RE = /(https?:\/\/[^\s)"'<>\]]+)/g
@@ -757,7 +766,8 @@ export default function ChatBot() {
                         setSeqPlay(null); setClosetPose(it.hold)
                       }}>
                       <img className="prop" alt=""
-                        src={`/matt-frames/props/${it.prop}.png`} />
+                        src={it.thumb ? `/matt-frames/${it.thumb}`
+                          : `/matt-frames/props/${it.prop}.png`} />
                       <span>{it.label}</span>
                     </button>
                   ))}
