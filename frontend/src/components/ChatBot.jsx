@@ -77,21 +77,35 @@ const CLOSET = [
   { id: 'trophy', label: 'Trophy', kind: 'Flair', hold: 'hold_trophy', prop: 'prop_flair_trophy' },
   { id: 'confetti', label: 'Confetti', kind: 'Flair', hold: 'hold_confetti', prop: 'prop_flair_confetti' },
   // Stage looks — thumbnails are the poses themselves
-  { id: 'stage_idle', label: 'Stage look', kind: 'Stage looks', hold: 'stage_idle', thumb: 'poses/matt_stage_idle.png' },
-  { id: 'stage_guitar', label: 'Guitar', kind: 'Stage looks', hold: 'stage_guitar', thumb: 'poses/matt_stage_guitar.png' },
-  { id: 'stage_solo', label: 'Solo', kind: 'Stage looks', hold: 'stage_solo', thumb: 'poses/matt_stage_solo.png' },
-  { id: 'stage_mic', label: 'Sing', kind: 'Stage looks', hold: 'stage_mic', thumb: 'poses/matt_stage_mic.png' },
-  { id: 'stage_horns', label: 'Rock horns', kind: 'Stage looks', hold: 'stage_horns', thumb: 'poses/matt_stage_horns.png' },
-  { id: 'stage_towel', label: 'Post-show', kind: 'Stage looks', hold: 'stage_towel', thumb: 'poses/matt_stage_towel.png' },
-  { id: 'stage_bow', label: 'Take a bow', kind: 'Stage looks', hold: 'stage_bow', thumb: 'poses/matt_stage_bow.png' },
-  { id: 'stage_wave', label: 'Wave', kind: 'Stage looks', hold: 'stage_wave', thumb: 'poses/matt_stage_wave.png' },
+  { id: 'stage_idle', label: 'Stage look', kind: 'Stage looks', hold: 'stage_idle', thumb: 'poses/matt_stage_idle.png',
+    line: "Shirt's in the wash, {n}. Professionalism fully intact." },
+  { id: 'stage_guitar', label: 'Guitar', kind: 'Stage looks', hold: 'stage_guitar', thumb: 'poses/matt_stage_guitar.png',
+    line: 'Unplugged tonight. Well — the shirt is, anyway.' },
+  { id: 'stage_solo', label: 'Solo', kind: 'Stage looks', hold: 'stage_solo', thumb: 'poses/matt_stage_solo.png',
+    line: "One boot on the amp, {n} — that's just showbiz physics." },
+  { id: 'stage_mic', label: 'Sing', kind: 'Stage looks', hold: 'stage_mic', thumb: 'poses/matt_stage_mic.png',
+    line: 'This one goes out to the best closer in the room.' },
+  { id: 'stage_horns', label: 'Rock horns', kind: 'Stage looks', hold: 'stage_horns', thumb: 'poses/matt_stage_horns.png',
+    line: '🤘 For those about to prospect, {n} — I salute you.' },
+  { id: 'stage_towel', label: 'Post-show', kind: 'Stage looks', hold: 'stage_towel', thumb: 'poses/matt_stage_towel.png',
+    line: "Great show tonight, {n}. Encore's whenever you are." },
+  { id: 'stage_bow', label: 'Take a bow', kind: 'Stage looks', hold: 'stage_bow', thumb: 'poses/matt_stage_bow.png',
+    line: 'Take a bow with me — that pipeline of yours has earned it.' },
+  { id: 'stage_wave', label: 'Wave', kind: 'Stage looks', hold: 'stage_wave', thumb: 'poses/matt_stage_wave.png',
+    line: 'Hello Cleveland! And far more importantly — hello {n}.' },
   // Calendar shoot — campy 80s heartthrob tropes
-  { id: 'cal_underwear', label: 'The Ad', kind: 'Calendar shoot', hold: 'cal_underwear', thumb: 'poses/matt_cal_underwear.png' },
-  { id: 'cal_chippendale', label: 'Bowtie', kind: 'Calendar shoot', hold: 'cal_chippendale', thumb: 'poses/matt_cal_chippendale.png' },
-  { id: 'cal_firefighter', label: 'Firefighter', kind: 'Calendar shoot', hold: 'cal_firefighter', thumb: 'poses/matt_cal_firefighter.png' },
-  { id: 'cal_cowboy', label: 'Cowboy', kind: 'Calendar shoot', hold: 'cal_cowboy', thumb: 'poses/matt_cal_cowboy.png' },
-  { id: 'cal_lifeguard', label: 'Lifeguard', kind: 'Calendar shoot', hold: 'cal_lifeguard', thumb: 'poses/matt_cal_lifeguard.png' },
-  { id: 'cal_mechanic', label: 'Mechanic', kind: 'Calendar shoot', hold: 'cal_mechanic', thumb: 'poses/matt_cal_mechanic.png' },
+  { id: 'cal_underwear', label: 'The Ad', kind: 'Calendar shoot', hold: 'cal_underwear', thumb: 'poses/matt_cal_underwear.png',
+    line: '📅 Mr. January. The jeans are for dramatic effect, {n} — the savings sheets are still my best feature.' },
+  { id: 'cal_chippendale', label: 'Bowtie', kind: 'Calendar shoot', hold: 'cal_chippendale', thumb: 'poses/matt_cal_chippendale.png',
+    line: '📅 Mr. February. Bowtie, cuffs, no shirt — formalwear where it counts.' },
+  { id: 'cal_firefighter', label: 'Firefighter', kind: 'Calendar shoot', hold: 'cal_firefighter', thumb: 'poses/matt_cal_firefighter.png',
+    line: '📅 Mr. March. The hose is purely decorative, {n}. The dedication to your deals? Certified.' },
+  { id: 'cal_cowboy', label: 'Cowboy', kind: 'Calendar shoot', hold: 'cal_cowboy', thumb: 'poses/matt_cal_cowboy.png',
+    line: "📅 Mr. April. This town's plenty big enough for both of us and your pipeline." },
+  { id: 'cal_lifeguard', label: 'Lifeguard', kind: 'Calendar shoot', hold: 'cal_lifeguard', thumb: 'poses/matt_cal_lifeguard.png',
+    line: '📅 Mr. May. Fully qualified in rescuing drowning deals.' },
+  { id: 'cal_mechanic', label: 'Mechanic', kind: 'Calendar shoot', hold: 'cal_mechanic', thumb: 'poses/matt_cal_mechanic.png',
+    line: '📅 Mr. June. Checked under the hood, {n} — your funnel is running beautifully.' },
 ]
 const CLOSET_KINDS = ['Music', 'Business', 'Flair', 'Stage looks',
   'Calendar shoot']
@@ -772,6 +786,12 @@ export default function ChatBot() {
                       onClick={() => {
                         if (seqTimer.current) clearTimeout(seqTimer.current)
                         setSeqPlay(null); setClosetPose(it.hold)
+                        if (it.line) {
+                          setMessages((m) => [...m, { role: 'assistant',
+                            _local: true, _showoff: true,
+                            content: it.line.replace(/\{n\}/g,
+                              name || 'mate') }])
+                        }
                       }}>
                       <img className="prop" alt=""
                         src={it.thumb ? `/matt-frames/${it.thumb}`
