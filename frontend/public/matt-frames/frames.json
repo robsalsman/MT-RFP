@@ -103,7 +103,13 @@
     "stage_mic": "poses/matt_stage_mic.png",
     "stage_solo": "poses/matt_stage_solo.png",
     "stage_towel": "poses/matt_stage_towel.png",
-    "stage_wave": "poses/matt_stage_wave.png"
+    "stage_wave": "poses/matt_stage_wave.png",
+    "cal_chippendale": "poses/matt_cal_chippendale.png",
+    "cal_cowboy": "poses/matt_cal_cowboy.png",
+    "cal_firefighter": "poses/matt_cal_firefighter.png",
+    "cal_lifeguard": "poses/matt_cal_lifeguard.png",
+    "cal_mechanic": "poses/matt_cal_mechanic.png",
+    "cal_underwear": "poses/matt_cal_underwear.png"
   },
   "sequences": {
     "air_guitar": [

@@ -85,8 +85,16 @@ const CLOSET = [
   { id: 'stage_towel', label: 'Post-show', kind: 'Stage looks', hold: 'stage_towel', thumb: 'poses/matt_stage_towel.png' },
   { id: 'stage_bow', label: 'Take a bow', kind: 'Stage looks', hold: 'stage_bow', thumb: 'poses/matt_stage_bow.png' },
   { id: 'stage_wave', label: 'Wave', kind: 'Stage looks', hold: 'stage_wave', thumb: 'poses/matt_stage_wave.png' },
+  // Calendar shoot — campy 80s heartthrob tropes
+  { id: 'cal_underwear', label: 'The Ad', kind: 'Calendar shoot', hold: 'cal_underwear', thumb: 'poses/matt_cal_underwear.png' },
+  { id: 'cal_chippendale', label: 'Bowtie', kind: 'Calendar shoot', hold: 'cal_chippendale', thumb: 'poses/matt_cal_chippendale.png' },
+  { id: 'cal_firefighter', label: 'Firefighter', kind: 'Calendar shoot', hold: 'cal_firefighter', thumb: 'poses/matt_cal_firefighter.png' },
+  { id: 'cal_cowboy', label: 'Cowboy', kind: 'Calendar shoot', hold: 'cal_cowboy', thumb: 'poses/matt_cal_cowboy.png' },
+  { id: 'cal_lifeguard', label: 'Lifeguard', kind: 'Calendar shoot', hold: 'cal_lifeguard', thumb: 'poses/matt_cal_lifeguard.png' },
+  { id: 'cal_mechanic', label: 'Mechanic', kind: 'Calendar shoot', hold: 'cal_mechanic', thumb: 'poses/matt_cal_mechanic.png' },
 ]
-const CLOSET_KINDS = ['Music', 'Business', 'Flair', 'Stage looks']
+const CLOSET_KINDS = ['Music', 'Business', 'Flair', 'Stage looks',
+  'Calendar shoot']
 
 // URLs in Matt's replies become real links — "the right link, one click"
 const URL_SPLIT_RE = /(https?:\/\/[^\s)"'<>\]]+)/g
