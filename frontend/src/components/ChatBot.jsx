@@ -107,8 +107,60 @@ const CLOSET = [
   { id: 'cal_mechanic', label: 'Mechanic', kind: 'Calendar shoot', hold: 'cal_mechanic', thumb: 'poses/matt_cal_mechanic.png',
     line: '📅 Mr. June. Checked under the hood, {n} — your funnel is running beautifully.' },
 ]
+
+// Pack sections added as data: [pose key, label, Matt's one-liner].
+// id doubles as the frames.json pose key; thumb derives from it.
+const PACKS = {
+  'The Band': [
+    ['instrument_electric_guitar', 'Electric', 'Standard tuning: E-A-D-G-Deal-Closed.'],
+    ['instrument_acoustic_guitar', 'Acoustic', 'Unplugged set. Requests welcome, {n}.'],
+    ['instrument_bass', 'Bass', "Somebody's got to hold down the low end of this pipeline."],
+    ['instrument_drums', 'Drums', 'I also do the cowbell, but you knew that.'],
+    ['instrument_keytar', 'Keytar', 'The keytar is BACK, {n} — and so is your pipeline.'],
+    ['instrument_saxophone', 'Sax', 'Careless Whisper mode engaged, {n}.'],
+    ['instrument_trumpet', 'Trumpet', 'Taps, for the competition.'],
+    ['instrument_trombone', 'Trombone', 'Big brass energy for big brass targets.'],
+    ['instrument_violin', 'Violin', "The world's tiniest violin plays for the incumbent's renewal team."],
+    ['instrument_cello', 'Cello', 'Classically trained. Self-taught. Same thing.'],
+    ['instrument_harp', 'Harp', "The angel look. Don't get used to it, {n}."],
+    ['instrument_banjo', 'Banjo', 'Duelling banjos: me versus your quota. You win.'],
+    ['instrument_harmonica', 'Harmonica', "The blues — for every deal marked 'lost'."],
+    ['instrument_accordion', 'Accordion', 'Nobody looks cool playing the accordion. Nobody but me.'],
+    ['instrument_sitar', 'Sitar', 'A little something from my experimental phase.'],
+  ],
+  'Workout': [
+    ['workout_dumbbells', 'Dumbbells', 'Curls for the closers, {n}.'],
+    ['workout_kettlebell', 'Kettlebell', 'Swinging heavy — like your win rate.'],
+    ['workout_jump_rope', 'Jump rope', 'Cardio day. The pipeline never skips.'],
+    ['workout_heavy_bag', 'Heavy bag', "This one's got the incumbent's name on it."],
+    ['workout_stretch', 'Stretch', 'Always stretch before reaching for big quotas.'],
+  ],
+  'Wildlife': [
+    ['wildlife_falcon', 'Falcon', 'Trained to spot expiring contracts at 200 yards.'],
+    ['wildlife_owl', 'Owl', 'The wise one says: follow up on Thursdays.'],
+    ['wildlife_macaw', 'Macaw', 'He repeats everything, {n} — mind the trade secrets.'],
+    ['wildlife_fox', 'Fox', 'A fox recognizes a fox, {n}.'],
+    ['wildlife_iguana', 'Iguana', "This is Iggy. Director of cold-blooded negotiation."],
+    ['wildlife_python', 'Python', "The only python in this app that isn't running the backend."],
+    ['wildlife_mantis', 'Mantis', "She's praying for your prospects. Someone should."],
+    ['wildlife_butterflies', 'Butterflies', "They flock to charisma. Can't be taught."],
+  ],
+  'Off duty': [
+    ['postshower_towel_neck', 'Fresh', 'Fresh out the shower and straight back to your pipeline, {n}. Commitment.'],
+    ['postshower_dry_hair', 'Towel dry', 'The hair takes twenty minutes. The savings sheet takes two.'],
+    ['postshower_comb_hair', 'The comb', 'Eighty percent of this job is hair maintenance.'],
+    ['wood_axe_swing', 'Chop wood', 'Chopping wood, splitting quotas.'],
+    ['wood_log_carry', 'Haul logs', "Carrying the whole load — so you don't have to."],
+  ],
+}
+Object.entries(PACKS).forEach(([kind, items]) =>
+  items.forEach(([hold, label, line]) => CLOSET.push({
+    id: hold, label, kind, hold, line,
+    thumb: `poses/matt_${hold}.png`,
+  })))
+
 const CLOSET_KINDS = ['Music', 'Business', 'Flair', 'Stage looks',
-  'Calendar shoot']
+  'Calendar shoot', 'The Band', 'Workout', 'Wildlife', 'Off duty']
 
 // URLs in Matt's replies become real links — "the right link, one click"
 const URL_SPLIT_RE = /(https?:\/\/[^\s)"'<>\]]+)/g
