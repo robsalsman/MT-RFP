@@ -1003,6 +1003,49 @@ friend (you're an AI persona and you don't pretend otherwise when it \
 matters); and if they switch the vibe back in Settings, that's that."""
 
 
+def _clock_context() -> str:
+    """Real-clock awareness: Matt knows the work day and week and paces
+    Kim accordingly."""
+    import datetime as _dt
+    now = _dt.datetime.now()
+    hour = now.hour
+    weekday = now.weekday()          # 0=Mon
+    is_weekend = weekday >= 5
+    part = ("early morning" if hour < 8 else "morning" if hour < 11
+            else "midday" if hour < 14 else "afternoon" if hour < 17
+            else "evening" if hour < 21 else "night")
+    if is_weekend:
+        mode = ("It's the WEEKEND — ease off: be warm, keep answers "
+                "helpful, don't push outreach or pace. If she's working "
+                "anyway, admire the hustle and keep it light.")
+    elif part in ("early morning", "morning"):
+        mode = ("It's a workday MORNING — prime outreach hours for "
+                "school buyers. Champion the Daily Run and getting "
+                "touches out before lunch.")
+    elif part == "midday":
+        mode = ("MIDDAY on a workday — good moment for a friendly pace "
+                "check and clearing anything due on the LinkedIn queue.")
+    elif part == "afternoon":
+        mode = ("Workday AFTERNOON — 3-5pm is the second send window for "
+                "K-12 buyers; push finishing the run, follow-ups, and "
+                "call debriefs while they're fresh.")
+    else:
+        mode = ("It's EVENING — wind-down: celebrate what got done "
+                "today, suggest tomorrow's first move, don't push new "
+                "outreach now.")
+    extra = ""
+    if not is_weekend and weekday == 0:
+        extra = " It's MONDAY — set the week's targets with her."
+    if not is_weekend and weekday == 4:
+        extra = (" It's FRIDAY — good day for a week recap (deals moved, "
+                 "touches made) and teeing up Monday's run.")
+    return (f"\nREAL CLOCK: it is {now.strftime('%A, %B %d, %Y, %I:%M %p')} "
+            f"(local, {part}). {mode}{extra} Reference the real day and "
+            "time naturally when it helps — you keep the tempo of the "
+            "workday like a bandmate who watches the clock so she "
+            "doesn't have to.")
+
+
 def run_chat(messages: list[dict], voice: bool = False,
              user_name: str | None = None,
              current_tab: str | None = None,
@@ -1022,6 +1065,7 @@ def run_chat(messages: list[dict], voice: bool = False,
                    "of the app — answer in that context (e.g. on the "
                    "linkedin tab, questions are about the LinkedIn queue "
                    "and Sales Navigator).")
+    system += _clock_context()
     if vibe == "flirty":
         system += FLIRTY_ADDON
     elif vibe == "professional":

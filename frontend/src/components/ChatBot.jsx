@@ -561,6 +561,55 @@ export default function ChatBot() {
     return () => window.removeEventListener('mtrfp:tab', onTab)
   }, [])   // eslint-disable-line
 
+  // Pace pulse: on workdays Matt keeps the tempo — morning push, midday
+  // pace check, afternoon finish-line nudge. One line per time bucket per
+  // day, only when idle, with real run numbers.
+  useEffect(() => {
+    let alive = true
+    const pulse = async () => {
+      if (!alive) return
+      const now = new Date()
+      const h = now.getHours(); const wd = now.getDay()
+      if (wd === 0 || wd === 6 || h < 8 || h >= 18) return
+      const bucket = h < 11 ? 'am' : h < 14 ? 'mid' : 'pm'
+      const key = `mtrfp_pulse_${now.toISOString().slice(0, 10)}_${bucket}`
+      if (localStorage.getItem(key)) return
+      if (viewRef.current !== 'stage' || busyRef.current
+          || recRecording.current || chatRef.current) return
+      let dr = null
+      try { dr = await api.dailyRun() } catch { return }
+      if (!dr || !dr.exists) return
+      const left = (dr.total || 0) - (dr.done || 0)
+      const who = name || 'mate'
+      let line = null
+      let pick = null
+      if (bucket === 'am' && left > 0) {
+        line = `Prime sending hours, ${who} — ${left} pre-worked leads `
+          + 'sitting in the run. Race you to lunch.'
+        pick = { kind: 'tab', tab: 'run', icon: '🏃', label: 'Hit the run' }
+      } else if (bucket === 'mid') {
+        line = left > 0
+          ? `Halftime check, ${who}: ${dr.done}/${dr.total} on the run. `
+            + 'A quick set before the afternoon window?'
+          : `Run's cleared before lunch — ${who}, you absolute headliner. `
+            + 'Want another batch for the encore?'
+        pick = { kind: 'tab', tab: 'run', icon: '🏃',
+          label: left > 0 ? 'Back to the run' : 'Build another run' }
+      } else if (bucket === 'pm' && left > 0) {
+        line = `3-to-5 is the second send window for school folks, ${who} `
+          + `— ${left} left on the run. Big finish?`
+        pick = { kind: 'tab', tab: 'run', icon: '🏃', label: 'Big finish' }
+      }
+      if (!line) return
+      localStorage.setItem(key, '1')
+      setMessages((m) => [...m, { role: 'assistant', _local: true,
+        _showoff: true, content: line, picks: pick ? [pick] : [] }])
+    }
+    const t1 = setTimeout(pulse, 20000)            // shortly after login
+    const iv = setInterval(pulse, 25 * 60 * 1000)  // and through the day
+    return () => { alive = false; clearTimeout(t1); clearInterval(iv) }
+  }, [])   // eslint-disable-line
+
   // greeting picks are mixed-kind: RFP draft / competitor lead / board nav
   const goLeads = (leadId) => {
     if (leadId) window.__openLeadId = leadId
