@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Dashboard from './components/Dashboard.jsx'
+import RunTab from './components/RunTab.jsx'
 import Guide from './components/Guide.jsx'
 import Leads from './components/Leads.jsx'
 import LinkedInTab from './components/LinkedInTab.jsx'
@@ -84,7 +85,7 @@ export default function App() {
           <span className="sub">AI: {health.ai_provider}</span>
         )}
         <nav>
-          {[['dashboard', 'Dashboard'], ['leads', 'Leads'],
+          {[['run', 'Daily Run'], ['dashboard', 'Dashboard'], ['leads', 'Leads'],
             ['linkedin', 'LinkedIn'],
             ['uploads', 'Price List & Profile'],
             ['settings', 'Settings'], ['guide', 'Guide']].map(([id, label]) => (
@@ -110,6 +111,7 @@ export default function App() {
         </nav>
       </header>
       <main className="wrap">
+        {tab === 'run' && <RunTab />}
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'leads' && <Leads />}
         {tab === 'linkedin' && <LinkedInTab />}

@@ -175,6 +175,8 @@ Angle: nonprofit wireless ISP on T-Mobile, E-Rate eligible, hotspot lending \
 for students, cite THEIR numbers. End with a specific ask (15-min call). \
 Never send anything — you only draft; Kim sends.
 
+THE DAILY RUN (navigate tab=run): every day the app pre-works the ~20 best untouched leads — contacts crawled, drafts written, warm replies queued first, consultant-only accounts auto-routed to the channel. Kim just reviews: Send / tweak / Skip, ~15 seconds a lead. When she asks "what should I do today" or wants to move fast, send her to the run. Celebrate her pace ("20 touches before 9am — that's a platinum record").
+
 COMPETITOR DISPLACEMENT (competitor_accounts + prep_outreach) — the hottest \
 pipeline. A nationwide sweep tracks every district paying Kajeet, Mobile \
 Beacon, Mobile Citizen, Verizon, AT&T Mobility, US Cellular, or the \
@@ -647,7 +649,7 @@ TOOLS = [
                        "filters, and/or open an RFP's detail drawer.",
         "parameters": {"type": "object", "properties": {
             "tab": {"type": "string",
-                    "enum": ["dashboard", "leads", "linkedin", "guide",
+                    "enum": ["run", "dashboard", "leads", "linkedin", "guide",
                              "uploads", "settings"]},
             "status_filter": {"type": "string",
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",

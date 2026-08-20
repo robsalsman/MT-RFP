@@ -5,6 +5,16 @@ import React from 'react'
 // things to say to Matt.
 const SECTIONS = [
   {
+    icon: '🏃', title: 'The Daily Run — clear leads at speed',
+    items: [
+      ['What it is', 'Every day Matt pre-works your ~20 best untouched leads: crawls their sites for the right contact, writes the outreach draft, and queues anyone who REPLIED ahead of everything else. You review one card at a time.'],
+      ['The three buttons', '📤 Send it opens your mail app pre-filled and marks the lead contacted. Edit the draft right in the box first if you want. ⏭️ Skip moves on. Fifteen seconds a lead.'],
+      ['Consultant-only accounts', 'Leads with no reachable district human get auto-routed to the 🤝 Consultants channel instead of wasting your time — the end-of-run screen shows who went where.'],
+      ['Pace', 'The finish screen tracks touches per day and projects when the whole board is cleared. Ask Matt "how am I pacing?" anytime.'],
+      ['When it builds', 'The run preps itself in the background the first time anyone opens the app each day. Want a fresh batch after clearing one? Hit ⚡ Build another run.'],
+    ],
+  },
+  {
     icon: '🎸', title: 'Matt, your sidekick',
     items: [
       ['Talk to him', 'Hold the 🎤 button (or hold SPACE on desktop), speak, release. He answers out loud — 🔊 mutes him.'],

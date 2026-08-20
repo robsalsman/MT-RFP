@@ -345,6 +345,22 @@ export default function ChatBot() {
           + `win-back ($${Math.round(winback[0].spend).toLocaleString()} ECF)` })
       if (leads.length) picks.push({ kind: 'nav',
         label: 'Open the full Leads board' })
+      // kick today's run build (lazy pre-warm); offer it when ready
+      api.dailyRun().then((dr) => {
+        if (!dr) return
+        const left = (dr.total || 0) - (dr.done || 0)
+        if (!dr.building && left <= 0) return
+        setMessages((m) => [...m, { role: 'assistant', _proactive: true,
+          content: dr.building
+            ? "I'm prepping today's run in the back — contacts and "
+              + 'drafts for your best untouched leads. Give it a few '
+              + 'minutes, then it\'s one tap per lead.'
+            : `Today's run is ready: ${left} pre-worked leads — drafts `
+              + 'written, contacts found. Fifteen seconds apiece.',
+          picks: [{ kind: 'tab', tab: 'run', icon: '🏃',
+            label: dr.building ? 'Peek at the run' : 'Start the run' }] }])
+      }).catch(() => {})
+
       if (!picks.length) return
       const hi = name ? `Hey ${name}! ` : 'Hey! '
       const content = hi + 'What are we hunting today — fresh RFPs, or '
@@ -509,6 +525,9 @@ export default function ChatBot() {
   const tabGreeted = useRef(new Set())
   useEffect(() => {
     const LINES = {
+      run: "The Daily Run — I've already done the digging and the "
+        + "writing; you just decide. Send, tweak, or skip. Race you to "
+        + "the bottom of the list.",
       linkedin: "Ah, the LinkedIn queue — my favourite hunting ground. "
         + "▶ copies the message and opens your Sales Navigator; ✓ logs "
         + "it and I schedule the next touch. Any Navigator questions at "
@@ -550,6 +569,8 @@ export default function ChatBot() {
   }
   const pickClick = (p) => {
     if (p.kind === 'ask') { setChatOpen(true); send(p.prompt) }
+    else if (p.kind === 'tab') window.dispatchEvent(new CustomEvent(
+      'mtrfp:navigate', { detail: { tab: p.tab } }))
     else if (p.kind === 'lead') goLeads(p.lead_id)
     else if (p.kind === 'nav') goLeads(null)
     else prepareReply(p.application_number, p.entity)

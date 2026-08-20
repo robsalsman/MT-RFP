@@ -17,8 +17,9 @@ from fastapi import (BackgroundTasks, FastAPI, File, Form, HTTPException,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import (ai, alerts, auth, competitors, config, consultants, db,
-               ingest, keepawake, leads, linkedin, respond, savings)
+from . import (ai, alerts, auth, competitors, config, consultants,
+               dailyrun, db, ingest, keepawake, leads, linkedin, respond,
+               savings)
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -287,6 +288,34 @@ def competitor_lead_doc(lead_id: int, kind: str = "savings"):
     if r.get("error"):
         raise HTTPException(404, r["error"])
     return FileResponse(r["path"], filename=r["filename"])
+
+
+@app.get("/api/daily-run")
+def daily_run_get(background_tasks: BackgroundTasks):
+    """Today's pre-worked lead run. First fetch of the day kicks the
+    build in the background (contacts + drafts), so it's ready by the
+    time Kim sits down."""
+    r = dailyrun.get_run()
+    if not r["exists"] and not r["building"]:
+        background_tasks.add_task(dailyrun.build)
+        r["building"] = True
+    return r
+
+
+@app.post("/api/daily-run/build")
+def daily_run_build(background_tasks: BackgroundTasks,
+                    payload: dict | None = None):
+    p = payload or {}
+    background_tasks.add_task(dailyrun.build, int(p.get("n", 20)), True)
+    return {"ok": True, "building": True}
+
+
+@app.post("/api/daily-run/{lead_id}/action")
+def daily_run_action(lead_id: int, payload: dict):
+    r = dailyrun.act(lead_id, str(payload.get("action", "")))
+    if r.get("error"):
+        raise HTTPException(400, r["error"])
+    return r
 
 
 @app.get("/api/alerts")

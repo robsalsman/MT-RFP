@@ -273,6 +273,20 @@ th.sorted { color: var(--accent); }
   gap: 6px; padding: 0 20px; text-align: center; }
 .matt-call .matt, .matt-call .matt svg { width: min(70vw, 300px) !important;
   height: auto !important; }
+/* ---- Daily Run ---- */
+.run-wrap { max-width: 720px; margin: 0 auto; }
+.run-center { max-width: 640px; margin: 40px auto; text-align: center;
+  display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.run-progress { display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px; font-size: 15px; }
+.run-card { padding: 16px 18px; }
+.run-head h2 { margin: 0 0 6px; }
+.run-actions { display: flex; gap: 8px; margin-top: 10px; }
+.run-actions button { font-size: 15px; padding: 10px 16px; }
+.run-send { background: linear-gradient(120deg, #0a7d33, #0b5fff) !important;
+  color: #fff !important; border: none !important; font-weight: 800;
+  flex: 1; }
+
 /* ---- Guide ---- */
 .guide-page { max-width: 860px; display: flex; flex-direction: column;
   gap: 14px; }

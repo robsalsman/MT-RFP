@@ -75,6 +75,16 @@ export const api = {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ vibe }),
   }).then(json),
+  dailyRun: () => authFetch('/api/daily-run').then(json),
+  dailyRunBuild: (n = 20) => authFetch('/api/daily-run/build', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ n }),
+  }).then(json),
+  dailyRunAction: (leadId, action) =>
+    authFetch(`/api/daily-run/${leadId}/action`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    }).then(json),
   alerts: () => authFetch('/api/alerts').then(json),
   alertsSeen: (ids) => authFetch('/api/alerts/seen', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
