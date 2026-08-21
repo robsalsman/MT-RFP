@@ -44,7 +44,37 @@ def _today() -> str:
     return datetime.date.today().isoformat()
 
 
+def get_focus() -> str:
+    with db.closing_conn() as conn:
+        f = db.kv_get(conn, "daily_run_focus", "all")
+    return f if f in ("all", "libraries") else "all"
+
+
+def set_focus(focus: str) -> str:
+    f = focus if focus in ("all", "libraries") else "all"
+    with db.closing_conn() as conn:
+        db.kv_set(conn, "daily_run_focus", f)
+        conn.commit()
+    return f
+
+
+def _is_library(lead: dict) -> bool:
+    return ("ibrar" in (lead.get("entity_type") or "").lower()
+            or "librar" in (lead.get("org") or "").lower()
+            or lead.get("competitor") == "greenfield")
+
+
 def _score(lead: dict) -> float:
+    if lead.get("competitor") == "greenfield":
+        # no incumbent spend - rank by need and budget
+        s = float(lead.get("budget") or 0) * 0.02
+        try:
+            from . import acp
+            hh = acp.households_for_zip(lead.get("zip")) or 0
+            s += hh * 40
+        except Exception:
+            pass
+        return s
     s = float(lead.get("spend") or 0)
     if lead.get("source") == "ecf":
         s *= 0.6
@@ -94,6 +124,15 @@ def _build_inner(n: int, today: str) -> dict:
     # candidates: warm replies first, then fresh leads by score
     warm = competitors.list_leads(status="replied", sort="spend", limit=50)
     cold = competitors.list_leads(status="new", sort="spend", limit=300)
+    focus = get_focus()
+    if focus == "libraries":
+        # Kim works libraries only - pull in the greenfield pool too
+        # (spend-sorted misses zero-spend greenfield rows)
+        green = competitors.list_leads(competitor="greenfield",
+                                       status="new", limit=300)
+        seen = {l["id"] for l in cold}
+        cold = [l for l in cold if _is_library(l)] +                [l for l in green if l["id"] not in seen]
+        warm = [l for l in warm if _is_library(l)]
     cold.sort(key=_score, reverse=True)
 
     picked: list[tuple[dict, str]] = [(l, "warm") for l in warm[:8]]

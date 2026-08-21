@@ -302,6 +302,23 @@ def daily_run_get(background_tasks: BackgroundTasks):
     return r
 
 
+@app.get("/api/daily-run/focus")
+def daily_run_focus_get():
+    return {"focus": dailyrun.get_focus()}
+
+
+@app.put("/api/daily-run/focus")
+def daily_run_focus_set(payload: dict):
+    return {"focus": dailyrun.set_focus(str(payload.get("focus", "all")))}
+
+
+@app.post("/api/libraries/promote")
+def libraries_promote(payload: dict | None = None):
+    from . import libraries as libs
+    p = payload or {}
+    return libs.promote_to_leads(p.get("state"), int(p.get("n", 25)))
+
+
 @app.post("/api/daily-run/build")
 def daily_run_build(background_tasks: BackgroundTasks,
                     payload: dict | None = None):

@@ -75,6 +75,11 @@ export const api = {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ vibe }),
   }).then(json),
+  runFocus: () => authFetch('/api/daily-run/focus').then(json),
+  setRunFocus: (focus) => authFetch('/api/daily-run/focus', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ focus }),
+  }).then(json),
   dailyRun: () => authFetch('/api/daily-run').then(json),
   dailyRunBuild: (n = 20) => authFetch('/api/daily-run/build', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },

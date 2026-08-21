@@ -14,6 +14,11 @@ export default function Settings() {
     setVibe(v)
     api.setVibe(v).catch(() => {})
   }
+  const [focus, setFocus] = useState(null)
+  useEffect(() => {
+    api.runFocus().then((d) => setFocus(d.focus)).catch(() => {})
+  }, [])
+  const saveFocus = (f) => { setFocus(f); api.setRunFocus(f).catch(() => {}) }
   if (!settings) return <div>Loading…</div>
 
   const w = settings.scoring_weights
@@ -52,6 +57,18 @@ export default function Settings() {
         <p className="small">That&apos;s the whole scale — it tops out at
           PG-13 by design.</p>
         {vibe === null && <p className="small">Loading…</p>}
+      </div>
+      <div className="card">
+        <h3>Daily Run focus</h3>
+        <p className="small">What Matt loads into the Daily Run.</p>
+        {[['all', 'Everything - best leads regardless of type'],
+          ['libraries', 'Libraries only - schools stay off the run']]
+          .map(([f, desc]) => (
+            <label key={f} style={{ display: 'block', margin: '6px 0' }}>
+              <input type="radio" name="runfocus" checked={focus === f}
+                onChange={() => saveFocus(f)} /> {desc}
+            </label>
+          ))}
       </div>
       <div className="card">
         <h3>Scoring weights</h3>

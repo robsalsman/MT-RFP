@@ -373,7 +373,9 @@ def list_leads(competitor: str | None = None, state: str | None = None,
             except (TypeError, json.JSONDecodeError):
                 r[f] = []
         r["competitor_label"] = COMPETITORS.get(
-            r["competitor"], {}).get("label", r["competitor"])
+            r["competitor"], {}).get("label",
+            "Greenfield library" if r["competitor"] == "greenfield"
+            else r["competitor"])
     return rows
 
 
@@ -391,7 +393,9 @@ def get_lead(lead_id: int) -> dict | None:
         except (TypeError, json.JSONDecodeError):
             r[f] = []
     r["competitor_label"] = COMPETITORS.get(
-        r["competitor"], {}).get("label", r["competitor"])
+        r["competitor"], {}).get("label",
+        "Greenfield library" if r["competitor"] == "greenfield"
+        else r["competitor"])
     return r
 
 
@@ -451,7 +455,8 @@ def _parse_contact(c: str) -> tuple[str | None, str | None]:
 
 
 def district_domain(lead: dict) -> str | None:
-    """The filing contact's email domain is usually the district's website."""
+    """The filing contact's email domain is usually the org's website;
+    greenfield/IMLS leads carry an explicit website instead."""
     for c in lead.get("contacts", []):
         _, email = _parse_contact(c)
         if not email:
@@ -459,6 +464,12 @@ def district_domain(lead: dict) -> str | None:
         dom = email.split("@")[-1]
         if not any(x in dom for x in _NON_DISTRICT_DOMAINS):
             return dom
+    site = (lead.get("website") or "").strip()
+    if site:
+        host = re.sub(r"^https?://", "", site).split("/")[0]
+        host = host.replace("www.", "")
+        if "." in host:
+            return host
     return None
 
 
@@ -577,12 +588,20 @@ def draft_outreach(lead_id: int) -> dict:
         return {"error": "no such lead"}
     best = _best_contact(lead)
     comp = lead["competitor_label"]
-    facts = [
-        f"District/org: {lead['org']} ({lead['state']})",
-        f"They currently pay {comp} about ${lead['spend']:,.0f}/year for "
-        f"mobile broadband (public E-Rate Form 471 data, "
-        f"FY{lead['funding_year']}).",
-    ]
+    if lead.get("competitor") == "greenfield":
+        facts = [f"Library: {lead['org']} ({lead['state']})",
+                 "No current mobile-broadband vendor on public record - "
+                 "this is a fresh Project: Volume Up (hotspot lending) "
+                 "pitch, not a switch."]
+        if lead.get("narratives"):
+            facts.append("Public profile: " + lead["narratives"][0])
+    else:
+        facts = [
+            f"District/org: {lead['org']} ({lead['state']})",
+            f"They currently pay {comp} about ${lead['spend']:,.0f}/year "
+            f"for mobile broadband (public E-Rate Form 471 data, "
+            f"FY{lead['funding_year']}).",
+        ]
     if lead.get("next_expiration"):
         facts.append(f"That contract expires {lead['next_expiration']}.")
     if lead.get("enrollment"):

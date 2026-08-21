@@ -256,8 +256,9 @@ export default function Leads() {
                   <span className="lr-tag">{l.status}</span>)}
               </span>
               <span className="lr-comp">{l.competitor_label}</span>
-              <span className="lr-spend">{fmtUsd(l.spend)}
-                {l.source === 'ecf' ? ' total' : '/yr'}</span>
+              <span className="lr-spend">{l.competitor === 'greenfield'
+                ? `${fmtUsd(l.budget)} budget`
+                : `${fmtUsd(l.spend)}${l.source === 'ecf' ? ' total' : '/yr'}`}</span>
               <span className="lr-exp">{l.next_expiration
                 ? `exp ${l.next_expiration}` : ''}</span>
             </button>

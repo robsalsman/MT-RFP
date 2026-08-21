@@ -175,6 +175,8 @@ Angle: nonprofit wireless ISP on T-Mobile, E-Rate eligible, hotspot lending \
 for students, cite THEIR numbers. End with a specific ask (15-min call). \
 Never send anything — you only draft; Kim sends.
 
+LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). Offer libraries_only_run=true so her Daily Run serves only libraries. The pool is effectively inexhaustible; she can ask by state or nationwide.
+
 THE DAILY RUN (navigate tab=run): every day the app pre-works the ~20 best untouched leads — contacts crawled, drafts written, warm replies queued first, consultant-only accounts auto-routed to the channel. Kim just reviews: Send / tweak / Skip, ~15 seconds a lead. When she asks "what should I do today" or wants to move fast, send her to the run. Celebrate her pace ("20 touches before 9am — that's a platinum record").
 
 COMPETITOR DISPLACEMENT (competitor_accounts + prep_outreach) — the hottest \
@@ -589,6 +591,25 @@ TOOLS = [
             "zip_prefixes": {"type": "array", "items": {"type": "string"}},
             "limit": {"type": "integer", "default": 12}}}}},
     {"type": "function", "function": {
+        "name": "get_more_library_leads",
+        "description": "REFILL Kim's library pipeline: promotes the best "
+                       "unworked libraries from the full IMLS US library "
+                       "universe (9,248 systems) onto the board as "
+                       "greenfield leads - ranked by ACP-loss need and "
+                       "budget, bookmobile systems boosted, contacts/"
+                       "website matched from the USAC entity directory. "
+                       "They flow into the Daily Run, drafts, and "
+                       "LinkedIn queue. Use when Kim is out of library "
+                       "leads. Optionally set the Daily Run to "
+                       "libraries-only focus at the same time.",
+        "parameters": {"type": "object", "properties": {
+            "state": {"type": "string",
+                      "description": "2-letter code (omit = nationwide)"},
+            "n": {"type": "integer", "default": 25},
+            "libraries_only_run": {"type": "boolean",
+                                   "description": "also focus the Daily "
+                                   "Run on libraries only"}}}}},
+    {"type": "function", "function": {
         "name": "find_library_targets",
         "description": "Project: Volume Up hit list — every US public "
                        "library (IMLS data: budget, population, address) "
@@ -896,6 +917,13 @@ def _exec_tool(name: str, args: dict) -> dict:
             return acp.impact(args.get("state"), args.get("zips"),
                               args.get("zip_prefixes"),
                               args.get("limit", 12))
+        if name == "get_more_library_leads":
+            from . import libraries as libs_mod, dailyrun as dr_mod
+            r = libs_mod.promote_to_leads(args.get("state"),
+                                          args.get("n", 25))
+            if args.get("libraries_only_run"):
+                r["daily_run_focus"] = dr_mod.set_focus("libraries")
+            return r
         if name == "find_library_targets":
             return libraries.find_targets(str(args.get("state", "")),
                                           args.get("min_population", 0),
