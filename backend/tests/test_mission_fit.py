@@ -23,7 +23,7 @@ def test_plain_internet_access_without_lte_is_not_biddable():
              ["Internet Access and Data Transmission Service"]),
         [{"min_capacity": "100.00 Mbps", "max_capacity": "500.00 Mbps"}])
     assert fit["biddable"] is False
-    assert any("lte" in b.lower() for b in fit["blockers"])
+    assert any("hotspot" in b.lower() for b in fit["blockers"])
 
 
 def test_lte_in_rfp_document_makes_it_biddable():
@@ -72,14 +72,24 @@ def test_inflated_bandwidth_does_not_disqualify():
     assert fit["concerns"]
 
 
-def test_wireless_wan_signal_detected():
+def test_cellular_device_signal_detected():
     fit = mission_fit.assess(
         _row(["Data Transmission and/or Internet Access"],
              ["Internet Access and Data Transmission Service"],
-             cat1="School seeks fixed wireless / cellular LTE internet access"),
+             cat1="School seeks cellular LTE hotspots and cell phones"),
         [{"min_capacity": "50.00 Mbps", "max_capacity": "200.00 Mbps"}])
     assert fit["biddable"] is True
     assert fit["wireless_signal"] is True
+
+
+def test_fixed_wireless_circuit_alone_is_not_biddable():
+    # fixed-wireless circuits are a WISP product, not Kim's hotspots/phones
+    fit = mission_fit.assess(
+        _row(["Data Transmission and/or Internet Access"],
+             ["Internet Access and Data Transmission Service"],
+             cat1="Fixed wireless internet circuit to the main building"),
+        [{"min_capacity": "50.00 Mbps", "max_capacity": "200.00 Mbps"}])
+    assert fit["biddable"] is False
 
 
 def test_category2_wifi_hardware_is_not_a_wireless_wan_signal():

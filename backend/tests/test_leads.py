@@ -1,7 +1,10 @@
-"""Lead-gen classification: which Form 471 lines count as LTE/wireless.
+"""Lead-gen classification: which Form 471 lines count as Kim's product —
+hotspots and cell phones (cellular devices + LTE/5G plans).
 
-The wireless flag drives who shows up as a lead — false positives waste
-Kim's outreach, so the narrative matching is word-boundary strict."""
+The cellular flag drives who shows up as a lead — false positives waste
+Kim's outreach, so the narrative matching is word-boundary strict. Fixed
+wireless / wireless internet are WISP circuit products Mission Telecom
+does not sell, so they must NOT match."""
 from app.leads import _LTE_NARRATIVE_RE, CELLULAR_CARRIERS, _consultant, \
     _norm_district
 
@@ -13,15 +16,23 @@ def _wireless_narrative(text: str) -> bool:
 def test_lte_terms_match():
     assert _wireless_narrative("LTE hotspots for student home use")
     assert _wireless_narrative("cellular data service, 45 units")
-    assert _wireless_narrative("Fixed Wireless internet for the annex")
+    assert _wireless_narrative("cell phone lines for staff")
+    assert _wireless_narrative("smartphones with unlimited data")
     assert _wireless_narrative("4G failover via Cradlepoint routers")
+
+
+def test_fixed_wireless_circuits_are_not_kims_product():
+    # Kim sells hotspots and cell phones — WISP circuit products must not
+    # surface as leads
+    assert not _wireless_narrative("Fixed Wireless internet for the annex")
+    assert not _wireless_narrative("wireless internet access for the branch")
 
 
 def test_5gbps_fiber_is_not_5g():
     # the classic false positive: "5Gbps dedicated fiber" is NOT 5G cellular
     assert not _wireless_narrative("5Gbps dedicated fiber internet access")
     assert not _wireless_narrative("upgrade to 10Gbps WAN")
-    assert _wireless_narrative("5G fixed wireless to the roof")
+    assert _wireless_narrative("5G service to student hotspots")
 
 
 def test_lte_not_matched_inside_words():

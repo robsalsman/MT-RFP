@@ -182,8 +182,9 @@ def dm_kit(lead: dict, person_name: str | None,
            f" at {lead['org']}")
     raw = ai._chat(
         "Write LinkedIn messages that KIM (an account executive at Mission "
-        "Telecom, a NONPROFIT wireless ISP on the T-Mobile network: "
-        "hotspot lending + mobile broadband for schools/libraries, E-Rate "
+        "Telecom, a NONPROFIT mobile carrier on the T-Mobile network: "
+        "hotspots and cell phones for schools/libraries, hotspot lending, "
+        "E-Rate "
         f"eligible, free CIPA filtering) will SEND TO {who}. Kim is the "
         "SENDER and signs; the RECIPIENT is the prospect — greet THEM "
         + (f"by first name ({first})" if first else "neutrally (no name)")
@@ -223,7 +224,8 @@ def dm_kit(lead: dict, person_name: str | None,
                    "Rooting for your program either way! — Kim",
             "inmail": f"Subject: Student connectivity at {org}\n\n{hi} — "
                       "Kim here from Mission Telecom, a nonprofit "
-                      "wireless carrier on the T-Mobile network. "
+                      "mobile carrier on the T-Mobile network "
+                      "(hotspots and cell phones). "
                       f"{give}. Districts like yours typically cut that "
                       "substantially with our nonprofit pricing (free "
                       "CIPA filtering, E-Rate eligible). Would a "

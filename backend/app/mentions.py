@@ -147,8 +147,8 @@ def find_open_bids(state: str | None = None, limit: int = 10) -> dict:
     sites = ("site:bidnetdirect.com OR site:demandstar.com OR "
              "site:bonfirehub.com OR site:publicpurchase.com OR "
              "site:ionwave.net")
-    q = (f'({sites}) (cellular OR hotspot OR "wireless data" OR '
-         f'"bus wifi") school')
+    q = (f'({sites}) (cellular OR hotspot OR "cell phone" OR '
+         f'"mobile data" OR "bus wifi") school')
     if state:
         q += f" {state}"
     results = web_search(q, limit)

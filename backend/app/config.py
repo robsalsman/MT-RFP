@@ -103,31 +103,33 @@ DEFAULT_SETTINGS = {
 
 # --- Mission Telecom capability profile -----------------------------------
 # Derived from missiontelecom.org (see data/company_knowledge.md). Mission
-# Telecom is a NONPROFIT WIRELESS ISP running on the T-Mobile 5G/4G network.
-# It sells internet access / data transmission delivered over fixed wireless
-# and cellular (mobile hotspots, connected tablets, BYOD) to schools and
-# libraries. It does NOT build fiber and does NOT sell/install LAN hardware
-# (switches, routers, firewalls, wireless access points, cabling, UPS).
+# Telecom is a NONPROFIT MOBILE CARRIER on the T-Mobile 5G/4G network.
+# It sells HOTSPOTS and CELL PHONES — mobile devices with cellular data and
+# voice plans (hotspots, cell phones, connected tablets, BYOD) — to schools
+# and libraries. It does NOT sell fixed-wireless circuits, does NOT build
+# fiber, and does NOT sell/install LAN hardware (switches, routers,
+# firewalls, wireless access points, cabling, UPS).
 #
 # Scoring uses this to find the RFPs Mission Telecom can actually bid on and
-# win: E-Rate Category 1 internet access / data transmission at bandwidths
-# deliverable over wireless — not fiber builds, multi-gig circuits, or
-# Category 2 internal-connections hardware.
+# win: E-Rate Category 1 internet access / data transmission deliverable to
+# cellular devices — not fiber builds, fixed-wireless circuits, multi-gig
+# circuits, or Category 2 internal-connections hardware.
 MISSION_TELECOM = {
     # E-Rate service the company bids on (Category 1 connectivity)
     "core_service_types": [
         "data transmission and/or internet access",
     ],
-    # what Mission Telecom actually delivers (wireless connectivity)
+    # what Mission Telecom actually delivers (hotspots + cell phones)
     "core_terms": [
-        "internet access", "data transmission", "broadband", "wan",
-        "wireless", "cellular", "lte", "5g", "4g", "fixed wireless",
-        "hotspot", "mobile data", "mobile hotspot",
+        "internet access", "data transmission", "broadband",
+        "cellular", "lte", "5g", "4g",
+        "hotspot", "mobile data", "mobile hotspot", "mobile broadband",
+        "cell phone", "cellphone", "smartphone",
     ],
     # exact-niche signals that make an RFP an especially strong fit
     "sweet_spot_terms": [
-        "fixed wireless", "wireless", "cellular", "lte", "5g", "hotspot",
-        "mobile", "wi-fi hotspot", "lending",
+        "cellular", "lte", "5g", "hotspot", "mobile",
+        "cell phone", "smartphone", "wi-fi hotspot", "lending",
     ],
     # requested services/functions Mission Telecom CANNOT deliver:
     # dedicated fiber builds, and Category 2 internal-connections hardware.
@@ -143,8 +145,8 @@ MISSION_TELECOM = {
         "basic maintenance of internal connections",
         "managed internal broadband services",
     ],
-    # realistic delivery ceiling for fixed wireless / cellular, in Mbps.
-    # Above this a wireless carrier can't serve the circuit.
+    # realistic delivery ceiling for cellular LTE/5G devices, in Mbps.
+    # Above this a mobile carrier can't serve the need.
     "max_deliverable_mbps": 1000,
     "sweet_spot_mbps": 500,
 }

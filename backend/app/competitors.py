@@ -625,10 +625,11 @@ def draft_outreach(lead_id: int) -> dict:
                      + (f", {best['title']}" if best.get("title") else ""))
     raw = ai._chat(
         "You write short cold-outreach emails for Kim, an account "
-        "executive at Mission Telecom — a NONPROFIT wireless ISP on the "
-        "T-Mobile network selling LTE/5G mobile broadband and hotspot "
-        "lending to schools and libraries, E-Rate eligible, plans from "
-        "$20-25/line/month with free CIPA-compliant filtering. "
+        "executive at Mission Telecom — a NONPROFIT mobile carrier on the "
+        "T-Mobile network selling hotspots and cell phones (devices + "
+        "LTE/5G plans, hotspot lending) to schools and libraries, E-Rate "
+        "eligible, plans from $20-25/line/month with free CIPA-compliant "
+        "filtering. Never pitch fixed-wireless circuits or Wi-Fi gear. "
         "Rules: under 160 words. Plain text. Subject line first. Use ONLY "
         "the facts provided — never invent names, numbers, or claims. "
         "Cite their real current spend and provider. If no recipient name "

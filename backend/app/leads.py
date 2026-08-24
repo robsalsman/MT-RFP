@@ -34,13 +34,15 @@ CELLULAR_CARRIERS = (
     "mobile beacon", "us cellular", "u.s. cellular", "cricket",
     "dish wireless", "boost mobile", "firstnet",
 )
-# narrative/nickname terms that mean the service itself is LTE/wireless WAN.
-# Word-boundary matched: "5Gbps fiber" must NOT match "5g", and words like
-# "complete" must not match "lte".
+# narrative/nickname terms that mean the service is Kim's actual product:
+# hotspots or cell phones (cellular devices + LTE/5G data). "Fixed wireless"
+# and "wireless internet" are deliberately absent — those are WISP circuit
+# products Mission Telecom does not sell. Word-boundary matched: "5Gbps
+# fiber" must NOT match "5g", and words like "complete" must not match "lte".
 _LTE_NARRATIVE_RE = re.compile(
-    r"\b(lte|hotspots?|hot ?spots?|cellular|4g|5g|wireless wan|"
+    r"\b(lte|hotspots?|hot ?spots?|cellular|4g|5g|"
     r"mobile broadband|mobile data|mifi|jetpacks?|cradlepoint|"
-    r"fixed wireless|wireless internet)\b")
+    r"cell ?phones?|smart ?phones?|mobile phones?)\b")
 
 URBAN_BASE = "https://educationdata.urban.org/api/v1/school-districts/ccd"
 DIRECTORY_YEAR = 2022   # latest CCD directory vintage on the API

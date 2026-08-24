@@ -95,8 +95,9 @@ def draft_partner_pitch(consultant_name: str) -> dict:
     ]
     raw = ai._chat(
         "You write short partnership emails for Kim, an account executive "
-        "at Mission Telecom — a NONPROFIT wireless ISP on the T-Mobile "
-        "network (LTE/5G broadband + hotspot lending for schools and "
+        "at Mission Telecom — a NONPROFIT mobile carrier on the T-Mobile "
+        "network (hotspots + cell phones with LTE/5G plans, hotspot "
+        "lending for schools and "
         "libraries, E-Rate eligible, from $20-25/line/month, free CIPA "
         "filtering). Audience: an E-RATE CONSULTANT who advises many "
         "districts. Angle: partnering makes THEM look good — nonprofit "

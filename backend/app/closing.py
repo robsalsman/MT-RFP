@@ -88,8 +88,8 @@ def handle_objection(lead_id: int | None, reply_text: str) -> dict:
     facts.append(f"E-Rate: acting this cycle = funded service July "
                  f"{cal['next_funding_year']}")
     raw = ai._chat(
-        "You help Kim (Mission Telecom, nonprofit wireless ISP on "
-        "T-Mobile) answer a prospect's objection. Write a short reply "
+        "You help Kim (Mission Telecom, nonprofit mobile carrier on "
+        "T-Mobile — hotspots and cell phones) answer a prospect's objection. Write a short reply "
         "email (under 130 words, plain text, no subject) that "
         f"acknowledges their point gracefully, then uses this angle: "
         f"{angle}. Use ONLY the facts given; never invent numbers. End "
@@ -134,8 +134,8 @@ def draft_followup(lead_id: int) -> dict:
                        "restate the deadline"}.get(stage, "warm check-in")
     raw = ai._chat(
         "Write Kim's follow-up email (under 110 words, plain text, "
-        "subject line first). Mission Telecom, nonprofit wireless ISP on "
-        f"T-Mobile. Angle for this touch: {angle}. Use ONLY the facts "
+        "subject line first). Mission Telecom, nonprofit mobile carrier "
+        f"(hotspots + cell phones) on T-Mobile. Angle for this touch: {angle}. Use ONLY the facts "
         "given. Friendly, zero pressure, one specific ask. Sign as Kim.",
         "Facts: " + "; ".join(facts), max_tokens=800)
     if not raw:

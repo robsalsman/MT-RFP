@@ -24,12 +24,15 @@ from . import config
 _BW_RE = re.compile(
     r"([\d,.]+)\s*(gbps|mbps|tbps|gbit|mbit|kbps|gig|gb|mb|kb|g|m|t|k)(?![a-z])")
 
-# The product: LTE mobile broadband. An RFP is an opportunity only when it
-# carries one of these unambiguous LTE / cellular wireless-WAN signals.
-# (Bare "wireless" is deliberately absent — see the note in assess().)
-LTE_TERMS = ("lte", "cellular", "4g", "5g", "fixed wireless", "hotspot",
-             "mobile broadband", "mobile data", "mobile hotspot", "wireless wan",
-             "wireless broadband", "wireless internet")
+# The products: HOTSPOTS and CELL PHONES — mobile devices with LTE/5G
+# cellular service. An RFP is an opportunity only when it carries one of
+# these unambiguous cellular-device signals. Bare "wireless" and
+# "fixed wireless" are deliberately absent: Mission Telecom does not sell
+# fixed-wireless circuits or Wi-Fi networks (see the note in assess()).
+LTE_TERMS = ("lte", "cellular", "4g", "5g", "hotspot",
+             "mobile broadband", "mobile data", "mobile hotspot",
+             "cell phone", "cellphone", "smartphone", "smart phone",
+             "mobile phone", "mifi", "jetpack")
 
 
 def _mbps(text: str | None) -> float:
@@ -115,11 +118,13 @@ def assess(row: dict, service_requests: list[dict]) -> dict:
         st in prof["excluded_service_types"] for st in st_lower)
 
     matched = sorted({t for t in prof["core_terms"] if t in blob})
-    # LTE is the whole business — it's all Kim sells. A biddable opportunity
-    # MUST carry an LTE / cellular wireless-WAN signal. Match only unambiguous
-    # terms; bare "wireless" is excluded because E-Rate's Category 2 "Wireless
-    # Access Points / Controllers" are building-Wi-Fi LAN hardware, not the
-    # LTE mobile-broadband service Mission Telecom delivers on T-Mobile.
+    # Hotspots and cell phones are the whole business — that's all Kim
+    # sells. A biddable opportunity MUST carry a cellular-device signal.
+    # Match only unambiguous terms; bare "wireless" is excluded because
+    # E-Rate's Category 2 "Wireless Access Points / Controllers" are
+    # building-Wi-Fi LAN hardware, and "fixed wireless" is excluded because
+    # fixed-wireless circuits are a WISP product — neither is the
+    # hotspot/cell-phone service Mission Telecom delivers on T-Mobile.
     lte_signal = any(t in blob for t in LTE_TERMS)
     wireless_signal = lte_signal   # kept for scoring/UI compatibility
 
@@ -135,8 +140,8 @@ def assess(row: dict, service_requests: list[dict]) -> dict:
                 "routers, firewalls, access points, cabling) — not LTE service")
         else:
             blockers.append(
-                "no LTE / cellular signal — Kim sells LTE mobile-broadband "
-                "service only")
+                "no hotspot / cellular signal — Kim sells hotspots and "
+                "cell phones only")
     if has_fiber:
         blockers.append(
             "requires leased fiber — beyond LTE wireless delivery on the "
@@ -146,7 +151,7 @@ def assess(row: dict, service_requests: list[dict]) -> dict:
     if biddable and min_need >= 2000:  # 2 Gbps floor
         concerns.append(
             f"high stated bandwidth floor ({_fmt_bw(min_need)}) — confirm "
-            "fixed wireless / cellular can serve it")
+            "cellular LTE/5G can serve it")
 
     # service-match fraction (0-1) for the scoring bucket
     if not biddable:

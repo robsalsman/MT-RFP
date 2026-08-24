@@ -17,9 +17,10 @@ from . import config, db
 log = logging.getLogger(__name__)
 
 ANALYST_SYSTEM = """You are an E-Rate RFP analyst for Mission Telecom, a \
-telecom/wireless provider selling internet access, WAN, wireless data, Wi-Fi \
-and internal connections to K-12 schools and libraries. Extract facts ONLY \
-from the provided documents. Never guess; use null when a fact is absent."""
+nonprofit mobile carrier selling hotspots and cell phones (cellular LTE/5G \
+devices + data/voice plans) to K-12 schools and libraries. Extract facts \
+ONLY from the provided documents. Never guess; use null when a fact is \
+absent."""
 
 ANALYST_SCHEMA_HINT = """Return ONLY a JSON object with exactly these keys:
 {

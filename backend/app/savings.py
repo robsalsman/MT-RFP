@@ -162,8 +162,9 @@ def _ai_intro(kind: str, lead: dict, sv: dict) -> str | None:
         "Write ONE short paragraph (60-90 words), plain text, no heading, "
         f"for the opening of a {kind} aimed at a school/library decision-"
         "maker. Professional, warm, concrete. Use ONLY the facts given. "
-        "Mission Telecom is a nonprofit wireless ISP on the T-Mobile "
-        "network offering hotspot lending and mobile broadband with free "
+        "Mission Telecom is a nonprofit mobile carrier on the T-Mobile "
+        "network offering hotspots and cell phones (hotspot lending, "
+        "mobile data plans) with free "
         "CIPA-compliant filtering.", f"Facts: {facts}", max_tokens=800)
 
 
@@ -239,8 +240,8 @@ def build_doc(lead_id: int, kind: str) -> dict:
         body = ai._chat(
             "Write a 150-200 word draft case study (plain text, no "
             "headings) about a school/library that switched to Mission "
-            "Telecom (nonprofit wireless ISP, T-Mobile network, hotspot "
-            "lending, free CIPA filtering). Use ONLY the facts given; "
+            "Telecom (nonprofit mobile carrier, T-Mobile network, hotspots "
+            "and cell phones, hotspot lending, free CIPA filtering). Use ONLY the facts given; "
             "where outcomes are unknown, leave [NEEDS INPUT] markers "
             "rather than inventing results.",
             "Facts: " + "; ".join(_fact_lines(lead, sv)), max_tokens=900) \
