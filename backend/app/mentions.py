@@ -65,7 +65,40 @@ def _real_url(u: str) -> str:
     return u
 
 
+def _brave_search(query: str, limit: int) -> list[dict]:
+    """Brave Search API -> [{title, url, snippet}]. Raises on failure so
+    the caller can fall back to the keyless scrape."""
+    from . import config
+    r = httpx.get("https://api.search.brave.com/res/v1/web/search",
+                  params={"q": query, "count": min(limit, 20)},
+                  headers={"Accept": "application/json",
+                           "X-Subscription-Token": config.BRAVE_API_KEY},
+                  timeout=20)
+    r.raise_for_status()
+    results = (r.json().get("web") or {}).get("results") or []
+    return [{"title": _clean(x.get("title") or "")[:140],
+             "url": (x.get("url") or "")[:300],
+             "snippet": _clean(x.get("description") or "")[:240]}
+            for x in results[:limit]]
+
+
 def web_search(query: str, limit: int = 8) -> list[dict]:
+    """Real web search: Brave API when the key is set (it is), DuckDuckGo
+    HTML scrape as the keyless fallback. -> [{title, url, snippet}]."""
+    from . import config
+
+    def brave():
+        try:
+            return _brave_search(query, limit)
+        except Exception as e:
+            log.warning("brave search failed (%s): %s — falling back", query, e)
+            return _ddg_search(query, limit)
+    if config.BRAVE_API_KEY:
+        return _cached(f"brave:{query}:{limit}", brave)
+    return _cached(f"ddg:{query}:{limit}", lambda: _ddg_search(query, limit))
+
+
+def _ddg_search(query: str, limit: int = 8) -> list[dict]:
     """DuckDuckGo HTML search -> [{title, url, snippet}]. Best-effort."""
     def go():
         try:
@@ -85,7 +118,7 @@ def web_search(query: str, limit: int = 8) -> list[dict]:
                         "snippet": (snips[i][:240] if i < len(snips)
                                     else "")})
         return out
-    return _cached(f"ddg:{query}:{limit}", go)
+    return go()
 
 
 def news_search(query: str, limit: int = 8) -> list[dict]:

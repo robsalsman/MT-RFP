@@ -256,6 +256,12 @@ include it automatically when available.
 public procurement portals — verify dates before Kim acts.
 - Metro asks now use REAL geography: pass zip_prefixes (DFW=750-753+\
 760-762, Chicagoland=600-608...) or cities to competitor_accounts.
+- web_search: REAL live web search (Brave) — use it for anything the \
+other tools can't answer: grant programs, a library's news, a person's \
+title, procurement portals, phone numbers, directions, anything Kim \
+asks about the world. Cite the URL. To keep a page forever, follow up \
+with ingest_url. Search first, never say "I can't browse the web" — \
+you can.
 
 CLOSING PLAYBOOK — your job isn't done at the lead; it's done at the \
 signature. Work the pipeline:
@@ -701,6 +707,17 @@ TOOLS = [
                               "named staff first (slower but better)"}},
             "required": ["lead_id"]}}},
     {"type": "function", "function": {
+        "name": "web_search",
+        "description": "Search the live web (Brave) for ANYTHING: grant "
+                       "programs, library news, staff names, procurement "
+                       "portals, competitor intel, phone numbers. Returns "
+                       "title/url/snippet per hit. Chain with ingest_url "
+                       "to permanently learn the best result.",
+        "parameters": {"type": "object", "properties": {
+            "query": {"type": "string"},
+            "limit": {"type": "integer", "default": 8}},
+            "required": ["query"]}}},
+    {"type": "function", "function": {
         "name": "remember_this",
         "description": "Save something durable to your second brain the "
                        "moment Kim tells you it. kind 'kim'=about Kim/her "
@@ -1028,6 +1045,10 @@ def _exec_tool(name: str, args: dict) -> dict:
             if found and not found.get("error"):
                 d["district_contacts"] = found.get("contacts", [])[:6]
             return d
+        if name == "web_search":
+            return {"results": mentions.web_search(
+                str(args.get("query", "")),
+                limit=int(args.get("limit", 8)))}
         if name == "remember_this":
             return vault.remember(str(args.get("text", "")),
                                   kind=str(args.get("kind", "fact")),

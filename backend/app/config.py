@@ -43,6 +43,8 @@ USAC_APP_TOKEN = os.environ.get("USAC_APP_TOKEN", "")
 # key is set; Anthropic is supported as an alternative. MTRFP_LLM_PROVIDER
 # can force one explicitly ("nemotron" | "anthropic").
 NEMOTRON_API_KEY = os.environ.get("NEMOTRON_API_KEY", "")
+# Brave Search API (real web search for Matt; DDG scrape is the fallback)
+BRAVE_API_KEY = os.environ.get("BRAVE_API_KEY", "")
 NEMOTRON_BASE_URL = os.environ.get(
     "NEMOTRON_BASE_URL", "https://integrate.api.nvidia.com/v1")
 NEMOTRON_MODEL = os.environ.get(
