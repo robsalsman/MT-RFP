@@ -124,6 +124,13 @@ def draft_followup(lead_id: int) -> dict:
     notes = lead.get("notes") or []
     if notes:
         facts.append("Last note: " + notes[-1].get("text", "")[:200])
+    try:
+        from . import vault
+        memory = vault.lead_context(lead, max_chars=600)
+        if memory:
+            facts.append("Account memory: " + memory)
+    except Exception:
+        pass
     angle = {"contacted": "gentle second touch, one new fact, easy out",
              "replied": "keep momentum, propose two specific times",
              "meeting": "confirm the meeting and preview the one number "

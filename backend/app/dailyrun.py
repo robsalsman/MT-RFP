@@ -65,6 +65,25 @@ def _is_library(lead: dict) -> bool:
 
 
 def _score(lead: dict) -> float:
+    return _apply_prefs(lead, _base_score(lead))
+
+
+def _apply_prefs(lead: dict, s: float) -> float:
+    """Kim's live hunting prefs (vault) re-rank the run without a deploy."""
+    try:
+        from . import vault
+        prefs = vault.get_prefs()
+        if (lead.get("state") or "").upper() in prefs["priority_states"]:
+            s *= 1.6
+        org = (lead.get("org") or "").lower()
+        if any(t in org for t in prefs["avoid_terms"]):
+            s *= 0.05
+    except Exception:
+        pass
+    return s
+
+
+def _base_score(lead: dict) -> float:
     if lead.get("competitor") == "greenfield":
         # no incumbent spend - rank by need and budget
         s = float(lead.get("budget") or 0) * 0.02
@@ -182,6 +201,13 @@ def _build_inner(n: int, today: str) -> dict:
         conn.commit()
     log.info("daily run built: %d items (%d prepped), %d consultant-routed",
              len(picked), prepped, sum(consultant_routed.values()))
+    try:
+        from . import vault
+        vault.journal(f"daily run built: {len(picked)} leads "
+                      f"({sum(1 for _, k in picked if k == 'warm')} warm), "
+                      f"{sum(consultant_routed.values())} consultant-routed")
+    except Exception:
+        pass
     return {"built": len(picked), "prepped": prepped,
             "consultant_routed": consultant_routed}
 
@@ -243,11 +269,21 @@ def act(lead_id: int, action: str) -> dict:
         conn.commit()
         if not cur.rowcount:
             return {"error": "lead not in today's run"}
+    lead = competitors.get_lead(lead_id)
     if action == "sent":
-        lead = competitors.get_lead(lead_id)
         competitors.add_note(lead_id, "Daily run: outreach email sent")
         if lead and lead.get("status") == "new":
             competitors.set_status(lead_id, "contacted")
+    try:
+        from . import vault
+        if lead:
+            vault.journal(f"run: Kim {action} {lead['org']} "
+                          f"({lead.get('state')})")
+            if action == "sent":
+                vault.account_event(lead["org"], "Kim sent outreach "
+                                    "(daily run)")
+    except Exception:
+        pass
     return {"ok": True, "action": action}
 
 

@@ -90,6 +90,34 @@ export const api = {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action }),
     }).then(json),
+  vaultNotes: (section) =>
+    authFetch(`/api/vault/notes${section ? `?section=${section}` : ''}`)
+      .then(json),
+  vaultNote: (path) =>
+    authFetch(`/api/vault/note?path=${encodeURIComponent(path)}`).then(json),
+  vaultSave: (path, content) => authFetch('/api/vault/note', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, content }),
+  }).then(json),
+  vaultDelete: (path) =>
+    authFetch(`/api/vault/note?path=${encodeURIComponent(path)}`,
+      { method: 'DELETE' }).then(json),
+  vaultSearch: (q) =>
+    authFetch(`/api/vault/search?q=${encodeURIComponent(q)}`).then(json),
+  vaultSticky: (text) => authFetch('/api/vault/sticky', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  }).then(json),
+  vaultUrl: (url) => authFetch('/api/vault/url', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  }).then(json),
+  vaultUpload: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return authFetch('/api/vault/upload', { method: 'POST', body: fd })
+      .then(json)
+  },
   alerts: () => authFetch('/api/alerts').then(json),
   alertsSeen: (ids) => authFetch('/api/alerts/seen', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },

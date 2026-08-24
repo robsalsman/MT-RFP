@@ -6,6 +6,7 @@ import Leads from './components/Leads.jsx'
 import LinkedInTab from './components/LinkedInTab.jsx'
 import Uploads from './components/Uploads.jsx'
 import Settings from './components/Settings.jsx'
+import Brain from './components/Brain.jsx'
 import ChatBot from './components/ChatBot.jsx'
 import Login from './components/Login.jsx'
 import { api, auth } from './api.js'
@@ -86,7 +87,7 @@ export default function App() {
         )}
         <nav>
           {[['run', 'Daily Run'], ['dashboard', 'Dashboard'], ['leads', 'Leads'],
-            ['linkedin', 'LinkedIn'],
+            ['linkedin', 'LinkedIn'], ['brain', "Matt's Brain"],
             ['uploads', 'Price List & Profile'],
             ['settings', 'Settings'], ['guide', 'Guide']].map(([id, label]) => (
             <button key={id} className={tab === id ? 'active' : ''}
@@ -115,6 +116,7 @@ export default function App() {
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'leads' && <Leads />}
         {tab === 'linkedin' && <LinkedInTab />}
+        {tab === 'brain' && <Brain />}
         {tab === 'guide' && <Guide />}
         {tab === 'uploads' && <Uploads />}
         {tab === 'settings' && <Settings />}

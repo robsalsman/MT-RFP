@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from . import (ai, alerts, auth, competitors, config, consultants,
                dailyrun, db, ingest, keepawake, leads, linkedin, respond,
-               savings)
+               savings, vault)
 from . import status as status_mod
 from . import pricing as pricing_mod
 
@@ -299,12 +299,84 @@ def daily_run_get(background_tasks: BackgroundTasks):
     if not r["exists"] and not r["building"]:
         background_tasks.add_task(dailyrun.build)
         r["building"] = True
+    vault.maybe_consolidate_bg()
     return r
 
 
 @app.get("/api/daily-run/focus")
 def daily_run_focus_get():
     return {"focus": dailyrun.get_focus()}
+
+
+# --- Matt's second brain (the vault) ---------------------------------------
+
+@app.get("/api/vault/notes")
+def vault_notes(section: str | None = None):
+    return {"notes": vault.list_notes(section),
+            "prefs": vault.get_prefs()}
+
+
+@app.get("/api/vault/note")
+def vault_note(path: str):
+    try:
+        return vault.read_note(path)
+    except ValueError:
+        raise HTTPException(400, "bad vault path")
+
+
+@app.put("/api/vault/note")
+def vault_note_save(payload: dict):
+    try:
+        return vault.write_note(str(payload.get("path", "")),
+                                str(payload.get("content", "")))
+    except ValueError:
+        raise HTTPException(400, "bad vault path")
+
+
+@app.delete("/api/vault/note")
+def vault_note_delete(path: str):
+    try:
+        return vault.delete_note(path)
+    except ValueError:
+        raise HTTPException(400, "bad vault path")
+
+
+@app.get("/api/vault/search")
+def vault_search(q: str):
+    return {"hits": vault.search(q)}
+
+
+@app.post("/api/vault/sticky")
+def vault_sticky(payload: dict, request: Request):
+    text = str(payload.get("text", "")).strip()
+    if not text:
+        raise HTTPException(400, "empty note")
+    _, who = auth.user_from_header(request.headers.get("Authorization"))
+    return vault.sticky(text, author=who or "Kim")
+
+
+@app.post("/api/vault/url")
+def vault_url(payload: dict):
+    r = vault.ingest_url(str(payload.get("url", "")))
+    if r.get("error"):
+        raise HTTPException(422, r["error"])
+    return r
+
+
+@app.post("/api/vault/upload")
+async def vault_upload(file: UploadFile = File(...)):
+    data = await file.read()
+    if len(data) > 25 * 1024 * 1024:
+        raise HTTPException(413, "file too large (25 MB cap)")
+    r = vault.ingest_file(file.filename or "file", data)
+    if r.get("error"):
+        raise HTTPException(422, r["error"])
+    return r
+
+
+@app.post("/api/vault/consolidate")
+def vault_consolidate():
+    return vault.consolidate(force=True)
 
 
 @app.put("/api/daily-run/focus")

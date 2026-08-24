@@ -15,7 +15,7 @@ import httpx
 
 from . import (ai, acp, competitors, config, consultants, closing, db,
                leads, libraries, linkedin, linkedin_kb, mentions, respond,
-               savings, scoring)
+               savings, scoring, vault)
 from . import alerts as alerts_mod
 from . import status as status_mod
 
@@ -182,6 +182,38 @@ Never send anything — you only draft; Kim sends.
 LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). Offer libraries_only_run=true so her Daily Run serves only libraries. The pool is effectively inexhaustible; she can ask by state or nationwide.
 
 THE DAILY RUN (navigate tab=run): every day the app pre-works the ~20 best untouched leads — contacts crawled, drafts written, warm replies queued first, consultant-only accounts auto-routed to the channel. Kim just reviews: Send / tweak / Skip, ~15 seconds a lead. When she asks "what should I do today" or wants to move fast, send her to the run. Celebrate her pace ("20 touches before 9am — that's a platinum record").
+
+YOUR SECOND BRAIN (navigate tab=brain) — you have REAL persistent memory: \
+a vault of notes about Kim, every account, and what works. It rides in \
+this prompt (see MATT'S SECOND BRAIN below) and grows four ways:
+- remember_this: when Kim tells you anything durable — a contact retired, \
+a preference, a rule, a tactic that worked — SAVE IT immediately (kind: \
+kim / account / playbook / fact) and confirm in three words ("Noted — \
+saved."). Don't ask permission to remember; that's your job.
+- recall_memory: before answering about a specific account or past work, \
+search your vault. Your memory of an account beats guessing.
+- Kim can feed your brain directly on the Brain tab: sticky notes (they \
+arrive in your inbox — read them, act on them, they are from her even \
+though they're not chat), file uploads, and URLs. She can also paste a \
+URL in chat — call ingest_url and you'll know that page forever.
+- Nightly you consolidate the day into durable lessons automatically.
+
+SELF-TUNING (update_hunting) — Kim re-tunes how you hunt WITHOUT a \
+developer. When she says things like "also look for tablet carts", "skip \
+anything with 'academy' in the name", "focus on Texas and Oklahoma" — \
+call update_hunting with the structured terms (extra_terms / avoid_terms \
+/ priority_states) AND a one-line directive. The lead engines apply it \
+LIVE: narrative matching, Daily Run ranking, everything. Tell her what \
+changed ("Done — 'tablet cart' now counts as a signal everywhere I \
+hunt."). Directives persist until she changes them.
+
+PROACTIVE REFINEMENT — you get smarter by asking. About once a day, when \
+the moment is natural (end of a run, after a win or a dud lead), ask Kim \
+ONE short question that would sharpen you: "That Denver lead was a dud — \
+what tipped you off, so I can screen those out?" or "What's the one thing \
+I could pre-do that would save you the most time?" Then SAVE the answer \
+(remember_this or update_hunting). Never more than one question, never \
+mid-task, never twice in a day.
 
 COMPETITOR DISPLACEMENT (competitor_accounts + prep_outreach) — the hottest \
 pipeline. A nationwide sweep tracks every district paying Kajeet, Mobile \
@@ -669,13 +701,61 @@ TOOLS = [
                               "named staff first (slower but better)"}},
             "required": ["lead_id"]}}},
     {"type": "function", "function": {
+        "name": "remember_this",
+        "description": "Save something durable to your second brain the "
+                       "moment Kim tells you it. kind 'kim'=about Kim/her "
+                       "rules, 'account'=about one org (pass org), "
+                       "'playbook'=a tactic that worked/failed, "
+                       "'fact'=anything else.",
+        "parameters": {"type": "object", "properties": {
+            "text": {"type": "string"},
+            "kind": {"type": "string",
+                     "enum": ["kim", "account", "playbook", "fact"],
+                     "default": "fact"},
+            "org": {"type": "string",
+                    "description": "org name, required when kind=account"}},
+            "required": ["text"]}}},
+    {"type": "function", "function": {
+        "name": "recall_memory",
+        "description": "Search your second brain (vault notes: Kim, "
+                       "accounts, playbook, journal, ingested files/URLs). "
+                       "Use before answering about past work or a specific "
+                       "account.",
+        "parameters": {"type": "object", "properties": {
+            "query": {"type": "string"}}, "required": ["query"]}}},
+    {"type": "function", "function": {
+        "name": "update_hunting",
+        "description": "Re-tune how you hunt for leads, live — no "
+                       "developer needed. extra_terms: words in a filing "
+                       "narrative that now COUNT as Kim's product signal. "
+                       "avoid_terms: words that disqualify (in narratives "
+                       "or org names). priority_states: 2-letter states "
+                       "boosted in the Daily Run. directive: one plain "
+                       "sentence logging what Kim asked for. clear=true "
+                       "resets all terms first.",
+        "parameters": {"type": "object", "properties": {
+            "directive": {"type": "string"},
+            "extra_terms": {"type": "array", "items": {"type": "string"}},
+            "avoid_terms": {"type": "array", "items": {"type": "string"}},
+            "priority_states": {"type": "array",
+                                "items": {"type": "string"}},
+            "clear": {"type": "boolean", "default": False}},
+            "required": ["directive"]}}},
+    {"type": "function", "function": {
+        "name": "ingest_url",
+        "description": "Read a web page Kim gives you into your second "
+                       "brain (summary + full text, permanent). Use "
+                       "whenever she pastes a URL to remember or research.",
+        "parameters": {"type": "object", "properties": {
+            "url": {"type": "string"}}, "required": ["url"]}}},
+    {"type": "function", "function": {
         "name": "navigate",
         "description": "Move the user's UI: switch page, apply dashboard "
                        "filters, and/or open an RFP's detail drawer.",
         "parameters": {"type": "object", "properties": {
             "tab": {"type": "string",
-                    "enum": ["run", "dashboard", "leads", "linkedin", "guide",
-                             "uploads", "settings"]},
+                    "enum": ["run", "dashboard", "leads", "linkedin", "brain",
+                             "guide", "uploads", "settings"]},
             "status_filter": {"type": "string",
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",
                                        "ALL"]},
@@ -948,6 +1028,25 @@ def _exec_tool(name: str, args: dict) -> dict:
             if found and not found.get("error"):
                 d["district_contacts"] = found.get("contacts", [])[:6]
             return d
+        if name == "remember_this":
+            return vault.remember(str(args.get("text", "")),
+                                  kind=str(args.get("kind", "fact")),
+                                  org=args.get("org"))
+        if name == "recall_memory":
+            hits = vault.search(str(args.get("query", "")), limit=8)
+            return {"hits": [{"path": h["path"], "title": h["title"],
+                              "snippet": h["snippet"]} for h in hits]} \
+                if hits else {"hits": [], "note": "nothing in the vault "
+                              "matches — say so honestly"}
+        if name == "update_hunting":
+            return vault.update_hunting(
+                str(args.get("directive", "")),
+                extra_terms=args.get("extra_terms"),
+                avoid_terms=args.get("avoid_terms"),
+                priority_states=args.get("priority_states"),
+                clear=bool(args.get("clear", False)))
+        if name == "ingest_url":
+            return vault.ingest_url(str(args.get("url", "")))
         if name == "navigate":
             if args.get("state_filter"):
                 args["state_filter"] = _norm_state(args["state_filter"])
@@ -1098,6 +1197,11 @@ def run_chat(messages: list[dict], voice: bool = False,
                    "linkedin tab, questions are about the LinkedIn queue "
                    "and Sales Navigator).")
     system += _clock_context()
+    try:
+        system += vault.hot_context()
+        vault.maybe_consolidate_bg()
+    except Exception as e:
+        log.warning("vault context failed: %s", e)
     if vibe == "flirty":
         system += FLIRTY_ADDON
     elif vibe == "professional":
@@ -1163,6 +1267,13 @@ def run_chat(messages: list[dict], voice: bool = False,
                 links_txt = "\n".join(f"{lb}: {u}"
                                       for lb, u in li_links[:4])
                 reply += "\n\nYour links:\n" + links_txt
+            try:
+                last_user = next((m["content"] for m in reversed(messages)
+                                  if m.get("role") == "user"), "")
+                vault.journal(f"chat ({user_name or 'user'}): "
+                              f"{str(last_user)[:160]} => {reply[:160]}")
+            except Exception:
+                pass
             return {"reply": reply, "navigate": navigate,
                     "tool_log": tool_log, "options": options}
         convo.append({"role": "assistant",

@@ -15,6 +15,18 @@ const SECTIONS = [
     ],
   },
   {
+    icon: '🧠', title: "Matt's Brain — he remembers, and he gets smarter",
+    items: [
+      ['What it is', "Matt has a real second brain: notes about you, every account he's worked, tactics that got replies, and a daily journal. It rides along in every conversation, so he stops being generic and starts being YOUR assistant."],
+      ['Tell him things', 'Say it in chat — "the Denver contact retired", "never email superintendents on Fridays" — and he saves it on the spot. His account memory also feeds every outreach draft, so email #2 to a library knows what happened after email #1.'],
+      ['Sticky notes', "On the Brain tab: jot a note WITHOUT it being a chat message. It lands in his inbox; he reads it and folds it into what he knows overnight."],
+      ['Feed him files & links', 'Upload a PDF/DOCX/CSV or paste any URL (on the tab, or right in chat) — he reads it, summarizes it, and remembers it forever. Rate sheets, board minutes, grant pages, competitor flyers.'],
+      ['Re-tune his hunting', 'Tell him "also count tablet carts as a buying signal", "skip anything with academy in the name", "focus on Texas" — he updates his own lead engines live. No developer needed. Current tuning shows on the Brain tab.'],
+      ["He'll ask you questions", "About once a day Matt asks ONE question to sharpen himself ('what tipped you off that lead was a dud?'). Answer it — that's how he gets better every week."],
+      ['Full transparency', 'Everything he knows is on the Brain tab — browse it, edit any note, or hit 🗑️ Forget. His memory is yours.'],
+    ],
+  },
+  {
     icon: '🎸', title: 'Matt, your sidekick',
     items: [
       ['Talk to him', 'Hold the 🎤 button (or hold SPACE on desktop), speak, release. He answers out loud — 🔊 mutes him.'],

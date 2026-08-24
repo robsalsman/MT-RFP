@@ -44,6 +44,24 @@ _LTE_NARRATIVE_RE = re.compile(
     r"mobile broadband|mobile data|mifi|jetpacks?|cradlepoint|"
     r"cell ?phones?|smart ?phones?|mobile phones?)\b")
 
+
+def narrative_match(text: str) -> bool:
+    """Product-signal check, live-tunable: the base regex plus any extra
+    terms Kim has taught Matt (vault hunting prefs), minus avoid terms."""
+    tl = (text or "").lower()
+    try:
+        from . import vault
+        prefs = vault.get_prefs()
+        if any(re.search(r"\b" + re.escape(t) + r"\b", tl)
+               for t in prefs["avoid_terms"]):
+            return False
+        if any(re.search(r"\b" + re.escape(t) + r"\b", tl)
+               for t in prefs["extra_terms"]):
+            return True
+    except Exception:   # prefs must never break lead-gen
+        pass
+    return bool(_LTE_NARRATIVE_RE.search(tl))
+
 URBAN_BASE = "https://educationdata.urban.org/api/v1/school-districts/ccd"
 DIRECTORY_YEAR = 2022   # latest CCD directory vintage on the API
 FINANCE_YEAR = 2020     # latest CCD finance vintage on the API
@@ -115,7 +133,7 @@ def find_leads(state: str, name_contains: list[str] | None = None,
             o["consultants"].add(cons)
         text = f"{r.get('narrative') or ''} {r.get('nickname') or ''}".lower()
         is_wireless = (any(c in spin.lower() for c in CELLULAR_CARRIERS)
-                       or bool(_LTE_NARRATIVE_RE.search(text)))
+                       or narrative_match(text))
         if is_wireless:
             o["wireless_spend"] += spend
             if spin:

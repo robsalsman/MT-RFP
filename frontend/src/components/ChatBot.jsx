@@ -528,6 +528,10 @@ export default function ChatBot() {
       run: "The Daily Run — I've already done the digging and the "
         + "writing; you just decide. Send, tweak, or skip. Race you to "
         + "the bottom of the list.",
+      brain: "My second brain! Everything I know about you, your accounts, "
+        + "and what works lives here — and you can feed it: stick a note, "
+        + "drop a file, paste a URL. Tell me in chat to hunt differently "
+        + "and you'll see the tuning appear right on this page.",
       linkedin: "Ah, the LinkedIn queue — my favourite hunting ground. "
         + "▶ copies the message and opens your Sales Navigator; ✓ logs "
         + "it and I schedule the next touch. Any Navigator questions at "

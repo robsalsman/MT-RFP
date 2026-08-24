@@ -419,7 +419,17 @@ def set_status(lead_id: int, status: str) -> bool:
             "WHERE id=?",
             (status, now, 1 if status in ENGAGED else 0, lead_id))
         conn.commit()
-        return cur.rowcount > 0
+        ok = cur.rowcount > 0
+    if ok:
+        try:
+            from . import vault
+            lead = get_lead(lead_id)
+            if lead:
+                vault.journal(f"{lead['org']} moved to stage '{status}'")
+                vault.account_event(lead["org"], f"stage -> {status}")
+        except Exception:
+            pass
+    return ok
 
 
 def add_note(lead_id: int, text: str) -> bool:
@@ -623,6 +633,14 @@ def draft_outreach(lead_id: int) -> dict:
     if best.get("name"):
         facts.append(f"Recipient: {best['name']}"
                      + (f", {best['title']}" if best.get("title") else ""))
+    try:
+        from . import vault
+        memory = vault.lead_context(lead)
+        if memory:
+            facts.append("Matt's memory of this account (use it — don't "
+                         "repeat ground already covered): " + memory)
+    except Exception:
+        pass
     raw = ai._chat(
         "You write short cold-outreach emails for Kim, an account "
         "executive at Mission Telecom — a NONPROFIT mobile carrier on the "
