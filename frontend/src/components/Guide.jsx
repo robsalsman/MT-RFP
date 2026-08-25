@@ -19,11 +19,21 @@ const SECTIONS = [
     items: [
       ['What it is', "Matt has a real second brain: notes about you, every account he's worked, tactics that got replies, and a daily journal. It rides along in every conversation, so he stops being generic and starts being YOUR assistant."],
       ['Tell him things', 'Say it in chat — "the Denver contact retired", "never email superintendents on Fridays" — and he saves it on the spot. His account memory also feeds every outreach draft, so email #2 to a library knows what happened after email #1.'],
-      ['Sticky notes', "On the Brain tab: jot a note WITHOUT it being a chat message. It lands in his inbox; he reads it and folds it into what he knows overnight."],
-      ['Feed him files & links', 'Upload a PDF/DOCX/CSV or paste any URL (on the tab, or right in chat) — he reads it, summarizes it, and remembers it forever. Rate sheets, board minutes, grant pages, competitor flyers.'],
-      ['Re-tune his hunting', 'Tell him "also count tablet carts as a buying signal", "skip anything with academy in the name", "focus on Texas" — he updates his own lead engines live. No developer needed. Current tuning shows on the Brain tab.'],
+      ['Sticky notes', "On the Teach Him page: jot a note WITHOUT it being a chat message. It lands in his inbox; he reads it and folds it into what he knows overnight."],
+      ['Teach him files & links', 'Upload a PDF/DOCX/CSV or paste any URL (on Teach Him, or right in chat) — he reads it, summarizes it, and remembers it forever. Rate sheets, board minutes, grant pages, competitor flyers.'],
+      ['Re-tune his hunting', 'Tell him "also count tablet carts as a buying signal", "skip anything with academy in the name", "focus on Texas" — he updates his own lead engines live. No developer needed. Current tuning shows on the Teach Him page.'],
       ["He'll ask you questions", "About once a day Matt asks ONE question to sharpen himself ('what tipped you off that lead was a dud?'). Answer it — that's how he gets better every week."],
-      ['Full transparency', 'Everything he knows is on the Brain tab — browse it, edit any note, or hit 🗑️ Forget. His memory is yours.'],
+      ['Full transparency', 'Everything he knows is on His Memory — browse it, edit any note, or hit 🗑️ Forget. His memory is yours.'],
+    ],
+  },
+  {
+    icon: '🏠', title: 'Matt HQ & the sidebar — your front door',
+    items: [
+      ['Matt HQ', "The landing page: today's run progress, buying signals, and your pace at a glance — plus a card for everything Matt can do. Each card has a 💬 magic-words chip that literally says the phrase to him for you."],
+      ['The sidebar', 'Organized by your day, not by data: TODAY (HQ, Daily Run, Signals), HUNT (RFPs, Leads, LinkedIn), CLOSE (Deals & Docs), MATT\'S BRAIN (His Memory, Teach Him), SETUP. Badges show live counts.'],
+      ['Signals', 'The page behind the 🔔: a watched district filing a new Form 470 (they are legally buying — act same-day) and deals that went quiet. One-tap asks Matt for the play.'],
+      ['Deals & Docs', 'Every engaged deal grouped by stage with buttons that ask Matt for the savings sheet, board champion kit, or a follow-up — the right artifact at the right moment.'],
+      ["Matt's Closet", 'Every look he owns in a video-game inventory (Setup → Matt\'s Closet). Tap a look and he wears it everywhere, with commentary. 🎲 Surprise Me is exactly what it sounds like.'],
     ],
   },
   {

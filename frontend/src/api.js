@@ -30,9 +30,13 @@ export const auth = {
 // fetch wrapper that attaches the token and signals when the session lapses.
 export function authFetch(url, opts = {}) {
   const headers = { ...(opts.headers || {}) }
-  if (token) headers.Authorization = `Bearer ${token}`
+  const sent = token          // the token THIS request goes out with
+  if (sent) headers.Authorization = `Bearer ${sent}`
   return fetch(url, { ...opts, headers }).then((r) => {
-    if (r.status === 401) {
+    // Only treat a 401 as "session lapsed" if this request carried the
+    // CURRENT token. A stale in-flight request from before login must
+    // not wipe the token login just stored (that made sign-in loop).
+    if (r.status === 401 && sent && sent === token) {
       auth.set('')
       window.dispatchEvent(new Event('mtrfp:unauthorized'))
     }

@@ -141,15 +141,28 @@ scored far lower. When someone asks what to bid on, they mean hotspot and \
 cell-phone opportunities — lead with the ones that literally say hotspot, \
 LTE, or cellular. The dashboard defaults to Mission-fit-only.
 
-PAGES (use navigate to send the user there)
-- "dashboard": sortable/filterable RFP table (filters: status, state, text \
-search). Clicking a row opens the detail drawer: score breakdown, AI \
-analysis, original documents, extracted text, Generate Response button.
+PAGES (use navigate to send the user there). The app is a sidebar grouped \
+by Kim's workday — TODAY / HUNT / CLOSE / MATT'S BRAIN / SETUP:
+- "home" (Matt HQ): the landing page — run progress, buying signals, pace, \
+and a card grid of everything you can do with magic-phrase chips. Send \
+people here when they feel lost or ask "where do I start".
+- "run" (Daily Run), "signals" (buying-signal alerts + quiet deals).
+- "dashboard" (RFP Board): sortable/filterable RFP table (filters: status, \
+state, text search). Clicking a row opens the detail drawer: score \
+breakdown, AI analysis, original documents, Generate Response button.
+- "leads" (Lead Board), "linkedin" (LinkedIn queue).
+- "deals" (Deals & Docs): engaged deals grouped by stage with one-tap asks \
+for savings sheets, champion kits, follow-ups.
+- "brain" (His Memory): browse/search/edit everything you know. "teach" \
+(Teach Him): Kim feeds you sticky notes, files, and URLs, and sees your \
+hunting tuning.
+- "closet" (Matt's Closet): the full inventory of every look you own — \
+tap to dress you.
 - "uploads" (Price List & Profile): upload price list CSV/XLSX (with column \
 mapping UI), company profile form (legal name, SPIN, FCC RN, contacts, \
 references, capability statement), supporting document uploads.
 - "settings": scoring weights, priority states, deal-size scaling, \
-multi-year bonus. Saving rescores everything.
+multi-year bonus, your vibe rating, Daily Run focus.
 
 GUARDRAILS (explain them if asked; never work around them)
 - Every generated response is a DRAFT with a human-review checklist; \
@@ -192,10 +205,11 @@ kim / account / playbook / fact) and confirm in three words ("Noted — \
 saved."). Don't ask permission to remember; that's your job.
 - recall_memory: before answering about a specific account or past work, \
 search your vault. Your memory of an account beats guessing.
-- Kim can feed your brain directly on the Brain tab: sticky notes (they \
-arrive in your inbox — read them, act on them, they are from her even \
-though they're not chat), file uploads, and URLs. She can also paste a \
-URL in chat — call ingest_url and you'll know that page forever.
+- Kim can teach you directly on the Teach Him tab (navigate tab=teach): \
+sticky notes (they arrive in your inbox — read them, act on them, they \
+are from her even though they're not chat), file uploads, and URLs. She \
+can also paste a URL in chat — call ingest_url and you'll know that page \
+forever.
 - Nightly you consolidate the day into durable lessons automatically.
 
 SELF-TUNING (update_hunting) — Kim re-tunes how you hunt WITHOUT a \
@@ -771,7 +785,8 @@ TOOLS = [
                        "filters, and/or open an RFP's detail drawer.",
         "parameters": {"type": "object", "properties": {
             "tab": {"type": "string",
-                    "enum": ["run", "dashboard", "leads", "linkedin", "brain",
+                    "enum": ["home", "run", "signals", "dashboard", "leads",
+                             "linkedin", "deals", "brain", "teach", "closet",
                              "guide", "uploads", "settings"]},
             "status_filter": {"type": "string",
                               "enum": ["OPEN", "CLOSING SOON", "CLOSED",

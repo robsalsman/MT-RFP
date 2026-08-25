@@ -8,6 +8,7 @@ import MattPuppet from './MattPuppet.jsx'
 import MattFrames from './MattFrames.jsx'
 import StageGear from './StageGear.jsx'
 import * as mattAudio from '../mattAudio.js'
+import { CLOSET, CLOSET_KINDS } from '../closet.js'
 
 // 16-bit mono WAV recorder (Riva ASR wants real WAV, not webm). Mic is routed
 // through a silent gain node so the ScriptProcessor keeps firing without
@@ -56,111 +57,7 @@ function createRecorder() {
   }
 }
 
-// Matt's closet — driven by the quality full-body poses (the generator's
-// standalone props + hold poses came back unusable, so each item just strikes
-// the matching painted pose). id -> label + pose key in frames.json.
-// Matt's closet: pull an item out and he actually holds it. `hold` is his
-// hold pose (frames.json poses key), `prop` the painted item shown as the
-// drawer thumbnail. Grouped by `kind`.
-const CLOSET = [
-  { id: 'guitar_electric', label: 'Guitar', kind: 'Music', hold: 'hold_guitar_electric', prop: 'prop_music_guitar_electric' },
-  { id: 'mic_handheld', label: 'Mic', kind: 'Music', hold: 'hold_mic_handheld', prop: 'prop_music_mic_handheld' },
-  { id: 'headphones', label: 'Headphones', kind: 'Music', hold: 'hold_headphones', prop: 'prop_music_headphones' },
-  { id: 'keytar', label: 'Keytar', kind: 'Music', hold: 'hold_keytar', prop: 'prop_music_keytar' },
-  { id: 'cowbell', label: 'Cowbell', kind: 'Music', hold: 'hold_cowbell', prop: 'prop_flair_cowbell' },
-  { id: 'laptop', label: 'Laptop', kind: 'Business', hold: 'hold_laptop', prop: 'prop_biz_laptop' },
-  { id: 'clipboard', label: 'Clipboard', kind: 'Business', hold: 'hold_clipboard', prop: 'prop_biz_clipboard' },
-  { id: 'document', label: 'RFP docs', kind: 'Business', hold: 'hold_document', prop: 'prop_biz_document_stack' },
-  { id: 'pointer', label: 'Pointer', kind: 'Business', hold: 'hold_pointer', prop: 'prop_biz_pointer' },
-  { id: 'coffee_mug', label: 'Coffee', kind: 'Business', hold: 'hold_coffee_mug', prop: 'prop_biz_coffee_mug' },
-  { id: 'sunglasses', label: 'Shades', kind: 'Flair', hold: 'hold_sunglasses', prop: 'prop_flair_sunglasses' },
-  { id: 'trophy', label: 'Trophy', kind: 'Flair', hold: 'hold_trophy', prop: 'prop_flair_trophy' },
-  { id: 'confetti', label: 'Confetti', kind: 'Flair', hold: 'hold_confetti', prop: 'prop_flair_confetti' },
-  // Stage looks — thumbnails are the poses themselves
-  { id: 'stage_idle', label: 'Stage look', kind: 'Stage looks', hold: 'stage_idle', thumb: 'poses/matt_stage_idle.png',
-    line: "Shirt's in the wash, {n}. Professionalism fully intact." },
-  { id: 'stage_guitar', label: 'Guitar', kind: 'Stage looks', hold: 'stage_guitar', thumb: 'poses/matt_stage_guitar.png',
-    line: 'Unplugged tonight. Well — the shirt is, anyway.' },
-  { id: 'stage_solo', label: 'Solo', kind: 'Stage looks', hold: 'stage_solo', thumb: 'poses/matt_stage_solo.png',
-    line: "One boot on the amp, {n} — that's just showbiz physics." },
-  { id: 'stage_mic', label: 'Sing', kind: 'Stage looks', hold: 'stage_mic', thumb: 'poses/matt_stage_mic.png',
-    line: 'This one goes out to the best closer in the room.' },
-  { id: 'stage_horns', label: 'Rock horns', kind: 'Stage looks', hold: 'stage_horns', thumb: 'poses/matt_stage_horns.png',
-    line: '🤘 For those about to prospect, {n} — I salute you.' },
-  { id: 'stage_towel', label: 'Post-show', kind: 'Stage looks', hold: 'stage_towel', thumb: 'poses/matt_stage_towel.png',
-    line: "Great show tonight, {n}. Encore's whenever you are." },
-  { id: 'stage_bow', label: 'Take a bow', kind: 'Stage looks', hold: 'stage_bow', thumb: 'poses/matt_stage_bow.png',
-    line: 'Take a bow with me — that pipeline of yours has earned it.' },
-  { id: 'stage_wave', label: 'Wave', kind: 'Stage looks', hold: 'stage_wave', thumb: 'poses/matt_stage_wave.png',
-    line: 'Hello Cleveland! And far more importantly — hello {n}.' },
-  // Calendar shoot — campy 80s heartthrob tropes
-  { id: 'cal_underwear', label: 'The Ad', kind: 'Calendar shoot', hold: 'cal_underwear', thumb: 'poses/matt_cal_underwear.png',
-    line: '📅 Mr. January. The jeans are for dramatic effect, {n} — the savings sheets are still my best feature.' },
-  { id: 'cal_chippendale', label: 'Bowtie', kind: 'Calendar shoot', hold: 'cal_chippendale', thumb: 'poses/matt_cal_chippendale.png',
-    line: '📅 Mr. February. Bowtie, cuffs, no shirt — formalwear where it counts.' },
-  { id: 'cal_firefighter', label: 'Firefighter', kind: 'Calendar shoot', hold: 'cal_firefighter', thumb: 'poses/matt_cal_firefighter.png',
-    line: '📅 Mr. March. The hose is purely decorative, {n}. The dedication to your deals? Certified.' },
-  { id: 'cal_cowboy', label: 'Cowboy', kind: 'Calendar shoot', hold: 'cal_cowboy', thumb: 'poses/matt_cal_cowboy.png',
-    line: "📅 Mr. April. This town's plenty big enough for both of us and your pipeline." },
-  { id: 'cal_lifeguard', label: 'Lifeguard', kind: 'Calendar shoot', hold: 'cal_lifeguard', thumb: 'poses/matt_cal_lifeguard.png',
-    line: '📅 Mr. May. Fully qualified in rescuing drowning deals.' },
-  { id: 'cal_mechanic', label: 'Mechanic', kind: 'Calendar shoot', hold: 'cal_mechanic', thumb: 'poses/matt_cal_mechanic.png',
-    line: '📅 Mr. June. Checked under the hood, {n} — your funnel is running beautifully.' },
-]
-
-// Pack sections added as data: [pose key, label, Matt's one-liner].
-// id doubles as the frames.json pose key; thumb derives from it.
-const PACKS = {
-  'The Band': [
-    ['instrument_electric_guitar', 'Electric', 'Standard tuning: E-A-D-G-Deal-Closed.'],
-    ['instrument_acoustic_guitar', 'Acoustic', 'Unplugged set. Requests welcome, {n}.'],
-    ['instrument_bass', 'Bass', "Somebody's got to hold down the low end of this pipeline."],
-    ['instrument_drums', 'Drums', 'I also do the cowbell, but you knew that.'],
-    ['instrument_keytar', 'Keytar', 'The keytar is BACK, {n} — and so is your pipeline.'],
-    ['instrument_saxophone', 'Sax', 'Careless Whisper mode engaged, {n}.'],
-    ['instrument_trumpet', 'Trumpet', 'Taps, for the competition.'],
-    ['instrument_trombone', 'Trombone', 'Big brass energy for big brass targets.'],
-    ['instrument_violin', 'Violin', "The world's tiniest violin plays for the incumbent's renewal team."],
-    ['instrument_cello', 'Cello', 'Classically trained. Self-taught. Same thing.'],
-    ['instrument_harp', 'Harp', "The angel look. Don't get used to it, {n}."],
-    ['instrument_banjo', 'Banjo', 'Duelling banjos: me versus your quota. You win.'],
-    ['instrument_harmonica', 'Harmonica', "The blues — for every deal marked 'lost'."],
-    ['instrument_accordion', 'Accordion', 'Nobody looks cool playing the accordion. Nobody but me.'],
-    ['instrument_sitar', 'Sitar', 'A little something from my experimental phase.'],
-  ],
-  'Workout': [
-    ['workout_dumbbells', 'Dumbbells', 'Curls for the closers, {n}.'],
-    ['workout_kettlebell', 'Kettlebell', 'Swinging heavy — like your win rate.'],
-    ['workout_jump_rope', 'Jump rope', 'Cardio day. The pipeline never skips.'],
-    ['workout_heavy_bag', 'Heavy bag', "This one's got the incumbent's name on it."],
-    ['workout_stretch', 'Stretch', 'Always stretch before reaching for big quotas.'],
-  ],
-  'Wildlife': [
-    ['wildlife_falcon', 'Falcon', 'Trained to spot expiring contracts at 200 yards.'],
-    ['wildlife_owl', 'Owl', 'The wise one says: follow up on Thursdays.'],
-    ['wildlife_macaw', 'Macaw', 'He repeats everything, {n} — mind the trade secrets.'],
-    ['wildlife_fox', 'Fox', 'A fox recognizes a fox, {n}.'],
-    ['wildlife_iguana', 'Iguana', "This is Iggy. Director of cold-blooded negotiation."],
-    ['wildlife_python', 'Python', "The only python in this app that isn't running the backend."],
-    ['wildlife_mantis', 'Mantis', "She's praying for your prospects. Someone should."],
-    ['wildlife_butterflies', 'Butterflies', "They flock to charisma. Can't be taught."],
-  ],
-  'Off duty': [
-    ['postshower_towel_neck', 'Fresh', 'Fresh out the shower and straight back to your pipeline, {n}. Commitment.'],
-    ['postshower_dry_hair', 'Towel dry', 'The hair takes twenty minutes. The savings sheet takes two.'],
-    ['postshower_comb_hair', 'The comb', 'Eighty percent of this job is hair maintenance.'],
-    ['wood_axe_swing', 'Chop wood', 'Chopping wood, splitting quotas.'],
-    ['wood_log_carry', 'Haul logs', "Carrying the whole load — so you don't have to."],
-  ],
-}
-Object.entries(PACKS).forEach(([kind, items]) =>
-  items.forEach(([hold, label, line]) => CLOSET.push({
-    id: hold, label, kind, hold, line,
-    thumb: `poses/matt_${hold}.png`,
-  })))
-
-const CLOSET_KINDS = ['Music', 'Business', 'Flair', 'Stage looks',
-  'Calendar shoot', 'The Band', 'Workout', 'Wildlife', 'Off duty']
+// Closet data lives in ../closet.js (shared with the full-page inventory).
 
 // URLs in Matt's replies become real links — "the right link, one click"
 const URL_SPLIT_RE = /(https?:\/\/[^\s)"'<>\]]+)/g
@@ -528,6 +425,15 @@ export default function ChatBot() {
       run: "The Daily Run — I've already done the digging and the "
         + "writing; you just decide. Send, tweak, or skip. Race you to "
         + "the bottom of the list.",
+      home: "Welcome to HQ, superstar — your whole day on one stage. Run "
+        + "status, buying signals, pace, and every trick I know, each with "
+        + "the magic words to say. Tap any card and I'm on it.",
+      teach: "School me! Stick a note, drop a file, or paste a link — I "
+        + "read it, use it immediately, and file it into my memory "
+        + "overnight. The receipts below show exactly where it all went.",
+      closet: `Ah, the walk-in closet — all ${CLOSET.length} looks. Tap `
+        + "anything and I'll put it on right here. Fair warning: I look "
+        + 'good in all of them.',
       brain: "My second brain! Everything I know about you, your accounts, "
         + "and what works lives here — and you can feed it: stick a note, "
         + "drop a file, paste a URL. Tell me in chat to hunt differently "
@@ -663,6 +569,20 @@ export default function ChatBot() {
     } catch { /* voice is best-effort */ }
   }
 
+  // put a closet look on Matt (shared by the studio drawer, the full-page
+  // Closet inventory via mtrfp:wear, and anything else that dresses him)
+  const wearItem = (it) => {
+    if (seqTimer.current) clearTimeout(seqTimer.current)
+    setSeqPlay(null); setClosetPose(it.hold)
+    if (it.line) {
+      setMessages((m) => [...m, { role: 'assistant',
+        _local: true, _showoff: true,
+        content: it.line.replace(/\{n\}/g, name || 'mate') }])
+    }
+    window.dispatchEvent(new CustomEvent('mtrfp:wearing',
+      { detail: { id: it.id } }))
+  }
+
   const send = async (preset) => {
     const text = (preset ?? input).trim()
     if (!text || busy) return
@@ -683,6 +603,30 @@ export default function ChatBot() {
         content: `Something went wrong: ${e.message}` }])
     } finally { setBusy(false) }
   }
+
+  // App-wide hooks: HQ magic-word chips ask Matt directly (mtrfp:ask) and
+  // the full-page Closet dresses him (mtrfp:wear). Refs dodge stale closures.
+  const sendRef = useRef(null); const wearRef = useRef(null)
+  sendRef.current = send; wearRef.current = wearItem
+  useEffect(() => {
+    const onAsk = (e) => {
+      const text = e.detail?.text
+      if (!text) return
+      setChatOpen(true)
+      if (viewRef.current === 'min') setView('stage')
+      setTimeout(() => sendRef.current?.(text), 50)
+    }
+    const onWear = (e) => {
+      const it = CLOSET.find((c) => c.id === e.detail?.id)
+      if (it) wearRef.current?.(it)
+    }
+    window.addEventListener('mtrfp:ask', onAsk)
+    window.addEventListener('mtrfp:wear', onWear)
+    return () => {
+      window.removeEventListener('mtrfp:ask', onAsk)
+      window.removeEventListener('mtrfp:wear', onWear)
+    }
+  }, [])
 
   // ---- push-to-talk: hold the mic to talk, release to send ----
   const pttHeld = useRef(false)
@@ -909,16 +853,7 @@ export default function ChatBot() {
                     <button key={it.id}
                       className={`closet-item ${closetPose === it.hold ? 'sel' : ''}`}
                       title={`Matt grabs the ${it.label.toLowerCase()}`}
-                      onClick={() => {
-                        if (seqTimer.current) clearTimeout(seqTimer.current)
-                        setSeqPlay(null); setClosetPose(it.hold)
-                        if (it.line) {
-                          setMessages((m) => [...m, { role: 'assistant',
-                            _local: true, _showoff: true,
-                            content: it.line.replace(/\{n\}/g,
-                              name || 'mate') }])
-                        }
-                      }}>
+                      onClick={() => wearItem(it)}>
                       <img className="prop" alt=""
                         src={it.thumb ? `/matt-frames/${it.thumb}`
                           : `/matt-frames/props/${it.prop}.png`} />
