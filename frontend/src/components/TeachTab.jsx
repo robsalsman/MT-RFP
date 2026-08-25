@@ -45,8 +45,11 @@ export default function TeachTab() {
     if (!url.trim()) return
     setBusy('url')
     api.vaultUrl(url).then((r) => {
-      setUrl(''); flash('🧠 He read it. His take: '
-        + (r.summary || '').slice(0, 120))
+      setUrl('')
+      const where = r.kind === 'prospect' || r.kind === 'person'
+        ? ` (filed to ${r.name}'s account)` : r.kind === 'linkedin'
+          ? '' : ' (filed to his library)'
+      flash(`🧠 ${(r.summary || 'He read it.').slice(0, 160)}${where}`)
       load()
     }).catch((e) => flash('⚠️ ' + e.message))
       .finally(() => setBusy(''))
@@ -109,8 +112,9 @@ export default function TeachTab() {
         <div className="card teach-card">
           <div className="teach-ico">🔗</div>
           <h4>Paste a link</h4>
-          <p className="small">Any web page — a grant program, a library's
-            news, an article worth keeping.</p>
+          <p className="small">Anything: a prospect's website, a person's
+            LinkedIn, a news story or post, a grant page. He classifies it
+            and files prospect/person intel straight to that account.</p>
           <input value={url} placeholder="https://…"
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && feedUrl()} />

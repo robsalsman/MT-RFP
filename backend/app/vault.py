@@ -232,10 +232,17 @@ def ingest_file(filename: str, data: bytes) -> dict:
 
 
 def ingest_url(url: str) -> dict:
-    """Kim gives Matt a URL; he reads it into the vault."""
+    """Kim gives Matt a URL; he reads it into the vault — and files it
+    smartly: a prospect's website or a person lands on that account's
+    note, a story/article lands in the library. LinkedIn is login-walled
+    (and scraping it violates their ToS), so those URLs are saved as a
+    pointer on the account note instead of fetched."""
     _ensure()
     if not re.match(r"https?://", url or ""):
         url = "https://" + (url or "")
+    host = re.sub(r"^https?://(www\.)?", "", url).split("/")[0].lower()
+    if "linkedin.com" in host:
+        return _ingest_linkedin(url)
     # honest bot UA first (Wikipedia et al. require it), then a browser
     # UA for sites that only whitelist browsers. Hard WAFs block both.
     ua_attempts = (
@@ -266,15 +273,67 @@ def ingest_url(url: str) -> dict:
     text = competitors._strip_html(resp.text)[:30000]
     if len(text) < 200:
         return {"error": "that page had no readable text"}
-    summary = _summarize(text, f"web page {url}")
+    kind, who, summary = _classify_page(text, url)
     name = _slug(re.sub(r"https?://", "", url))
     rel = f"library/url-{name}.md"
-    write_note(rel, f"# {url}\n\nIngested {_today()}.\n\n## Summary\n"
+    write_note(rel, f"# {url}\n\nIngested {_today()} · looks like: {kind}"
+                    f"{f' ({who})' if who else ''}.\n\n## Summary\n"
                     f"{summary}\n\n## Page text\n{text[:20000]}\n")
     write_note(f"inbox/url-{name}.md",
                f"# URL: {url} ({_today()})\n\n{summary}\n")
-    journal(f"ingested URL {url}")
-    return {"ok": True, "path": rel, "summary": summary}
+    filed_to = rel
+    # a prospect org or a person gets the intel pinned to their account
+    # note too, where drafts and recall will actually use it
+    if kind in ("prospect", "person") and who:
+        account_event(who, f"Kim fed me {url} — {summary[:400]}")
+        filed_to = f"accounts/{_slug(who)}.md"
+    journal(f"ingested URL {url} [{kind}{f': {who}' if who else ''}]")
+    return {"ok": True, "path": rel, "summary": summary,
+            "kind": kind, "name": who, "filed_to": filed_to}
+
+
+def _classify_page(text: str, url: str):
+    """(kind, name, summary): prospect | person | article, via the LLM."""
+    raw = ai._chat(
+        "You file web pages into a sales assistant's memory (client sells "
+        "hotspots and cell phones to libraries/schools). Return STRICT "
+        'JSON: {"kind": "prospect"|"person"|"article", "name": str|null, '
+        '"summary": "4-6 tight bullet lines - facts, names, numbers, '
+        'anything actionable"}. kind=prospect for an organization that '
+        "could buy (a library, district, city, agency) - name it; "
+        "kind=person for a page about one person - name them; "
+        "kind=article for news/stories/reference. No other text.",
+        f"URL: {url}\n\n{text[:12000]}", max_tokens=700)
+    try:
+        import json as _json
+        m = re.search(r"\{.*\}", raw or "", re.DOTALL)
+        d = _json.loads(m.group(0))
+        kind = d.get("kind") if d.get("kind") in ("prospect", "person",
+                                                  "article") else "article"
+        return kind, (d.get("name") or "").strip() or None, \
+            (d.get("summary") or "").strip() or "(no summary)"
+    except Exception:
+        return "article", None, (_summarize(text, f"web page {url}"))
+
+
+def _ingest_linkedin(url: str) -> dict:
+    """LinkedIn URLs: no fetch (login-walled + ToS). Save the pointer to
+    the right account note so it's never lost, and ask Kim for the
+    details worth keeping."""
+    m = re.search(r"linkedin\.com/(in|company|school)/([^/?#]+)", url)
+    slug = m.group(2) if m else ""
+    pretty = slug.replace("-", " ").title().strip() or "Unknown"
+    what = {"in": "person", "company": "company",
+            "school": "school"}.get(m.group(1) if m else "", "profile")
+    account_event(pretty, f"LinkedIn {what}: {url}")
+    journal(f"saved LinkedIn {what} link for {pretty}")
+    return {"ok": True, "kind": "linkedin", "name": pretty,
+            "filed_to": f"accounts/{_slug(pretty)}.md",
+            "summary": f"Saved {pretty}'s LinkedIn link to their account "
+                       "note. I can't read LinkedIn itself (it's "
+                       "login-walled and off-limits by their terms) — "
+                       "paste me the highlights worth remembering and "
+                       "I'll file them with it."}
 
 
 def _summarize(text: str, what: str) -> str:

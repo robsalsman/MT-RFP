@@ -267,6 +267,43 @@ export default function ChatBot() {
         content, picks }])
       playSeq('wave', 2400)   // he waves hello when he greets you
 
+      // one-time announcement: Matt is a full assistant now (per browser)
+      const TOUR3_KEY = 'mtrfp_tour_assistant_v1'
+      if (!localStorage.getItem(TOUR3_KEY)) {
+        localStorage.setItem(TOUR3_KEY, '1')
+        const who3 = name || 'mate'
+        const tour3 = `${who3} — big announcement, so I'm saying it `
+          + 'straight: I\'m not just an RFP searcher anymore. I\'m your '
+          + 'full AI assistant, and I can REMEMBER ANYTHING for you — '
+          + 'permanently.\n\n'
+          + '🧠 I now have a real second brain. Every account we work, '
+          + 'everything you tell me, every lesson from every deal — it '
+          + 'stays with me. Tell me "remember: the Denver contact '
+          + 'retired" and it\'s saved for good.\n'
+          + '🔗 FEED ME ANY LINK — a prospect\'s website, someone\'s '
+          + 'LinkedIn, a news story, a post. I read it, summarize it, and '
+          + 'file it to the right account so my drafts and answers use '
+          + 'it. (LinkedIn pages are login-walled, so I pin the link to '
+          + 'the account and you paste me the good bits.)\n'
+          + '📝 STICKY NOTES + 📎 FILES — jot me a thought without '
+          + 'chatting, or drop a PDF/spreadsheet on the Teach Him page. '
+          + 'I read every word.\n'
+          + '🎛️ RETUNE ME BY TALKING — "skip anything with academy in '
+          + 'the name", "focus on Texas" — I change my own hunting, no '
+          + 'developer needed.\n'
+          + '🌐 And I search the real live web now.\n\n'
+          + 'Everything I know is yours to see and edit in HIS MEMORY — '
+          + 'zero mystery. Go on, test my memory. Tell me something to '
+          + 'remember.'
+        setMessages((m) => [...m, { role: 'assistant', _proactive: true,
+          content: tour3, picks: [
+            { kind: 'tab', tab: 'teach', icon: '🍎', label: 'Teach him something' },
+            { kind: 'tab', tab: 'brain', icon: '🧠', label: 'See his memory' },
+            { kind: 'ask', icon: '🎤', label: 'What do you remember about me?',
+              prompt: 'What do you remember about me so far?' },
+          ] }])
+      }
+
       // one-time tour of the closing kit (per browser)
       const TOUR2_KEY = 'mtrfp_tour_closing_v1'
       if (!localStorage.getItem(TOUR2_KEY)) {
