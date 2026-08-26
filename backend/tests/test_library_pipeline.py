@@ -105,38 +105,56 @@ def test_greenfield_libraries_are_a_board_facet(tmp_db):
         (l["budget"] for l in only), reverse=True)
 
 
-def test_daily_run_reaches_libraries_without_a_libraries_only_focus(
+def test_libraries_only_filter_reaches_every_kind_of_library(tmp_db):
+    """Kim's switch: promoted IMLS systems AND the library systems already
+    on the funding board, and nothing else."""
+    _seed_board(schools=5, libs=3)
+    with db.closing_conn() as conn:
+        conn.execute(
+            "INSERT INTO competitor_leads (ben, competitor, org, "
+            "entity_type, state, spend, status, source) VALUES "
+            "('B1','kajeet','Springfield City Library','Library','OH',"
+            "9000,'new','erate')")
+        conn.execute(   # E-Rate files some systems under a bare type
+            "INSERT INTO competitor_leads (ben, competitor, org, "
+            "entity_type, state, spend, status, source) VALUES "
+            "('B2','verizon','Athens County Public Libraries','Consortium',"
+            "'OH',8000,'new','erate')")
+        conn.commit()
+    orgs = {l["org"] for l in competitors.list_leads(libraries_only=True,
+                                                     limit=100)}
+    assert orgs == {"City 0 Public Library", "City 1 Public Library",
+                    "City 2 Public Library", "Springfield City Library",
+                    "Athens County Public Libraries"}
+    # and it composes with the other filters
+    assert not competitors.list_leads(libraries_only=True, state="TX")
+
+
+def test_daily_run_serves_only_libraries_when_kim_says_so(
         tmp_db, monkeypatch):
     # regression: candidates came off a spend-sorted page, so zero-spend
-    # library leads never made the run and Kim only ever saw schools.
+    # library leads never made the run at all — even under this focus.
     _no_slow_prep(monkeypatch)
     _seed_board(schools=40, libs=10)
+    dailyrun.set_focus("libraries", rebuild=False)
+    dailyrun.build(20, force=True)
+    run = dailyrun.get_run()
+    assert run["total"] == 10
+    assert {i["competitor"] for i in run["items"]} \
+        == {competitors.GREENFIELD_LABEL}
+
+
+def test_daily_run_can_reach_a_library_under_the_all_focus(
+        tmp_db, monkeypatch):
+    """'all' means all: score decides the order, but a zero-spend library
+    has to be in the running at all."""
+    _no_slow_prep(monkeypatch)
+    _seed_board(schools=2, libs=10)
     assert dailyrun.get_focus() == "all"
     dailyrun.build(20, force=True)
     run = dailyrun.get_run()
-    libs = [i for i in run["items"]
+    assert [i for i in run["items"]
             if i["competitor"] == competitors.GREENFIELD_LABEL]
-    assert libs, "no library lead reached the run"
-    # a fixed share, so neither type can crowd the other off the run
-    assert len(libs) == round(20 * dailyrun.LIBRARY_SHARE)
-    assert run["total"] == 20
-
-
-@pytest.mark.parametrize("schools, libs, want_libs", [
-    (40, 2, 2),     # not enough libraries to fill the share
-    (2, 40, 18),    # not enough districts: libraries take the rest
-])
-def test_a_thin_pool_on_either_side_still_fills_the_run(
-        tmp_db, monkeypatch, schools, libs, want_libs):
-    """The library share is a split of the run, never a cap on its size."""
-    _no_slow_prep(monkeypatch)
-    _seed_board(schools=schools, libs=libs)
-    dailyrun.build(20, force=True)
-    run = dailyrun.get_run()
-    assert run["total"] == 20
-    assert len([i for i in run["items"]
-                if i["competitor"] == competitors.GREENFIELD_LABEL]) \
-        == want_libs
 
 
 def test_focus_change_refills_todays_run_and_keeps_decisions(
@@ -170,3 +188,45 @@ def test_focus_set_to_the_same_value_leaves_the_run_alone(
     dailyrun.set_focus("all")
     assert dailyrun.build(20) == {"already_built": True}
     assert [i["lead_id"] for i in dailyrun.get_run()["items"]] == before
+
+
+# --- what Matt can actually be asked to do in chat -------------------------
+
+def _tool(name):
+    from app import chat
+    return next(t["function"] for t in chat.TOOLS
+                if t["function"]["name"] == name)
+
+
+def test_matt_can_set_and_read_the_run_focus_from_chat(tmp_db, monkeypatch):
+    """Kim's 'libraries only, no more schools' has to be something Matt can
+    carry out — and undo — without anyone opening Settings."""
+    from app import chat
+    monkeypatch.setattr(dailyrun, "refill_bg", lambda: True)
+    assert _tool("daily_run_focus")["parameters"]["properties"]["focus"][
+        "enum"] == ["all", "libraries"]
+
+    assert chat._exec_tool("daily_run_focus", {}) == {"focus": "all"}
+
+    r = chat._exec_tool("daily_run_focus", {"focus": "libraries"})
+    assert r["focus"] == "libraries" and r["refilling"] is True
+    assert dailyrun.get_focus() == "libraries"
+
+    # asking again is a no-op, not a pointless rebuild
+    assert chat._exec_tool(
+        "daily_run_focus", {"focus": "libraries"})["refilling"] is False
+    # and she can put it back
+    assert chat._exec_tool(
+        "daily_run_focus", {"focus": "all"})["focus"] == "all"
+
+
+def test_matt_can_list_libraries_only_from_chat(tmp_db, monkeypatch):
+    from app import chat
+    monkeypatch.setattr(competitors, "district_domain", lambda lead: None)
+    _seed_board(schools=40, libs=3)
+    assert "libraries_only" in \
+        _tool("competitor_accounts")["parameters"]["properties"]
+    r = chat._exec_tool("competitor_accounts",
+                        {"libraries_only": True, "limit": 10})
+    assert r["accounts"]
+    assert all("Library" in a["org"] for a in r["accounts"])

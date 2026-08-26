@@ -7,10 +7,9 @@ reply always jump ahead of new outreach. Leads with no reachable human
 (consultant-only contact) are auto-routed to the consultant channel
 instead of wasting a slot.
 
-A fixed share of each run goes to greenfield library leads (LIBRARY_SHARE)
-— they have no incumbent spend to score against, so left to the numbers
-alone they never appear. Changing the focus refills today's run instead of
-waiting for tomorrow's.
+Kim decides what the run is made of, not the run: the focus setting
+("all" or "libraries") is hers to set from Settings or by asking Matt, and
+changing it refills today's run instead of waiting for tomorrow's.
 
 Runs build lazily in the background the first time anyone asks for
 today's run (the laptop hosts the app, so "overnight" = "before Kim
@@ -38,13 +37,6 @@ _SCHEMA = """CREATE TABLE IF NOT EXISTS daily_run (
 
 BUILD_FLAG = "daily_run_building"
 DEFAULT_N = 20
-# Share of a mixed run's cold slots that goes to libraries. A library is
-# scored off its own budget and a district off the money it already pays a
-# competitor — two different scales, so leaving the split to the score gives
-# an all-schools run or an all-libraries one depending on whose numbers are
-# bigger that week. Kim gets a fixed share of each instead; libraries-only
-# is the focus setting, not an accident of scoring.
-LIBRARY_SHARE = 0.34
 
 
 def _ensure():
@@ -213,29 +205,16 @@ def _build_inner(n: int, today: str) -> dict:
     slots = max(0, n - len(kept))
     picked: list[tuple[dict, str]] = [(l, "warm") for l in warm[:8]][:slots]
     consultant_routed: dict[str, int] = {}
-
-    def take(pool: list[dict], want: int) -> None:
-        """Fill up to `want` slots from `pool`, routing the leads with no
-        reachable human to their consultant instead of burning a slot."""
-        while pool and want > 0 and len(picked) < slots:
-            lead = pool.pop(0)
-            if not _reachable(lead):
-                cons = (lead.get("consultants")
-                        or ["(no consultant listed)"])[0]
-                name = cons.split("<")[0].strip()
-                consultant_routed[name] = consultant_routed.get(name, 0) + 1
-                continue
-            picked.append((lead, "cold"))
-            want -= 1
-
-    libs = [l for l in cold if _is_library(l)]
-    others = [l for l in cold if not _is_library(l)]
-    if focus == "libraries":
-        take(libs, slots)
-    else:
-        take(libs, round((slots - len(picked)) * LIBRARY_SHARE))
-        take(others, slots)
-        take(libs, slots)   # short on districts: don't run light
+    for lead in cold:
+        if len(picked) >= slots:
+            break
+        if not _reachable(lead):
+            # consultant-only: route to the channel, don't burn a slot
+            cons = (lead.get("consultants") or ["(no consultant listed)"])[0]
+            name = cons.split("<")[0].strip()
+            consultant_routed[name] = consultant_routed.get(name, 0) + 1
+            continue
+        picked.append((lead, "cold"))
 
     prepped = 0
     for lead, kind in picked:

@@ -192,7 +192,8 @@ E-Rate eligible, hotspot lending \
 for students, cite THEIR numbers. End with a specific ask (15-min call). \
 Never send anything — you only draft; Kim sends.
 
-LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). Offer libraries_only_run=true so her Daily Run serves only libraries. The pool is effectively inexhaustible; she can ask by state or nationwide. Promoted libraries land on the board as competitor='greenfield' with no spend, so list them back with competitor_accounts(competitor='greenfield') - a plain board call sorts by spend and shows her school districts instead.
+LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). The pool is effectively inexhaustible; she can ask by state or nationwide. Promoted libraries land on the board with no spend, so a plain board call sorts by spend and shows her school districts: pass competitor_accounts(libraries_only=true) to list them back.
+WHAT SHE SEES IS HER CALL, NOT YOURS. If she says libraries only, no more schools, just libraries - call daily_run_focus(focus='libraries') and say it's done. Same going the other way: daily_run_focus(focus='all') puts everything back. Never talk her out of it, never water it down to a mix, never tell her a lead type is good for her. She sets the filter; you carry it out and keep the pipeline full behind it.
 
 THE DAILY RUN (navigate tab=run): every day the app pre-works the ~20 best untouched leads — contacts crawled, drafts written, warm replies queued first, consultant-only accounts auto-routed to the channel. Kim just reviews: Send / tweak / Skip, ~15 seconds a lead. When she asks "what should I do today" or wants to move fast, send her to the run. Celebrate her pace ("20 touches before 9am — that's a platinum record").
 
@@ -516,12 +517,14 @@ TOOLS = [
                        "contract expiration, contacts, status. Use for "
                        "'find the Kajeet accounts', 'who's paying "
                        "Verizon', 'biggest displacement targets'. "
-                       "competitor='greenfield' lists the promoted library "
-                       "leads — they have no spend, so a default (spend-"
-                       "sorted) call buries them under the districts: "
-                       "ALWAYS pass competitor='greenfield' when Kim asks "
-                       "to see her library leads.",
+                       "Pass libraries_only=true whenever Kim wants "
+                       "libraries and not schools — a default call sorts "
+                       "by spend and shows her school districts.",
         "parameters": {"type": "object", "properties": {
+            "libraries_only": {"type": "boolean", "default": False,
+                               "description": "only libraries — promoted "
+                               "IMLS systems and the library systems "
+                               "already on the funding board"},
             "competitor": {"type": "string",
                            "description": "'greenfield' = the promoted "
                            "library leads (no incumbent); the rest are "
@@ -721,6 +724,20 @@ TOOLS = [
             "libraries_only_run": {"type": "boolean",
                                    "description": "also focus the Daily "
                                    "Run on libraries only"}}}}},
+    {"type": "function", "function": {
+        "name": "daily_run_focus",
+        "description": "Read or set what Kim's Daily Run is made of. "
+                       "focus='libraries' = libraries only, schools stay "
+                       "off the run entirely; focus='all' = every lead "
+                       "type. Omit focus to report the current setting. "
+                       "This is Kim's call, so just do it when she asks "
+                       "('only libraries', 'no more schools', 'go back to "
+                       "everything') — changing it refills today's run in "
+                       "the background, keeping whatever she already sent "
+                       "or skipped today.",
+        "parameters": {"type": "object", "properties": {
+            "focus": {"type": "string", "enum": ["all", "libraries"],
+                      "description": "omit to read the current setting"}}}}},
     {"type": "function", "function": {
         "name": "find_library_targets",
         "description": "Project: Volume Up hit list — every US public "
@@ -1032,7 +1049,8 @@ def _exec_tool(name: str, args: dict) -> dict:
                 args.get("competitor"), args.get("state"), None,
                 args.get("min_spend") or 0, args.get("sort") or "spend",
                 args.get("limit", 10), None,
-                args.get("cities"), args.get("zip_prefixes"))
+                args.get("cities"), args.get("zip_prefixes"),
+                libraries_only=bool(args.get("libraries_only")))
             compact = [{"lead_id": r["id"], "org": r["org"],
                         "state": r["state"], "competitor":
                         r["competitor_label"],
@@ -1102,6 +1120,19 @@ def _exec_tool(name: str, args: dict) -> dict:
             if args.get("libraries_only_run"):
                 r["daily_run_focus"] = dr_mod.set_focus("libraries")
             return r
+        if name == "daily_run_focus":
+            from . import dailyrun as dr_mod
+            want = args.get("focus")
+            if not want:
+                return {"focus": dr_mod.get_focus()}
+            was = dr_mod.get_focus()
+            now = dr_mod.set_focus(str(want))
+            return {"focus": now, "was": was,
+                    "refilling": now != was,
+                    "note": ("Today's run is refilling in the background — "
+                             "what she already sent or skipped is kept."
+                             if now != was else
+                             "Already set to that; run unchanged.")}
         if name == "find_library_targets":
             return libraries.find_targets(str(args.get("state", "")),
                                           args.get("min_population", 0),

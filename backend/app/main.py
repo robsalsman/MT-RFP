@@ -207,7 +207,8 @@ def competitor_leads_list(competitor: str | None = None,
                           state: str | None = None,
                           status: str | None = None,
                           min_spend: float = 0, sort: str = "spend",
-                          direction: str | None = None, limit: int = 50):
+                          direction: str | None = None, limit: int = 50,
+                          libraries_only: bool = False):
     """The competitor displacement board: accounts + summary + facets."""
     with db.closing_conn() as conn:
         states = [r[0] for r in conn.execute(
@@ -222,9 +223,9 @@ def competitor_leads_list(competitor: str | None = None,
     return {"summary": summary,
             "competitors": facets,
             "states": states,
-            "leads": competitors.list_leads(competitor, state, status,
-                                            min_spend, sort, limit,
-                                            direction)}
+            "leads": competitors.list_leads(
+                competitor, state, status, min_spend, sort, limit,
+                direction, libraries_only=libraries_only)}
 
 
 @app.post("/api/competitor-leads/sweep")

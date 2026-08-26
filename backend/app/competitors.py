@@ -65,6 +65,12 @@ COMPETITORS = {
 GREENFIELD = "greenfield"
 GREENFIELD_LABEL = "Greenfield library"
 
+# "show me libraries only": promoted IMLS systems plus the library systems
+# already on the funding board (E-Rate files them under a Library entity
+# type, but plenty are only recognisable by name).
+_LIBRARY_SQL = ("(competitor=? OR entity_type LIKE '%ibrar%' "
+                "OR org LIKE '%librar%')")
+
 # consultant/vendor email domains that are NOT the district's own website
 _NON_DISTRICT_DOMAINS = (
     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com",
@@ -333,9 +339,13 @@ def list_leads(competitor: str | None = None, state: str | None = None,
                sort: str = "spend", limit: int = 50,
                direction: str | None = None,
                cities: list[str] | None = None,
-               zip_prefixes: list[str] | None = None) -> list[dict]:
+               zip_prefixes: list[str] | None = None,
+               libraries_only: bool = False) -> list[dict]:
     sql = "SELECT * FROM competitor_leads WHERE 1=1"
     params: list = []
+    if libraries_only:
+        sql += " AND " + _LIBRARY_SQL
+        params.append(GREENFIELD)
     if competitor:
         sql += " AND competitor=?"
         params.append(competitor)

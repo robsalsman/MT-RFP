@@ -22,6 +22,7 @@ export default function Leads() {
   const [state, setState] = useState('')
   const [status, setStatus] = useState('')       // '' = active (not dismissed)
   const [minSpend, setMinSpend] = useState('')
+  const [librariesOnly, setLibrariesOnly] = useState(false)
   const [sort, setSort] = useState({ field: 'spend', dir: 'desc' })
   const [open, setOpen] = useState(null)
   const [busyId, setBusyId] = useState(null)
@@ -47,10 +48,11 @@ export default function Leads() {
 
   const load = () => api.competitorLeads({
     competitor, state, status, min_spend: minSpend || 0,
+    libraries_only: librariesOnly || '',
     sort: sort.field, direction: sort.dir, limit: 100,
   }).then(setData).catch(() => {})
   useEffect(() => { load() },   // eslint-disable-line
-    [competitor, state, status, minSpend, sort])
+    [competitor, state, status, minSpend, librariesOnly, sort])
 
   // deep-link from Matt's greeting: open the lead he recommended
   useEffect(() => {
@@ -197,6 +199,11 @@ export default function Leads() {
       </div>
 
       <div className="leads-filters">
+        <label className={`libtoggle${librariesOnly ? ' on' : ''}`}>
+          <input type="checkbox" checked={librariesOnly}
+            onChange={(e) => setLibrariesOnly(e.target.checked)} />
+          {' '}Libraries only
+        </label>
         <select value={competitor}
           onChange={(e) => setCompetitor(e.target.value)}>
           <option value="">All competitors</option>
