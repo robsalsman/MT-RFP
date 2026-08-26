@@ -213,9 +213,14 @@ def competitor_leads_list(competitor: str | None = None,
         states = [r[0] for r in conn.execute(
             "SELECT DISTINCT state FROM competitor_leads "
             "WHERE state IS NOT NULL AND state != '' ORDER BY state")]
-    return {"summary": competitors.summary(),
-            "competitors": {k: v["label"]
-                            for k, v in competitors.COMPETITORS.items()},
+    summary = competitors.summary()
+    facets = {k: v["label"] for k, v in competitors.COMPETITORS.items()}
+    if any(s["competitor"] == competitors.GREENFIELD for s in summary):
+        # promoted library leads are filterable too, or they're unreachable
+        # on a board sorted by incumbent spend
+        facets[competitors.GREENFIELD] = competitors.GREENFIELD_LABEL
+    return {"summary": summary,
+            "competitors": facets,
             "states": states,
             "leads": competitors.list_leads(competitor, state, status,
                                             min_spend, sort, limit,

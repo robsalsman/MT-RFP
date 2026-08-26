@@ -58,6 +58,13 @@ COMPETITORS = {
                   "patterns": ["%HUGHES NETWORK%", "%HUGHESNET%"]},
 }
 
+# Promoted IMLS library systems ride the same board with no incumbent to
+# displace. They are NOT a tracked competitor (nothing to sweep for), but
+# they are a real facet Kim filters and sorts by, so they need a key and a
+# label everywhere leads are listed.
+GREENFIELD = "greenfield"
+GREENFIELD_LABEL = "Greenfield library"
+
 # consultant/vendor email domains that are NOT the district's own website
 _NON_DISTRICT_DOMAINS = (
     "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "aol.com",
@@ -305,6 +312,11 @@ def summary() -> list[dict]:
                     "total_spend": (r["total"] if r else 0) or 0,
                     "contacted": (r["contacted"] if r else 0) or 0})
     out.sort(key=lambda s: s["total_spend"], reverse=True)
+    g = by_key.get(GREENFIELD)
+    if g:   # zero-spend by definition, so it always sits last
+        out.append({"competitor": GREENFIELD, "label": GREENFIELD_LABEL,
+                    "accounts": g["n"], "total_spend": g["total"] or 0,
+                    "contacted": g["contacted"] or 0})
     return out
 
 
@@ -360,7 +372,9 @@ def list_leads(competitor: str | None = None, state: str | None = None,
     elif col in ("competitor", "state", "status", "org"):
         sql += f" ORDER BY {col} {direction}, spend DESC"
     else:
-        sql += f" ORDER BY spend {direction}"
+        # greenfield libraries all have spend 0 — rank them by their own
+        # budget so the tie isn't broken arbitrarily
+        sql += f" ORDER BY spend {direction}, COALESCE(budget,0) DESC"
     sql += " LIMIT ?"
     params.append(max(1, min(int(limit or 50), 200)))
     with db.closing_conn() as conn:
@@ -374,7 +388,7 @@ def list_leads(competitor: str | None = None, state: str | None = None,
                 r[f] = []
         r["competitor_label"] = COMPETITORS.get(
             r["competitor"], {}).get("label",
-            "Greenfield library" if r["competitor"] == "greenfield"
+            GREENFIELD_LABEL if r["competitor"] == GREENFIELD
             else r["competitor"])
     return rows
 
@@ -394,7 +408,7 @@ def get_lead(lead_id: int) -> dict | None:
             r[f] = []
     r["competitor_label"] = COMPETITORS.get(
         r["competitor"], {}).get("label",
-        "Greenfield library" if r["competitor"] == "greenfield"
+        GREENFIELD_LABEL if r["competitor"] == GREENFIELD
         else r["competitor"])
     return r
 

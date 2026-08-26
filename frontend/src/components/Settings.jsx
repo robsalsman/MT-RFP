@@ -18,7 +18,16 @@ export default function Settings() {
   useEffect(() => {
     api.runFocus().then((d) => setFocus(d.focus)).catch(() => {})
   }, [])
-  const saveFocus = (f) => { setFocus(f); api.setRunFocus(f).catch(() => {}) }
+  const [focusMsg, setFocusMsg] = useState('')
+  const saveFocus = (f) => {
+    setFocus(f)
+    api.setRunFocus(f).then(() => {
+      // today's run was built under the old focus — Matt refills the
+      // slots you haven't worked yet, in the background
+      setFocusMsg('Refilling today\u2019s run\u2026 check the Run tab.')
+      setTimeout(() => setFocusMsg(''), 6000)
+    }).catch(() => {})
+  }
   if (!settings) return <div>Loading…</div>
 
   const w = settings.scoring_weights
@@ -69,6 +78,7 @@ export default function Settings() {
                 onChange={() => saveFocus(f)} /> {desc}
             </label>
           ))}
+        {focusMsg && <p className="small">{focusMsg}</p>}
       </div>
       <div className="card">
         <h3>Scoring weights</h3>

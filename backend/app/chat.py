@@ -192,7 +192,7 @@ E-Rate eligible, hotspot lending \
 for students, cite THEIR numbers. End with a specific ask (15-min call). \
 Never send anything — you only draft; Kim sends.
 
-LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). Offer libraries_only_run=true so her Daily Run serves only libraries. The pool is effectively inexhaustible; she can ask by state or nationwide.
+LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). Offer libraries_only_run=true so her Daily Run serves only libraries. The pool is effectively inexhaustible; she can ask by state or nationwide. Promoted libraries land on the board as competitor='greenfield' with no spend, so list them back with competitor_accounts(competitor='greenfield') - a plain board call sorts by spend and shows her school districts instead.
 
 THE DAILY RUN (navigate tab=run): every day the app pre-works the ~20 best untouched leads — contacts crawled, drafts written, warm replies queued first, consultant-only accounts auto-routed to the channel. Kim just reviews: Send / tweak / Skip, ~15 seconds a lead. When she asks "what should I do today" or wants to move fast, send her to the run. Celebrate her pace ("20 touches before 9am — that's a platinum record").
 
@@ -515,10 +515,18 @@ TOOLS = [
                        "Mobility) for mobile broadband — annual spend, "
                        "contract expiration, contacts, status. Use for "
                        "'find the Kajeet accounts', 'who's paying "
-                       "Verizon', 'biggest displacement targets'.",
+                       "Verizon', 'biggest displacement targets'. "
+                       "competitor='greenfield' lists the promoted library "
+                       "leads — they have no spend, so a default (spend-"
+                       "sorted) call buries them under the districts: "
+                       "ALWAYS pass competitor='greenfield' when Kim asks "
+                       "to see her library leads.",
         "parameters": {"type": "object", "properties": {
             "competitor": {"type": "string",
-                           "enum": ["kajeet", "mobile_beacon",
+                           "description": "'greenfield' = the promoted "
+                           "library leads (no incumbent); the rest are "
+                           "displacement targets",
+                           "enum": ["greenfield", "kajeet", "mobile_beacon",
                                     "mobile_citizen", "verizon", "att",
                                     "uscellular", "starlink", "viasat",
                                     "hughesnet"]},

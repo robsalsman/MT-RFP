@@ -32,11 +32,14 @@ _SCHEMA = """CREATE TABLE IF NOT EXISTS libraries (
     name TEXT, address TEXT, city TEXT, state TEXT, zip TEXT,
     county TEXT, phone TEXT,
     population INTEGER, total_income REAL, operating_exp REAL,
-    wifi_sessions INTEGER, terminals INTEGER
+    wifi_sessions INTEGER, terminals INTEGER, bookmobiles INTEGER
 );"""
 
 
 def _migrate():
+    """Add the bookmobile column to a table created before it existed.
+    (New databases get it from _SCHEMA — it must be in both, or the first
+    load into a fresh DB fails on the INSERT.)"""
     with db.closing_conn() as conn:
         cols = {r[1] for r in conn.execute("PRAGMA table_info(libraries)")}
         if cols and "bookmobiles" not in cols:
@@ -51,7 +54,13 @@ def ensure_loaded() -> int:
         conn.execute(_SCHEMA)
         conn.commit()
         n = conn.execute("SELECT COUNT(*) FROM libraries").fetchone()[0]
-    if n > 5000:
+        # A DB loaded before the bookmobile column existed has the column
+        # but no values in it — re-read the file once to fill it, or the
+        # bookmobile boost silently never fires.
+        filled = n and conn.execute(
+            "SELECT COUNT(*) FROM libraries WHERE bookmobiles IS NOT NULL"
+        ).fetchone()[0]
+    if n > 5000 and filled:
         return n
     try:
         r = httpx.get(PLS_ZIP, headers={"User-Agent": "Mozilla/5.0"},
