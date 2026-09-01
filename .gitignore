@@ -9,6 +9,7 @@ data/rfp_docs/
 data/responses/
 data/uploads/
 data/settings.json
+data/vault/
 data/users.json
 data/.auth_secret
 

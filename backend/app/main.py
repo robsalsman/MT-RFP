@@ -207,19 +207,25 @@ def competitor_leads_list(competitor: str | None = None,
                           state: str | None = None,
                           status: str | None = None,
                           min_spend: float = 0, sort: str = "spend",
-                          direction: str | None = None, limit: int = 50):
+                          direction: str | None = None, limit: int = 50,
+                          libraries_only: bool = False):
     """The competitor displacement board: accounts + summary + facets."""
     with db.closing_conn() as conn:
         states = [r[0] for r in conn.execute(
             "SELECT DISTINCT state FROM competitor_leads "
             "WHERE state IS NOT NULL AND state != '' ORDER BY state")]
-    return {"summary": competitors.summary(),
-            "competitors": {k: v["label"]
-                            for k, v in competitors.COMPETITORS.items()},
+    summary = competitors.summary()
+    facets = {k: v["label"] for k, v in competitors.COMPETITORS.items()}
+    if any(s["competitor"] == competitors.GREENFIELD for s in summary):
+        # promoted library leads are filterable too, or they're unreachable
+        # on a board sorted by incumbent spend
+        facets[competitors.GREENFIELD] = competitors.GREENFIELD_LABEL
+    return {"summary": summary,
+            "competitors": facets,
             "states": states,
-            "leads": competitors.list_leads(competitor, state, status,
-                                            min_spend, sort, limit,
-                                            direction)}
+            "leads": competitors.list_leads(
+                competitor, state, status, min_spend, sort, limit,
+                direction, libraries_only=libraries_only)}
 
 
 @app.post("/api/competitor-leads/sweep")

@@ -13,12 +13,23 @@ export default function Settings() {
   const saveVibe = (v) => {
     setVibe(v)
     api.setVibe(v).catch(() => {})
+    // Matt's closet lines follow the vibe too — tell him now, not on reload
+    window.dispatchEvent(new CustomEvent('mtrfp:vibe', { detail: { vibe: v } }))
   }
   const [focus, setFocus] = useState(null)
   useEffect(() => {
     api.runFocus().then((d) => setFocus(d.focus)).catch(() => {})
   }, [])
-  const saveFocus = (f) => { setFocus(f); api.setRunFocus(f).catch(() => {}) }
+  const [focusMsg, setFocusMsg] = useState('')
+  const saveFocus = (f) => {
+    setFocus(f)
+    api.setRunFocus(f).then(() => {
+      // today's run was built under the old focus — Matt refills the
+      // slots you haven't worked yet, in the background
+      setFocusMsg('Refilling today\u2019s run\u2026 check the Run tab.')
+      setTimeout(() => setFocusMsg(''), 6000)
+    }).catch(() => {})
+  }
   if (!settings) return <div>Loading…</div>
 
   const w = settings.scoring_weights
@@ -69,6 +80,7 @@ export default function Settings() {
                 onChange={() => saveFocus(f)} /> {desc}
             </label>
           ))}
+        {focusMsg && <p className="small">{focusMsg}</p>}
       </div>
       <div className="card">
         <h3>Scoring weights</h3>
