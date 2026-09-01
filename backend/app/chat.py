@@ -737,19 +737,23 @@ TOOLS = [
                        "talking about X'; web_search searches the whole "
                        "internet, this reads their actual sites and quotes "
                        "the sentence. A library already advertising "
-                       "hotspot lending is a warm lead. Slow (it visits "
-                       "each site) — keep limit modest. Report the quote "
-                       "and the page; the result separates libraries that "
-                       "genuinely don't mention it from ones whose site "
-                       "couldn't be read — never call the second group a "
-                       "no.",
+                       "hotspot lending is a warm lead — quote their own "
+                       "words back at them. It really visits the sites, so "
+                       "it takes up to a minute and stops there: keep "
+                       "limit modest and go state by state for more. "
+                       "Report the quote AND the page it came from. The "
+                       "result separates libraries that genuinely don't "
+                       "mention it from ones whose site couldn't be read "
+                       "or wasn't reached in time — never report those as "
+                       "a no; say they're unchecked and offer to run them.",
         "parameters": {"type": "object", "properties": {
             "term": {"type": "string",
                      "description": "the word to look for, e.g. 'hotspot'"},
             "state": {"type": "string",
                       "description": "2-letter code (optional)"},
-            "limit": {"type": "integer", "default": 12,
-                      "description": "libraries to visit (max 40)"}},
+            "limit": {"type": "integer", "default": 10,
+                      "description": "libraries to visit (max 40); 10-15 "
+                      "fits comfortably in one go"}},
             "required": ["term"]}}},
     {"type": "function", "function": {
         "name": "daily_run_focus",
@@ -1152,7 +1156,7 @@ def _exec_tool(name: str, args: dict) -> dict:
             return libs_mod.scan_sites(
                 str(args.get("term", "")),
                 _norm_state(args.get("state")),
-                int(args.get("limit") or 12))
+                int(args.get("limit") or 10))
         if name == "daily_run_focus":
             from . import dailyrun as dr_mod
             want = args.get("focus")

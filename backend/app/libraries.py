@@ -16,6 +16,7 @@ import io
 import json
 import logging
 import re
+import time
 import zipfile
 
 import httpx
@@ -275,22 +276,41 @@ def _find_domain(lead: dict) -> str | None:
     return None
 
 
-def _pages_mentioning(dom: str, term: str) -> dict:
+# The library's own site search, in the shapes libraries actually use.
+# {q} is the term. These are the backbone: most library sites render their
+# pages with JavaScript, so fetching a URL blind sees an empty shell, but
+# their own search engine answers server-side and hands us the real pages.
+_SEARCH_PATTERNS = ("/?s={q}&feed=rss2", "/?s={q}", "/search?q={q}",
+                    "/search/{q}/", "/search?query={q}", "/search/{q}")
+_MAX_FETCHES = 8            # per library, so one slow site can't hog the run
+SCAN_SECONDS = 55           # whole-scan wall clock: Kim is waiting on this
+
+
+def _pages_mentioning(dom: str, term: str,
+                      deadline: float | None = None) -> dict:
     """Does this library's site say `term`, and where? Returns
     {status, hits:[{url, snippet, from}]}.
 
-    Search first, crawl second. Most library sites render their pages
-    with JavaScript, so fetching the HTML sees a near-empty shell — a
-    search engine has already read what a crawler can't. The crawl is the
-    fallback for the server-rendered sites (and for when no search key is
-    configured).
+    Probes in order of how well they work in the wild — the site's own
+    search first, then a homepage crawl, then an external search engine if
+    one is configured. A hit is only ever confirmed by fetching a real
+    content page: a search results page echoes the word back at us from
+    the query string, which would make every site a false positive.
     """
     from . import mentions
     from .competitors import _strip_html
     tl = term.lower()
-    hits: list[dict] = []
+    slug = re.sub(r"\s+", "-", term.strip().lower())
+    budget = [_MAX_FETCHES]
+    ran_out = [False]
 
     def grab(url: str):
+        if deadline and time.time() > deadline:
+            ran_out[0] = True
+            return None
+        if budget[0] <= 0:
+            return None
+        budget[0] -= 1
         try:
             r = httpx.get(url, timeout=12, follow_redirects=True,
                           headers={"User-Agent": "Mozilla/5.0"})
@@ -300,48 +320,82 @@ def _pages_mentioning(dom: str, term: str) -> dict:
         except Exception:
             return None
 
-    def quote(text: str) -> str | None:
-        i = text.lower().find(tl)
-        if i < 0:
+    def confirm(url: str) -> dict | None:
+        """The term, on an actual page, with the sentence around it."""
+        got = grab(url)
+        if not got:
             return None
-        return " ".join(text[max(0, i - 120):i + 200].split())[:300]
+        real_url, html_text = got
+        text = _strip_html(html_text)
+        i = text.lower().find(tl)
+        if i >= 0:
+            snip = " ".join(text[max(0, i - 120):i + 200].split())
+            return {"url": real_url, "snippet": snip[:300], "from": "page"}
+        # script-rendered pages often still ship the words in the payload
+        j = html_text.lower().find(tl)
+        if j >= 0:
+            window = re.sub(r"<[^>]+>|\\[nrt]|[{}\"\\\\]", " ",
+                            html_text[max(0, j - 200):j + 300])
+            snip = " ".join(window.split())
+            if len(snip) > 40:
+                return {"url": real_url, "snippet": snip[:300],
+                        "from": "page source"}
+        return None
 
-    # 1. ask the index what the whole site says
-    try:
-        found = mentions.web_search(f"site:{dom} {term}", limit=5)
-    except Exception as e:
-        log.debug("site search failed for %s: %s", dom, e)
-        found = []
-    for f in found[:3]:
-        url = f.get("url") or ""
-        if dom not in url:
-            continue
-        page = grab(url)
-        q = quote(_strip_html(page[1])) if page else None
-        if q:                       # confirmed on the page itself
-            hits.append({"url": page[0], "snippet": q, "from": "page"})
-        elif tl in (f.get("snippet", "") + f.get("title", "")).lower():
-            # the page is script-rendered: report the index's words, and
-            # say so, rather than claiming we read the page
-            hits.append({"url": url, "from": "search result",
-                         "snippet": (f.get("snippet") or "")[:300]})
-        if len(hits) >= 3:
+    def links_from(page_url: str, html_text: str) -> list[str]:
+        """Result links off a search page — never the search page itself."""
+        items = re.findall(r"<item>.*?<link>([^<]+)</link>.*?</item>",
+                           html_text, re.S)          # RSS results
+        hrefs = items or re.findall(r'href=["\']([^"\'#]+)["\']',
+                                    html_text, re.I)
+        base = re.sub(r"/(\?.*)?$", "", page_url)
+        out = []
+        for h in hrefs:
+            u = (h if h.lower().startswith("http")
+                 else f"{base}/{h.lstrip('/')}")
+            if dom not in u or "?s=" in u or "/search" in u or u in out:
+                continue
+            if slug in u.lower() or re.search(
+                    r"hot-?spot|wi-?fi|internet|device|lend|borrow|"
+                    r"news|servic|program|digital", u, re.I):
+                out.append(u)
+        return out
+
+    hits: list[dict] = []
+
+    # 1. the library's own search engine
+    for pat in _SEARCH_PATTERNS:
+        if budget[0] <= 2:
             break
-    if hits:
-        return {"status": "found", "hits": hits}
+        page = grab(f"https://www.{dom}" + pat.format(q=slug))
+        if not page:
+            continue
+        for url in links_from(page[0], page[1])[:3]:
+            got = confirm(url)
+            if got:
+                hits.append(got)
+            if len(hits) >= 2:
+                break
+        if hits:
+            return {"status": "found", "hits": hits}
 
-    # 2. no search hit — read the site ourselves
+    # 2. read the site ourselves
     home = None
     for b in (f"https://www.{dom}", f"https://{dom}"):
         home = grab(b)
         if home:
             break
     if not home:
-        return {"status": "unreachable", "hits": []}
+        # never call a site we ran out of time on "unreachable"
+        return {"status": "out of time" if ran_out[0] else "unreachable",
+                "hits": []}
     base, home_html = home
-    q = quote(_strip_html(home_html))
-    if q:
-        hits.append({"url": base, "snippet": q, "from": "page"})
+    text = _strip_html(home_html)
+    i = text.lower().find(tl)
+    if i >= 0:
+        hits.append({"url": base, "from": "page",
+                     "snippet": " ".join(
+                         text[max(0, i - 120):i + 200].split())[:300]})
     anchors = re.findall(r'<a[^>]+href=["\']([^"\'#]+)["\'][^>]*>(.*?)</a>',
                          home_html, re.I | re.S)
     picks: list[str] = []
@@ -355,19 +409,34 @@ def _pages_mentioning(dom: str, term: str) -> dict:
         if len(picks) >= 5:
             break
     for url in picks:
-        if len(hits) >= 3:
+        if len(hits) >= 2 or budget[0] <= 0:
             break
-        page = grab(url)
-        if not page:
-            continue
-        q = quote(_strip_html(page[1]))
-        if q:
-            hits.append({"url": page[0], "snippet": q, "from": "page"})
+        got = confirm(url)
+        if got:
+            hits.append(got)
     if hits:
         return {"status": "found", "hits": hits}
-    # a site whose HTML carries almost no text is a JS shell: we did not
+
+    # 3. an external engine, when a key is configured (it usually is not)
+    try:
+        found = mentions.web_search(f"site:{dom} {term}", limit=4)
+    except Exception as e:
+        log.debug("site search failed for %s: %s", dom, e)
+        found = []
+    for f in found[:2]:
+        url = f.get("url") or ""
+        if dom in url:
+            got = confirm(url)
+            if got:
+                hits.append(got)
+    if hits:
+        return {"status": "found", "hits": hits}
+
+    # a page whose HTML carries almost no text is a JS shell: we did not
     # read it, so we must not report it as "doesn't mention it"
-    readable = len(_strip_html(home_html)) > 1500 or len(anchors) > 5
+    if ran_out[0]:
+        return {"status": "out of time", "hits": []}
+    readable = len(text) > 1500 or len(anchors) > 5
     return {"status": "no mention" if readable else "unreadable", "hits": []}
 
 
@@ -391,24 +460,31 @@ def scan_sites(term: str, state: str | None = None, limit: int = 12,
     leads = [l for l in leads if (l.get("status") or "new") != "dismissed"]
     candidates = leads[:n * 3]      # room for the ones with no site at all
 
+    deadline = time.time() + SCAN_SECONDS
+
     def one(lead: dict) -> dict:
+        if time.time() > deadline:
+            return {"lead": lead, "dom": None, "status": "out of time",
+                    "hits": []}
         dom = _domain_for(lead)
         if not dom and find_missing_sites:
             dom = _find_domain(lead)
         if not dom:
             return {"lead": lead, "dom": None, "status": "no website",
                     "hits": []}
-        r = _pages_mentioning(dom, term)
+        r = _pages_mentioning(dom, term, deadline)
         return {"lead": lead, "dom": dom, **r}
 
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=12) as pool:
         scanned = list(pool.map(one, candidates[:n]))
 
-    matches, no_site, unreadable, clear = [], [], [], 0
+    matches, no_site, unreadable, ran_out, clear = [], [], [], [], 0
     for r in scanned:
         lead = r["lead"]
         if r["status"] == "no website":
             no_site.append(lead["org"])
+        elif r["status"] == "out of time":
+            ran_out.append(lead["org"])
         elif r["status"] in ("unreadable", "unreachable"):
             unreadable.append(lead["org"])
         elif r["hits"]:
@@ -422,25 +498,27 @@ def scan_sites(term: str, state: str | None = None, limit: int = 12,
         else:
             clear += 1
 
-    from . import config as cfg
     searched = len(matches) + clear
-    note = (f"{len(matches)} of {searched} libraries we could actually read "
-            f"say '{term}' on their own site — they are already talking "
-            "about it publicly, so they're warm, not cold.")
+    note = (f"{len(matches)} of {searched} library sites we could actually "
+            f"read say '{term}' — they're already talking about it in "
+            "public, so they're warm, not cold. Quote it back to them.")
+    unknown = []
     if unreadable:
-        note += (f" {len(unreadable)} more could not be read (their pages "
-                 "are built by JavaScript) — that is unknown, NOT a no.")
+        unknown.append(f"{len(unreadable)} unreadable (their pages are "
+                       "built by JavaScript)")
+    if ran_out:
+        unknown.append(f"{len(ran_out)} not reached before the time limit "
+                       "— ask again with a smaller limit, or by state")
     if no_site:
-        note += (f" {len(no_site)} have no website on file.")
-    if not cfg.BRAVE_API_KEY:
-        note += (" NOTE: no BRAVE_API_KEY is set, so this fell back to "
-                 "reading pages directly and will miss a lot — set the key "
-                 "for real coverage.")
-    if not searched and not unreadable and not no_site:
+        unknown.append(f"{len(no_site)} with no website on file")
+    if unknown:
+        note += (" UNKNOWN, not a no: " + "; ".join(unknown) + ".")
+    if not searched and not unknown:
         note = ("No library leads on the board to read. Promote some first "
                 "with get_more_library_leads.")
     return {"term": term, "state": state or "ALL",
             "libraries_read": searched, "matches": matches,
             "could_not_read": unreadable[:10],
+            "not_reached_in_time": ran_out[:10],
             "no_website_on_file": no_site[:10],
             "note": note}

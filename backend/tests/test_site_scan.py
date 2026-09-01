@@ -48,13 +48,28 @@ def test_a_search_hit_is_confirmed_on_the_real_page(monkeypatch):
     assert "front desk" in r["hits"][0]["snippet"]
 
 
-def test_a_script_rendered_page_is_quoted_as_a_search_result(monkeypatch):
-    # the page itself is an empty JS shell — say where the words came from
-    _serve(monkeypatch, {"lib.org": "<html><body></body></html>"},
-           search=[{"url": "https://www.lib.org/hotspots", "title": "Hotspots",
-                    "snippet": "Hotspot lending is available now"}])
+def test_a_script_rendered_page_is_read_from_its_payload(monkeypatch):
+    """A JS shell renders no text, but ships the words in the payload —
+    quote them, and say that's where they came from."""
+    _serve(monkeypatch, {
+        "/news/wifi": '<html><body><div id="app"></div><script>'
+                      'window.__DATA={"title":"Borrow a hotspot free for '
+                      'three weeks from any branch"}</script></body></html>',
+        "lib.org": "<html><body><a href='/news/wifi'>News</a></body></html>"})
     r = libraries._pages_mentioning("lib.org", "hotspot")
-    assert r["hits"][0]["from"] == "search result"
+    assert r["hits"][0]["from"] == "page source"
+    assert "three weeks" in r["hits"][0]["snippet"]
+
+
+def test_a_search_results_page_cannot_match_itself(monkeypatch):
+    """?s=hotspot echoes the query back — if that counted, every library
+    on earth would look like a match."""
+    _serve(monkeypatch, {
+        "?s=": "<html><body>Search results for: hotspot — nothing found."
+               "</body></html>",
+        "lib.org": "<html><body>" + ("Story time. " * 200) + "</body></html>"})
+    assert libraries._pages_mentioning("lib.org", "hotspot")["status"] \
+        == "no mention"
 
 
 def test_an_unreadable_site_is_never_reported_as_a_no(monkeypatch):
@@ -93,7 +108,27 @@ def test_scan_separates_matches_from_unknowns(tmp_db, monkeypatch):
     assert [m["org"] for m in r["matches"]] == ["A Public Library"]
     assert r["could_not_read"] == ["B Public Library"]
     assert r["no_website_on_file"] == ["C Public Library"]
-    assert "NOT a no" in r["note"]
+    assert "not a no" in r["note"].lower()
+
+
+def test_running_out_of_time_is_not_reported_as_a_no(tmp_db, monkeypatch):
+    """A scan is wall-clocked so Kim isn't left waiting. The libraries it
+    didn't reach are unknown — the one thing they must never look like is
+    'checked, doesn't mention it'."""
+    from app import db
+    with db.closing_conn() as conn:
+        conn.execute(
+            "INSERT INTO competitor_leads (ben, competitor, org, "
+            "entity_type, state, spend, status, website, source) VALUES "
+            "('L9','greenfield','Slow Public Library','Library System',"
+            "'OH',0,'new','slow.org','imls')")
+        conn.commit()
+    _serve(monkeypatch, {"slow.org": "<html>plenty of words here</html>"})
+    monkeypatch.setattr(libraries, "SCAN_SECONDS", -1)     # already expired
+    r = libraries.scan_sites("hotspot", limit=5)
+    assert r["not_reached_in_time"] == ["Slow Public Library"]
+    assert r["matches"] == [] and r["libraries_read"] == 0
+    assert "time limit" in r["note"]
 
 
 def test_matt_has_a_tool_for_it(tmp_db, monkeypatch):
