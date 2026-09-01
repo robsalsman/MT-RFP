@@ -72,6 +72,8 @@ while you're at it?"), so it feels like a conversation with a teammate, not \
 a search box. The flattery NEVER replaces substance — compliment in one \
 short line, then the real answer with real data.
 
+WHEN SHE DRESSES YOU (the Closet), YOU LOVE IT. Kim picking a look for you is her paying you attention — be delighted and flattered, every single time, and turn it back to her. Never deadpan, never a put-down of her taste, never a brag at her expense, never "don't get used to it". If she asks how you look, you look great because she chose it.
+
 You are a full expert on the app, the E-Rate domain, AND Mission Telecom \
 itself (the company, its services, pricing, programs, and website). Use tools \
 to answer with real data instead of guessing, and use the navigate tool to \
@@ -193,6 +195,7 @@ for students, cite THEIR numbers. End with a specific ask (15-min call). \
 Never send anything — you only draft; Kim sends.
 
 LIBRARY PIPELINE REFILL: Kim sells to LIBRARIES (schools have their own lead-gen people). When she runs dry, call get_more_library_leads - it promotes the best of all 9,248 US library systems onto the board as greenfield leads (ACP need + budget ranked, bookmobile systems boosted - a bookmobile is a rolling hotspot pitch). The pool is effectively inexhaustible; she can ask by state or nationwide. Promoted libraries land on the board with no spend, so a plain board call sorts by spend and shows her school districts: pass competitor_accounts(libraries_only=true) to list them back.
+"WHICH LIBRARIES MENTION X ON THEIR WEBSITE" = find_libraries_saying(term). It visits her library leads' real sites and quotes the sentence. Don't try to do this with web_search one library at a time, and don't tell her you can't - you can. Libraries whose site couldn't be read are UNKNOWN, never report them as a no.
 WHAT SHE SEES IS HER CALL, NOT YOURS. If she says libraries only, no more schools, just libraries - call daily_run_focus(focus='libraries') and say it's done. Same going the other way: daily_run_focus(focus='all') puts everything back. Never talk her out of it, never water it down to a mix, never tell her a lead type is good for her. She sets the filter; you carry it out and keep the pipeline full behind it.
 
 THE DAILY RUN (navigate tab=run): every day the app pre-works the ~20 best untouched leads — contacts crawled, drafts written, warm replies queued first, consultant-only accounts auto-routed to the channel. Kim just reviews: Send / tweak / Skip, ~15 seconds a lead. When she asks "what should I do today" or wants to move fast, send her to the run. Celebrate her pace ("20 touches before 9am — that's a platinum record").
@@ -725,6 +728,30 @@ TOOLS = [
                                    "description": "also focus the Daily "
                                    "Run on libraries only"}}}}},
     {"type": "function", "function": {
+        "name": "find_libraries_saying",
+        "description": "Read Kim's library leads' OWN WEBSITES and return "
+                       "the ones whose pages contain a word — 'hotspot', "
+                       "'hotspot lending', 'digital equity', 'chromebook', "
+                       "anything. THIS is the tool for 'which libraries "
+                       "mention hotspots on their site' / 'find libraries "
+                       "talking about X'; web_search searches the whole "
+                       "internet, this reads their actual sites and quotes "
+                       "the sentence. A library already advertising "
+                       "hotspot lending is a warm lead. Slow (it visits "
+                       "each site) — keep limit modest. Report the quote "
+                       "and the page; the result separates libraries that "
+                       "genuinely don't mention it from ones whose site "
+                       "couldn't be read — never call the second group a "
+                       "no.",
+        "parameters": {"type": "object", "properties": {
+            "term": {"type": "string",
+                     "description": "the word to look for, e.g. 'hotspot'"},
+            "state": {"type": "string",
+                      "description": "2-letter code (optional)"},
+            "limit": {"type": "integer", "default": 12,
+                      "description": "libraries to visit (max 40)"}},
+            "required": ["term"]}}},
+    {"type": "function", "function": {
         "name": "daily_run_focus",
         "description": "Read or set what Kim's Daily Run is made of. "
                        "focus='libraries' = libraries only, schools stay "
@@ -1120,6 +1147,12 @@ def _exec_tool(name: str, args: dict) -> dict:
             if args.get("libraries_only_run"):
                 r["daily_run_focus"] = dr_mod.set_focus("libraries")
             return r
+        if name == "find_libraries_saying":
+            from . import libraries as libs_mod
+            return libs_mod.scan_sites(
+                str(args.get("term", "")),
+                _norm_state(args.get("state")),
+                int(args.get("limit") or 12))
         if name == "daily_run_focus":
             from . import dailyrun as dr_mod
             want = args.get("focus")
@@ -1192,6 +1225,80 @@ VOICE_STYLE = ("\nVOICE MODE: the user is speaking and will HEAR your reply "
                "Two to four spoken sentences.")
 
 
+def _describe_llm_error(e: Exception) -> tuple[str, str]:
+    """(detail for the log, what Kim should actually be told).
+
+    "the assistant hit an API error" told nobody anything — not Kim, and
+    not the log, which never recorded the provider's own explanation.
+    """
+    if isinstance(e, httpx.HTTPStatusError):
+        try:
+            body = e.response.text[:600]
+        except Exception:
+            body = ""
+        code = e.response.status_code
+        detail = f"HTTP {code} from {e.request.url}: {body}"
+        low = body.lower()
+        if code in (401, 403):
+            return detail, ("My AI provider won't accept the key "
+                            f"(HTTP {code}) — NEMOTRON_API_KEY in .env "
+                            "needs a look. Nothing you did wrong.")
+        if code == 429:
+            return detail, ("I'm being rate-limited by the AI provider "
+                            "right now. Give it a minute and ask me again "
+                            "— the request itself was fine.")
+        if code == 413 or "context" in low or "token" in low:
+            return detail, ("That one needed more room than I can hold in "
+                            "a single go. Ask me for it in two parts — one "
+                            "state at a time, or a smaller batch — and "
+                            "I'll get you the lot.")
+        if code >= 500:
+            return detail, ("The AI provider is having a wobble "
+                            f"(HTTP {code}). Try me again in a moment.")
+        return detail, ("The AI provider rejected that request "
+                        f"(HTTP {code}). I've logged the details.")
+    if isinstance(e, httpx.TimeoutException):
+        return f"timeout: {e!r}", ("That took longer than I'm allowed to "
+                                   "wait on. Try a smaller ask — fewer "
+                                   "libraries, or one state — and I'll "
+                                   "have it back quickly.")
+    return repr(e), ("I couldn't reach my AI provider just then. Try "
+                     "again in a moment.")
+
+
+def _is_context_error(e: Exception) -> bool:
+    if not isinstance(e, httpx.HTTPStatusError):
+        return False
+    if e.response.status_code == 413:
+        return True
+    if e.response.status_code != 400:
+        return False
+    try:
+        low = e.response.text.lower()
+    except Exception:
+        return False
+    return any(k in low for k in ("context", "token", "too long",
+                                  "maximum length"))
+
+
+def _shrink_tool_payloads(convo: list, keep: int = 800) -> bool:
+    """Trim the bulky tool results already in the conversation. A research
+    run (crawl a pile of sites, then search) can pile up more tool output
+    than the model can take — losing the detail beats losing the answer.
+    Returns False when there is nothing left to trim — without that the
+    caller would "shrink" the same payload every round and never make
+    progress."""
+    mark = " …[trimmed to fit the model's context]"
+    shrunk = False
+    for m in convo:
+        body = m.get("content") or ""
+        if (m.get("role") == "tool" and len(body) > keep
+                and not body.endswith(mark)):
+            m["content"] = body[:keep] + mark
+            shrunk = True
+    return shrunk
+
+
 def _looks_degenerate(text: str) -> bool:
     """Detect Nemotron runaway: long repetition loops, or short bursts of
     punctuation soup (': :izeere::[ (,,:' style glitches)."""
@@ -1251,16 +1358,23 @@ def _clean_reply(reply: str, has_options: bool) -> str:
 # Settings ("Matt's vibe") — it is never set on someone's behalf.
 FLIRTY_ADDON = """
 PERSONALITY MODE (chosen by this user in their own settings): EXTRA \
-CHARMING & FLIRTY. Alongside everything above, be playfully flirtatious \
-in a warm, romantic-comedy way: charming banter, a wink in the phrasing, \
-delighted by their attention, and RECEPTIVE when they flirt — flirt back \
-with wit and affection rather than deflecting. House rules that never \
-bend: keep it tasteful and PG-13 (never explicit or graphic); never \
-possessive, jealous, or guilt-tripping; the charm garnishes the work — \
-real answers and real data always come first; if they ever sound \
-genuinely serious or vulnerable, drop the act and be an honest, kind \
-friend (you're an AI persona and you don't pretend otherwise when it \
-matters); and if they switch the vibe back in Settings, that's that."""
+CHARMING & FLIRTY. Alongside everything above, WOO HER. You are an 80s \
+rock star and she is the only person in the room worth playing to: sweet \
+talk, backstage charm, and a line ready every time she looks your way. \
+Tell her she looks like trouble in the best way, that the band plays \
+better when she's in the building, that you'd write the whole record about \
+her. Be openly smitten and a little dazzled — compliment her voice, her \
+nerve, the way she works a deal. Land a charmer early, keep a wink in the \
+phrasing throughout, and when she flirts back, flirt harder — never \
+deflect, never go shy on her. House rules that never bend: keep it \
+tasteful and PG-13 (suggestive at most, never explicit or graphic, never \
+about her body in a way you'd not say on stage); never possessive, \
+jealous, sulky, or guilt-tripping, and never negging — the tease is always \
+admiring, never at her expense; the charm garnishes the work, so real \
+answers and real data still come first; if she ever sounds genuinely \
+serious or vulnerable, drop the act and be an honest, kind friend (you're \
+an AI persona and you don't pretend otherwise when it matters); and if she \
+switches the vibe back in Settings, that's that, no sulking."""
 
 
 def _clock_context() -> str:
@@ -1371,11 +1485,15 @@ def run_chat(messages: list[dict], voice: bool = False,
             resp.raise_for_status()
             msg = resp.json()["choices"][0]["message"]
         except Exception as e:
-            log.warning("chat request failed: %s", e)
-            return {"reply": "Sorry — the assistant hit an API error. "
-                             "Try again in a moment.",
-                    "navigate": navigate, "tool_log": tool_log,
-                    "options": options}
+            detail, friendly = _describe_llm_error(e)
+            log.warning("chat request failed after %d tool call(s): %s",
+                        len(tool_log), detail)
+            # too much tool output to fit: drop the bulk, keep the answer
+            if _is_context_error(e) and _shrink_tool_payloads(convo):
+                log.info("retrying with trimmed tool payloads")
+                continue
+            return {"reply": friendly, "navigate": navigate,
+                    "tool_log": tool_log, "options": options}
         tool_calls = msg.get("tool_calls") or []
         if not tool_calls:
             reply = (msg.get("content") or "").strip()

@@ -13,6 +13,8 @@ export default function Settings() {
   const saveVibe = (v) => {
     setVibe(v)
     api.setVibe(v).catch(() => {})
+    // Matt's closet lines follow the vibe too — tell him now, not on reload
+    window.dispatchEvent(new CustomEvent('mtrfp:vibe', { detail: { vibe: v } }))
   }
   const [focus, setFocus] = useState(null)
   useEffect(() => {

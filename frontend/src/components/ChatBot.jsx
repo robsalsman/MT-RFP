@@ -100,6 +100,16 @@ export default function ChatBot() {
   const [voiceOk, setVoiceOk] = useState(false)
   const [avatar, setAvatar] = useState({ state: 'idle', mouth: 0 })
   const [closetOpen, setClosetOpen] = useState(false)
+  // her chosen vibe decides which register the closet lines use, and
+  // Settings tells us the moment she changes it
+  const vibe = useRef('classic')
+  useEffect(() => {
+    api.getVibe().then((d) => { vibe.current = d.vibe || 'classic' })
+      .catch(() => {})
+    const onVibe = (e) => { vibe.current = e.detail?.vibe || 'classic' }
+    window.addEventListener('mtrfp:vibe', onVibe)
+    return () => window.removeEventListener('mtrfp:vibe', onVibe)
+  }, [])
   // greeting/picks tray: open on desktop (room to spare), collapsed on mobile
   const [trayOpen, setTrayOpen] = useState(
     () => typeof window === 'undefined'
@@ -611,10 +621,13 @@ export default function ChatBot() {
   const wearItem = (it) => {
     if (seqTimer.current) clearTimeout(seqTimer.current)
     setSeqPlay(null); setClosetPose(it.hold)
-    if (it.line) {
+    // professional vibe keeps his mouth shut about the outfit
+    const said = vibe.current === 'professional' ? null
+      : (vibe.current === 'flirty' && it.flirt) || it.line
+    if (said) {
       setMessages((m) => [...m, { role: 'assistant',
         _local: true, _showoff: true,
-        content: it.line.replace(/\{n\}/g, name || 'mate') }])
+        content: said.replace(/\{n\}/g, name || 'mate') }])
     }
     window.dispatchEvent(new CustomEvent('mtrfp:wearing',
       { detail: { id: it.id } }))
