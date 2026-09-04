@@ -612,34 +612,8 @@ async def put_settings(new_settings: dict):
 # Assistant chat
 # ---------------------------------------------------------------------------
 
-VIBES = ("professional", "classic", "flirty")   # G / PG / PG-13
-
-
-def _user_vibe(username: str | None) -> str:
-    if not username:
-        return "classic"
-    with db.closing_conn() as conn:
-        v = db.kv_get(conn, f"vibe:{username.lower()}", "classic")
-    return v if v in VIBES else "classic"
-
-
-@app.get("/api/me/vibe")
-def get_vibe(request: Request):
-    """Matt's personality for THIS user — each person sets their own."""
-    user, _ = auth.user_from_header(request.headers.get("Authorization"))
-    return {"vibe": _user_vibe(user), "options": list(VIBES)}
-
-
-@app.put("/api/me/vibe")
-def set_vibe(payload: dict, request: Request):
-    user, _ = auth.user_from_header(request.headers.get("Authorization"))
-    v = str(payload.get("vibe", "classic"))
-    if not user or v not in VIBES:
-        raise HTTPException(400, "invalid vibe")
-    with db.closing_conn() as conn:
-        db.kv_set(conn, f"vibe:{user.lower()}", v)
-        conn.commit()
-    return {"vibe": v}
+# Matt has one user (Kim) and one persona, built to her request — there is
+# no per-user "vibe" switch any more; see chat.SEXY_PERSONA.
 
 
 @app.post("/api/chat")
@@ -650,8 +624,7 @@ def chat_endpoint(payload: dict, request: Request):
         raise HTTPException(400, "messages list required")
     user, name = auth.user_from_header(request.headers.get("Authorization"))
     return chat_mod.run_chat(messages, user_name=name,
-                             current_tab=payload.get("tab"),
-                             vibe=_user_vibe(user))
+                             current_tab=payload.get("tab"))
 
 
 @app.post("/api/voice/converse")
@@ -674,8 +647,7 @@ async def voice_converse(request: Request, audio: UploadFile = File(...),
     user, name = auth.user_from_header(request.headers.get("Authorization"))
     history = json.loads(messages or "[]")
     history.append({"role": "user", "content": transcript})
-    result = chat_mod.run_chat(history, voice=True, user_name=name,
-                               vibe=_user_vibe(user))
+    result = chat_mod.run_chat(history, voice=True, user_name=name)
     audio_b64 = None
     if speak_reply and result.get("reply"):
         try:
