@@ -11,5 +11,7 @@ data/uploads/
 data/settings.json
 data/users.json
 data/.auth_secret
+data/voice/
+logs/
 
 Brave_key_matt.env.txt

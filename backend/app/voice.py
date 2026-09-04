@@ -1,22 +1,34 @@
-"""Voice layer via NVIDIA-hosted Riva speech services (same NVIDIA API key
-as Nemotron):
+"""Voice layer.
 
-- Speech-to-text: Parakeet ASR  (grpc.nvcf.nvidia.com, offline recognize)
-- Text-to-speech: Magpie TTS multilingual
+- Speech-to-text: NVIDIA Parakeet ASR (grpc.nvcf.nvidia.com, offline
+  recognize; same NVIDIA API key as Nemotron).
+- Text-to-speech, preferred: Matt's OWN voice — a local LuxTTS sidecar
+  (scripts/matt-voice-server.py) speaking in the cloned "Rob" reference,
+  48 kHz. It runs warm on the laptop GPU under the LuxTTS venv.
+- Text-to-speech, fallback: NVIDIA Magpie TTS (22.05 kHz) whenever the
+  sidecar is down or errors, so voice never goes silent.
 
 Together with the Nemotron chat loop this gives speech -> assistant ->
 speech. Audio in must be 16-bit mono WAV (the frontend records exactly
-that); audio out is 22.05 kHz 16-bit mono WAV.
+that); audio out is 16-bit mono WAV at whichever rate the engine used —
+the browser reads the header.
 """
 import io
 import logging
 import os
 import re
+import time
 import wave
+
+import httpx
 
 from . import config
 
 log = logging.getLogger(__name__)
+
+LOCAL_TTS_URL = os.environ.get("MATT_VOICE_URL", "http://127.0.0.1:8030")
+LOCAL_TTS_TIMEOUT = float(os.environ.get("MATT_VOICE_TIMEOUT", "90"))
+_local_state = {"ok": False, "checked": 0.0}
 
 NVCF_GRPC = os.environ.get("NVIDIA_SPEECH_GRPC", "grpc.nvcf.nvidia.com:443")
 ASR_FUNCTION_ID = os.environ.get(
@@ -33,8 +45,38 @@ TTS_SAMPLE_RATE = 22050
 TTS_CHUNK_CHARS = 180
 
 
+def local_tts_ok(max_age: float = 15.0) -> bool:
+    """Is Matt's own-voice sidecar up and loaded? Cached briefly so chat
+    turns don't pay a health round-trip each time."""
+    now = time.time()
+    if now - _local_state["checked"] < max_age:
+        return _local_state["ok"]
+    ok = False
+    try:
+        r = httpx.get(f"{LOCAL_TTS_URL}/health", timeout=2)
+        ok = r.status_code == 200 and bool(r.json().get("ok"))
+    except Exception:
+        ok = False
+    _local_state.update(ok=ok, checked=now)
+    return ok
+
+
+def tts_engine() -> str:
+    return "luxtts" if local_tts_ok() else "magpie"
+
+
 def available() -> bool:
+    # ASR needs the NVIDIA key; TTS can come from either engine.
     return bool(config.NEMOTRON_API_KEY)
+
+
+def _synthesize_local(text: str) -> bytes:
+    r = httpx.post(f"{LOCAL_TTS_URL}/synthesize",
+                   json={"text": text}, timeout=LOCAL_TTS_TIMEOUT)
+    r.raise_for_status()
+    if not r.content.startswith(b"RIFF"):
+        raise RuntimeError("sidecar returned no audio")
+    return r.content
 
 
 def _auth(function_id: str):
@@ -59,8 +101,23 @@ def transcribe(wav_bytes: bytes) -> str:
 
 
 def synthesize(text: str) -> bytes:
-    """Text -> WAV bytes. Long text is split at sentence boundaries into
-    <=~320-char chunks (Magpie per-request cap) and the PCM concatenated."""
+    """Text -> WAV bytes in Matt's own cloned voice (LuxTTS sidecar),
+    falling back to Magpie if the sidecar is down or fails."""
+    speakable = _speakable(text)
+    if not speakable.strip():
+        return _magpie(speakable)
+    if local_tts_ok():
+        try:
+            return _synthesize_local(speakable)
+        except Exception as e:
+            log.warning("local voice failed, falling back to Magpie: %r", e)
+            _local_state.update(ok=False, checked=time.time())
+    return _magpie(speakable)
+
+
+def _magpie(text: str) -> bytes:
+    """NVIDIA Magpie TTS. Long text is split at sentence boundaries into
+    short chunks (Magpie per-request cap) and the PCM concatenated."""
     import riva.client
     from riva.client.proto.riva_audio_pb2 import AudioEncoding
     tts = riva.client.SpeechSynthesisService(_auth(TTS_FUNCTION_ID))

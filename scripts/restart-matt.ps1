@@ -7,10 +7,14 @@ param([switch]$Silent)
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-# stop whatever is serving port 8010
-Get-NetTCPConnection -State Listen -LocalPort 8010 -ErrorAction SilentlyContinue |
-  Select-Object -ExpandProperty OwningProcess -Unique |
-  ForEach-Object { Stop-Process -Id $_ -Force -Confirm:$false }
+# stop whatever is serving port 8010 (the app) and 8030 (Matt's voice
+# sidecar); the scheduled task relaunches both. Voice takes ~40s to
+# reload and the app speaks via Magpie in the meantime.
+foreach ($p in 8010, 8030) {
+  Get-NetTCPConnection -State Listen -LocalPort $p -ErrorAction SilentlyContinue |
+    Select-Object -ExpandProperty OwningProcess -Unique |
+    ForEach-Object { Stop-Process -Id $_ -Force -Confirm:$false }
+}
 Start-Sleep -Seconds 2
 
 # relaunch through the autostart task

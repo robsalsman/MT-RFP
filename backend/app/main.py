@@ -680,6 +680,7 @@ def health():
     from . import voice
     return {"ok": True, "ai_provider": config.llm_provider(),
             "voice_available": voice.available(),
+            "tts_engine": voice.tts_engine(),
             "auth_required": auth.auth_enabled(),
             "ai_model": (config.NEMOTRON_MODEL
                          if config.llm_provider() == "nemotron"

@@ -34,6 +34,25 @@ Start-Process -FilePath 'python' `
   -RedirectStandardOutput $serverLog -RedirectStandardError "$serverLog.err" `
   -WindowStyle Hidden
 
+# Matt's own voice: LuxTTS sidecar (port 8030) in the LuxTTS venv. The app
+# falls back to Magpie while it loads (~40s) or if it isn't installed.
+$voicePort = 8030
+$luxPy     = 'C:\Users\robsa\Apps\LuxTTS\.venv\Scripts\python.exe'
+$voiceLog  = Join-Path $logDir "voice-$stamp.log"
+$voiceBusy = Get-NetTCPConnection -State Listen -LocalPort $voicePort -ErrorAction SilentlyContinue
+if ($voiceBusy) {
+  Add-Content $voiceLog "[$(Get-Date -f o)] port $voicePort already listening - voice server not restarted"
+} elseif (Test-Path $luxPy) {
+  Add-Content $voiceLog "[$(Get-Date -f o)] starting LuxTTS voice server on 127.0.0.1:$voicePort"
+  Start-Process -FilePath $luxPy `
+    -ArgumentList @((Join-Path $PSScriptRoot 'matt-voice-server.py')) `
+    -WorkingDirectory $root `
+    -RedirectStandardOutput $voiceLog -RedirectStandardError "$voiceLog.err" `
+    -WindowStyle Hidden
+} else {
+  Add-Content $voiceLog "[$(Get-Date -f o)] LuxTTS venv not found at $luxPy - Magpie voice only"
+}
+
 if ($Tunnel) {
   $cf = Join-Path $env:USERPROFILE 'cloudflared.exe'
   if (Test-Path $cf) {

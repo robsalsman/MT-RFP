@@ -624,6 +624,7 @@ export default function ChatBot() {
     const text = (preset ?? input).trim()
     if (!text || busy) return
     voiceMode.current = false
+    mattAudio.prime()  // start the audio context on the gesture, before the long awaits
     const next = [...messages, { role: 'user', content: text }]
     setMessages(next); setInput(''); setBusy(true)
     try {

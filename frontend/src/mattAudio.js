@@ -34,12 +34,27 @@ function ensureCtx() {
   return ctx
 }
 
+// Browsers only let an AudioContext start within a few seconds of a user
+// gesture. Matt's replies arrive well after that (chat round-trip plus a
+// multi-second voice render), so create and resume the context ON the
+// gesture — any click/key on the page — and it's already running when the
+// audio shows up. Called explicitly from send/mic too.
+export function prime() { ensureCtx() }
+if (typeof window !== 'undefined') {
+  for (const ev of ['pointerdown', 'keydown', 'touchstart']) {
+    window.addEventListener(ev, prime, { passive: true, capture: true })
+  }
+}
+
 export function play(src) {
   stop()
   const audio = new Audio(src)
   currentAudio = audio
   const c = ensureCtx()
-  if (c) {
+  // Only route through the analyser when the context is actually running.
+  // A suspended context would swallow the element's output — Matt would
+  // "speak" silently. Plain playback loses lip-sync, never the voice.
+  if (c && c.state === 'running') {
     try {
       const source = c.createMediaElementSource(audio)
       analyser = c.createAnalyser()
